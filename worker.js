@@ -1,7 +1,7 @@
 // SwingTraderKrushna secure Gemini proxy
 // Deploy this file as a Cloudflare Worker. Add GEMINI_API_KEY as a Secret.
 const ALLOWED_ORIGIN = "https://krushnawagh470-ops.github.io";
-const MODEL = "gemini-3.8-flash";
+const MODEL = "gemini-3.5-flash-lite";
 
 function cors(origin) {
   const allowed = origin === ALLOWED_ORIGIN ? origin : ALLOWED_ORIGIN;
@@ -50,8 +50,10 @@ export default {
           generation_config: { max_output_tokens: 900, thinking_level: "low" }
         })
       });
-      const data = await upstream.json();
-      if (!upstream.ok) return json({ error: data?.error?.message || "Gemini provider request failed.", providerStatus: upstream.status }, upstream.status === 429 ? 429 : 502, origin);
+      const raw = await upstream.text();
+      let data = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch { data = { rawError: raw.slice(0, 500) }; }
+      if (!upstream.ok) return json({ error: data?.error?.message || data?.message || "Gemini provider request failed.", providerStatus: upstream.status }, upstream.status === 429 ? 429 : 502, origin);
       let reply = typeof data?.output_text === "string" ? data.output_text.trim() : "";
       if (!reply && Array.isArray(data?.steps)) {
         for (const step of data.steps) {
