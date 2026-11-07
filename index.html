@@ -189,15 +189,15 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
    <div class="row"><div><div class="terminal-label">CURRENT WORKSPACE</div><b id="aiSelectedName">Claude workspace</b></div><span class="signal-tag" id="aiConnectionState">NOT CONNECTED</span><a class="btn secondary small" id="aiProviderOpen" href="https://claude.ai" target="_blank" rel="noopener">Open Claude ↗</a></div>
    <p class="muted" id="aiSelectedDescription">Claude runs through a secure Cloudflare Worker. Your Anthropic API key stays on the server and is never placed in this public website.</p>
    <div class="card" style="margin:12px 0;padding:12px">
-    <div class="terminal-label">SECURE CONNECTION SETUP</div>
-    <label class="terminal-label" for="agentWorkerUrl">Cloudflare Worker URL</label><input id="agentWorkerUrl" type="url" placeholder="https://swingtraderkrushna-agent.yourname.workers.dev">
-    <label class="terminal-label" for="agentAccessToken" style="margin-top:9px">Agent access token</label><input id="agentAccessToken" type="password" autocomplete="off" placeholder="Your separate Cloudflare AGENT_ACCESS_TOKEN">
-    <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><button class="btn secondary" id="agentSaveConnection">Save & test connection</button><span class="q-meta" id="agentConnectStatus" aria-live="polite">Not configured on this device.</span></div>
+    <div class="terminal-label">FREE AI CONNECTION · GEMINI</div>
+    <label class="terminal-label" for="geminiApiKey">Gemini API key</label><input id="geminiApiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your Google AI Studio API key">
+    <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><a class="btn secondary small" href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Get free API key ↗</a><span class="q-meta" id="agentConnectStatus" aria-live="polite">Key stays in this page memory only.</span></div>
+    <p class="q-meta" style="margin:8px 0 0">Use a Free-tier Google AI Studio project. Do not enable billing if you want to avoid API charges. The key is not saved to this device or repository; it is sent directly to Google when you ask a question.</p>
    </div>
-   <label class="terminal-label" for="aiWorkbenchPrompt">MESSAGE TO CLAUDE</label>
-   <textarea id="aiWorkbenchPrompt" placeholder="Ask your AI agent anything…"></textarea>
-   <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><button class="btn" id="aiSendToClaude">Send to Claude</button><button class="btn secondary" id="aiPrepareTask">Prepare task</button><button class="btn secondary" id="aiCopyPrepared">Copy prompt</button><span id="aiWorkbenchStatus" class="q-meta" aria-live="polite">Waiting for your message.</span></div>
-   <div id="aiAgentConversation" class="card" style="margin-top:12px;min-height:76px;white-space:pre-wrap" aria-live="polite">Claude's replies will appear here after the secure connection is configured.</div>
+   <label class="terminal-label" for="aiWorkbenchPrompt">MESSAGE TO SWINGTRADERKRUSHNA AI</label>
+   <textarea id="aiWorkbenchPrompt" placeholder="Ask about trading, XAUUSD, strategy testing, coding, research or everyday work…"></textarea>
+   <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><button class="btn" id="aiSendToClaude">Send message</button><button class="btn secondary" id="aiPrepareTask">Prepare task</button><button class="btn secondary" id="aiCopyPrepared">Copy prompt</button><span id="aiWorkbenchStatus" class="q-meta" aria-live="polite">Gemini free-tier connection is not tested yet.</span></div>
+   <div id="aiAgentConversation" class="card" style="margin-top:12px;min-height:76px;white-space:pre-wrap;overflow-wrap:anywhere" aria-live="polite">Your AI conversation will appear here after you add a Gemini API key.</div>
    <div class="section-title" style="margin:16px 0 8px">Work process & viewer tour</div>
    <div class="q-meta">A transparent checklist of the handoff stages. Stages are not marked complete unless an integration reports completion.</div>
    <div class="ai-task-steps" id="aiTaskSteps">
@@ -439,16 +439,16 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
 /* AI workbench: honest handoff UI; no simulated provider execution. */
 (function(){
  const descriptions={
-  Claude:"Prepare coding, research or planning work for Claude. Provider sign-in sessions cannot be embedded securely in this static website.",
+  Claude:"Claude can be opened externally. In-terminal free mode currently uses Gemini.",
   ChatGPT:"Prepare analysis, writing or technical tasks for ChatGPT. API execution is not configured in this static build.",
-  Gemini:"Prepare research and multimodal tasks for Gemini. API execution is not configured in this static build.",
+  Gemini:"Gemini is the active free-tier AI provider for this workspace.",
   Perplexity:"Prepare source-research questions for Perplexity. API execution is not configured in this static build.",
   Grok:"Prepare market-research or reasoning prompts for Grok. API execution is not configured in this static build.",
   GitHub:"Prepare repository issues, code changes or review tasks. GitHub actions require a server-side integration.",
   Higgsfield:"Prepare video-generation briefs and visual production prompts. Generation requires provider authorization.",
   ElevenLabs:"Prepare narration scripts and voice directions. Audio generation requires provider authorization."
  };
- let selected="Claude",prepared="";
+ let selected="Gemini",prepared="";
  const choices=document.getElementById("aiAgentChoices");
  choices?.addEventListener("click",e=>{
   const b=e.target.closest("button[data-agent]");if(!b)return;
@@ -456,8 +456,8 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
   choices.querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b));
   document.getElementById("aiSelectedName").textContent=selected+" workspace";
   document.getElementById("aiSelectedDescription").textContent=descriptions[selected];
-  document.getElementById("aiConnectionState").textContent="NOT CONNECTED";
-  document.getElementById("aiWorkbenchStatus").textContent=selected+" selected · no provider session connected.";
+  document.getElementById("aiConnectionState").textContent=selected==="Gemini"?"FREE API · KEY REQUIRED":"EXTERNAL SIGN-IN";
+  document.getElementById("aiWorkbenchStatus").textContent=selected==="Gemini"?"Gemini selected · add your free-tier API key to chat.":"This provider opens externally; in-terminal execution is currently available through Gemini.";
   prepared="";
  });
  document.getElementById("aiPrepareTask")?.addEventListener("click",()=>{
@@ -509,4 +509,45 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
  b.addEventListener("click",()=>{const open=m.classList.toggle("open");b.setAttribute("aria-expanded",String(open));b.textContent=open?"− Hide tools":"＋ More tools"});
  m.addEventListener("click",e=>{if(e.target.closest("button[data-page]")){m.classList.remove("open");b.setAttribute("aria-expanded","false");b.textContent="＋ More tools"}});
 })();
-(function(){const urls={Claude:"https://claude.ai",ChatGPT:"https://chatgpt.com",Gemini:"https://gemini.google.com",Perplexity:"https://www.perplexity.ai",Grok:"https://grok.com",GitHub:"https://github.com/krushnawagh470-ops/swingtraderkrushna",Higgsfield:"https://higgsfield.ai",ElevenLabs:"https://elevenlabs.io"};document.addEventListener("click",e=>{const b=e.target.closest("button[data-agent]");if(!b)return;const name=b.dataset.agent;document.querySelectorAll("button[data-agent]").forEach(x=>x.classList.toggle("selected",x.dataset.agent===name));const description={Claude:"Open Claude for coding, research and planning. Sign in on the provider website.",ChatGPT:"Open ChatGPT for analysis, writing and project work.",Gemini:"Open Gemini for research and multimodal tasks.",Perplexity:"Open Perplexity for source-led web research.",Grok:"Open Grok for research and reasoning.",GitHub:"Open the SwingTraderKrushna repository.",Higgsfield:"Open Higgsfield for video and visual production.",ElevenLabs:"Open ElevenLabs for narration and voice generation."};const link=document.getElementById("aiProviderOpen"),linkAI=document.getElementById("aiProviderOpenAI");[link,linkAI].filter(Boolean).forEach(a=>{a.href=urls[name]||"https://claude.ai";a.textContent="Open "+name+" ↗";});const selectedName=document.getElementById("aiSelectedName"),selectedDesc=document.getElementById("aiSelectedDescription"),state=document.getElementById("aiConnectionState");if(selectedName)selectedName.textContent=name+" workspace";if(selectedDesc)selectedDesc.textContent=description[name]||"Open the selected provider workspace.";if(state)state.textContent="EXTERNAL SIGN-IN";});})();</script></body></html>
+(function(){const urls={Claude:"https://claude.ai",ChatGPT:"https://chatgpt.com",Gemini:"https://gemini.google.com",Perplexity:"https://www.perplexity.ai",Grok:"https://grok.com",GitHub:"https://github.com/krushnawagh470-ops/swingtraderkrushna",Higgsfield:"https://higgsfield.ai",ElevenLabs:"https://elevenlabs.io"};document.addEventListener("click",e=>{const b=e.target.closest("button[data-agent]");if(!b)return;const name=b.dataset.agent;document.querySelectorAll("button[data-agent]").forEach(x=>x.classList.toggle("selected",x.dataset.agent===name));const description={Claude:"Open Claude for coding, research and planning. Sign in on the provider website.",ChatGPT:"Open ChatGPT for analysis, writing and project work.",Gemini:"Open Gemini for research and multimodal tasks.",Perplexity:"Open Perplexity for source-led web research.",Grok:"Open Grok for research and reasoning.",GitHub:"Open the SwingTraderKrushna repository.",Higgsfield:"Open Higgsfield for video and visual production.",ElevenLabs:"Open ElevenLabs for narration and voice generation."};const link=document.getElementById("aiProviderOpen"),linkAI=document.getElementById("aiProviderOpenAI");[link,linkAI].filter(Boolean).forEach(a=>{a.href=urls[name]||"https://claude.ai";a.textContent="Open "+name+" ↗";});const selectedName=document.getElementById("aiSelectedName"),selectedDesc=document.getElementById("aiSelectedDescription"),state=document.getElementById("aiConnectionState");if(selectedName)selectedName.textContent=name+" workspace";if(selectedDesc)selectedDesc.textContent=description[name]||"Open the selected provider workspace.";if(state)state.textContent="EXTERNAL SIGN-IN";});})();
+/* Gemini free-tier chat integration. API key is kept in page memory only. */
+(function(){
+ const send=document.getElementById("aiSendToClaude"),input=document.getElementById("aiWorkbenchPrompt"),keyField=document.getElementById("geminiApiKey"),out=document.getElementById("aiAgentConversation"),status=document.getElementById("aiWorkbenchStatus");
+ const name=document.getElementById("aiSelectedName"),state=document.getElementById("aiConnectionState");
+ if(!send||!input||!keyField||!out)return;
+ const history=[];
+ const systemPrompt="You are SwingTraderKrushna AI, a practical, honest assistant. Help with personal planning, learning, technology, business and trading. For forex topics, explain clearly and distinguish facts, assumptions and opinions. Never promise profits or present a trade as guaranteed. Do not claim to have live market prices, news, charts, broker access, files or tools unless they are actually provided in this conversation. For XAUUSD, EURUSD and BTCUSD analysis, request timeframe, price data and context when missing. Focus on risk management and capital preservation. For coding, provide complete, testable steps and state limitations. Be concise but useful.";
+ function addMessage(role,text){
+  const item=document.createElement("div");item.style.cssText="padding:10px 11px;margin:8px 0;border:1px solid #1c3859;border-radius:9px;background:#091a2e;white-space:pre-wrap;overflow-wrap:anywhere";
+  const label=document.createElement("b");label.textContent=role==="user"?"YOU":"SWINGTRADERKRUSHNA AI";label.style.cssText="display:block;font-size:9px;letter-spacing:.12em;color:#6ebeff;margin-bottom:5px";
+  const body=document.createElement("div");body.textContent=text;body.style.fontSize="12px";item.append(label,body);out.appendChild(item);out.scrollTop=out.scrollHeight;
+ }
+ async function ask(){
+  const prompt=input.value.trim(),apiKey=keyField.value.trim();
+  if(!prompt){status.textContent="Type a message first.";input.focus();return}
+  if(!apiKey){status.textContent="Add your Gemini API key first. Get one from Google AI Studio.";keyField.focus();return}
+  if(window.__stkrushnaBusy)return;
+  window.__stkrushnaBusy=true;send.disabled=true;send.textContent="Thinking…";status.textContent="Sending securely to Google Gemini…";
+  if(name)name.textContent="Gemini workspace";if(state)state.textContent="REQUEST IN PROGRESS";
+  addMessage("user",prompt);input.value="";
+  try{
+   const contents=[...history.slice(-8),{role:"user",parts:[{text:prompt}]}];
+   const response=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="+encodeURIComponent(apiKey),{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({systemInstruction:{parts:[{text:systemPrompt}]},contents,generationConfig:{temperature:0.6,maxOutputTokens:1800}})
+   });
+   const data=await response.json();
+   if(!response.ok){const detail=data?.error?.message||("HTTP "+response.status);throw new Error(detail+(response.status===429?" · Free-tier quota or rate limit reached. Try later.":""))}
+   const answer=(data?.candidates?.[0]?.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
+   if(!answer)throw new Error(data?.promptFeedback?.blockReason?"The request was blocked by provider safety settings.":"Gemini returned an empty response. Please try again.");
+   history.push({role:"user",parts:[{text:prompt}]},{role:"model",parts:[{text:answer}]});
+   addMessage("model",answer);status.textContent="Reply received · Gemini 2.5 Flash · Free-tier quota applies.";
+   if(state)state.textContent="CONNECTED · GEMINI";
+  }catch(error){status.textContent="AI request failed: "+error.message;addMessage("model","Connection error: "+error.message);if(state)state.textContent="REQUEST FAILED"}
+  finally{window.__stkrushnaBusy=false;send.disabled=false;send.textContent="Send message"}
+ }
+ send.addEventListener("click",ask);
+ input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ask()}});
+ keyField.addEventListener("input",()=>{if(state)state.textContent=keyField.value.trim()?"KEY ENTERED · NOT YET TESTED":"FREE API · KEY REQUIRED"});
+})();
+</script></body></html>
