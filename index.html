@@ -198,7 +198,13 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
    </div>
    <label class="terminal-label" for="aiWorkbenchPrompt">MESSAGE TO SWINGTRADERKRUSHNA AI</label>
    <textarea id="aiWorkbenchPrompt" placeholder="Ask about trading, XAUUSD, strategy testing, coding, research or everyday work…"></textarea>
-   <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><button type="button" class="btn" id="aiSendToClaude" onclick="(async function(btn){var inp=document.getElementById('aiWorkbenchPrompt'),out=document.getElementById('aiAgentConversation'),st=document.getElementById('aiWorkbenchStatus'),msg=inp.value.trim(),url=(localStorage.getItem('stk_gemini_worker_url')||window.STK_DEFAULT_WORKER_URL||'https://floral-wood-dfe4.swingtraderkrushna.workers.dev');if(!msg){st.textContent='Type a message first.';return;}btn.disabled=true;btn.textContent='Thinking…';st.textContent='Sending message to Gemini…';function add(role,val){var w=document.createElement('div'),h=document.createElement('b'),b=document.createElement('div');w.style.cssText='padding:10px;margin:8px 0;border:1px solid #1c3859;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere';h.textContent=role;h.style.display='block';b.textContent=val;w.append(h,b);if(out.dataset.cleared!=='yes'){out.textContent='';out.dataset.cleared='yes';}out.appendChild(w);}add('YOU',msg);inp.value='';try{var resp=await fetch(url+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:msg}]})}),data=await resp.json();if(!resp.ok)throw Error(data.error||('HTTP '+resp.status));if(!data.reply)throw Error('Gemini returned an empty reply.');add('SWINGTRADERKRUSHNA AI',data.reply);st.textContent='Reply received · '+(data.model||'Gemini');}catch(e){add('ERROR',e.message||'Network error');st.textContent='AI request failed: '+(e.message||'Network error');inp.value=msg;}finally{btn.disabled=false;btn.textContent='Send message';}})(this)">Send message</button><button class="btn secondary" id="aiPrepareTask">Prepare task</button><button class="btn secondary" id="aiCopyPrepared">Copy prompt</button><span id="aiWorkbenchStatus" class="q-meta" aria-live="polite">Connect your Cloudflare Worker before sending a message.</span></div>
+   <div class="stk-voice-bar" role="group" aria-label="Voice conversation controls">
+    <button type="button" class="btn" id="stkVoiceMic" aria-pressed="false">🎙️ Talk to AI</button>
+    <button type="button" class="btn secondary" id="stkVoiceToggle" aria-pressed="true">🔊 Voice replies: ON</button>
+    <button type="button" class="btn secondary" id="stkVoiceStop">■ Stop voice</button>
+    <span id="stkVoiceStatus" class="q-meta" aria-live="polite">Tap Talk to AI, speak, and your message will be sent automatically.</span>
+   </div>
+   <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><button type="button" class="btn" id="aiSendToClaude"Send message</button><button class="btn secondary" id="aiPrepareTask">Prepare task</button><button class="btn secondary" id="aiCopyPrepared">Copy prompt</button><span id="aiWorkbenchStatus" class="q-meta" aria-live="polite">Connect your Cloudflare Worker before sending a message.</span></div>
    <div id="aiAgentConversation" class="card" style="margin-top:12px;min-height:76px;white-space:pre-wrap;overflow-wrap:anywhere" aria-live="polite">Your AI conversation will appear here after the secure Worker connects.</div>
    <div class="section-title" style="margin:16px 0 8px">Work process & viewer tour</div>
    <div class="q-meta">A transparent checklist of the handoff stages. Stages are not marked complete unless an integration reports completion.</div>
@@ -504,7 +510,7 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
  m.addEventListener("click",e=>{if(e.target.closest("button[data-page]")){m.classList.remove("open");b.setAttribute("aria-expanded","false");b.textContent="＋ More tools"}});
 })();
 (function(){const urls={Claude:"https://claude.ai",ChatGPT:"https://chatgpt.com",Gemini:"https://gemini.google.com",Perplexity:"https://www.perplexity.ai",Grok:"https://grok.com",GitHub:"https://github.com/krushnawagh470-ops/swingtraderkrushna",Higgsfield:"https://higgsfield.ai",ElevenLabs:"https://elevenlabs.io"};document.addEventListener("click",e=>{const b=e.target.closest("button[data-agent]");if(!b)return;const name=b.dataset.agent;document.querySelectorAll("button[data-agent]").forEach(x=>x.classList.toggle("selected",x.dataset.agent===name));const description={Claude:"Open Claude for coding, research and planning. Sign in on the provider website.",ChatGPT:"Open ChatGPT for analysis, writing and project work.",Gemini:"Open Gemini for research and multimodal tasks.",Perplexity:"Open Perplexity for source-led web research.",Grok:"Open Grok for research and reasoning.",GitHub:"Open the SwingTraderKrushna repository.",Higgsfield:"Open Higgsfield for video and visual production.",ElevenLabs:"Open ElevenLabs for narration and voice generation."};const link=document.getElementById("aiProviderOpen"),linkAI=document.getElementById("aiProviderOpenAI");[link,linkAI].filter(Boolean).forEach(a=>{a.href=urls[name]||"https://claude.ai";a.textContent="Open "+name+" ↗";});const selectedName=document.getElementById("aiSelectedName"),selectedDesc=document.getElementById("aiSelectedDescription"),state=document.getElementById("aiConnectionState");if(selectedName)selectedName.textContent=name+" workspace";if(selectedDesc)selectedDesc.textContent=description[name]||"Open the selected provider workspace.";if(state)state.textContent="EXTERNAL SIGN-IN";});})();
-/* Secure Gemini chat via Cloudflare Worker. No API key is stored in this page. */
+.stk-voice-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px;padding:10px;border:1px solid #21456e;border-radius:9px;background:#07162a}.stk-voice-bar button{font-size:11px}.stk-voice-bar #stkVoiceMic.listening{background:linear-gradient(135deg,#ff6689,#e44768);color:#fff;box-shadow:0 0 18px #ff668955}.stk-voice-bar #stkVoiceStop{background:#10223d;color:#d9eaff;border:1px solid #27466e}@media(max-width:650px){.stk-voice-bar{gap:7px}.stk-voice-bar button{padding:9px 10px}}\n/* Secure Gemini chat via Cloudflare Worker. No API key is stored in this page. */
 window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.workers.dev";
 (function(){
  const send=document.getElementById("aiSendToClaude"),input=document.getElementById("aiWorkbenchPrompt"),urlField=document.getElementById("agentWorkerUrl"),out=document.getElementById("aiAgentConversation"),status=document.getElementById("aiWorkbenchStatus"),connect=document.getElementById("agentSaveConnection"),connectStatus=document.getElementById("agentConnectStatus"),name=document.getElementById("aiSelectedName"),state=document.getElementById("aiConnectionState");
@@ -581,6 +587,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     body.textContent = value;
     body.style.fontSize = "12px";
     wrap.append(heading, body);
+    if (role === "assistant") window.stkSpeakReply?.(value);
     if (output.dataset.placeholder !== "cleared") { output.textContent = ""; output.dataset.placeholder = "cleared"; }
     output.appendChild(wrap);
     output.scrollTop = output.scrollHeight;
@@ -622,6 +629,83 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     }
   }
   window.stkGeminiSend = sendMessage;
+
+  // Browser-native voice mode: speech recognition in, spoken reply out.
+  const mic = document.getElementById("stkVoiceMic");
+  const voiceToggle = document.getElementById("stkVoiceToggle");
+  const stopVoice = document.getElementById("stkVoiceStop");
+  const voiceStatus = document.getElementById("stkVoiceStatus");
+  const voiceInput = document.getElementById("aiWorkbenchPrompt");
+  let voiceOn = true;
+  let recognition = null;
+  let listening = false;
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  window.stkSpeakReply = function (text) {
+    if (!voiceOn || !("speechSynthesis" in window) || !text) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-IN";
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  };
+  if (voiceToggle) voiceToggle.addEventListener("click", function () {
+    voiceOn = !voiceOn;
+    voiceToggle.textContent = voiceOn ? "🔊 Voice replies: ON" : "🔇 Voice replies: OFF";
+    voiceToggle.setAttribute("aria-pressed", String(voiceOn));
+    if (!voiceOn && "speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (voiceStatus) voiceStatus.textContent = voiceOn ? "AI replies will be spoken aloud." : "Voice replies are muted; text replies remain on.";
+  });
+  if (stopVoice) stopVoice.addEventListener("click", function () {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (recognition && listening) recognition.stop();
+    if (voiceStatus) voiceStatus.textContent = "Voice playback stopped.";
+  });
+  if (mic) {
+    if (!SpeechRecognition) {
+      mic.disabled = true;
+      mic.textContent = "🎙️ Mic unavailable";
+      if (voiceStatus) voiceStatus.textContent = "Voice input is not supported in this browser. Try the latest Chrome on Android.";
+    } else {
+      recognition = new SpeechRecognition();
+      recognition.lang = "en-IN";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.onstart = function () {
+        listening = true;
+        mic.classList.add("listening");
+        mic.textContent = "Listening… tap to cancel";
+        mic.setAttribute("aria-pressed", "true");
+        if (voiceStatus) voiceStatus.textContent = "Listening. Speak clearly; your message will send when you finish.";
+      };
+      recognition.onresult = function (event) {
+        const spoken = event.results && event.results[0] && event.results[0][0] ? event.results[0][0].transcript.trim() : "";
+        if (!spoken) return;
+        voiceInput.value = spoken;
+        if (voiceStatus) voiceStatus.textContent = "Heard: " + spoken + " · sending to AI…";
+        sendMessage();
+      };
+      recognition.onerror = function (event) {
+        if (voiceStatus) voiceStatus.textContent = event.error === "not-allowed" ? "Microphone permission denied. Allow microphone access for this website in Chrome." : "Voice input error: " + event.error;
+      };
+      recognition.onend = function () {
+        listening = false;
+        mic.classList.remove("listening");
+        mic.textContent = "🎙️ Talk to AI";
+        mic.setAttribute("aria-pressed", "false");
+      };
+      mic.addEventListener("click", function () {
+        if (listening) { recognition.stop(); return; }
+        try {
+          if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+          recognition.start();
+        } catch (error) {
+          if (voiceStatus) voiceStatus.textContent = "Could not start microphone. Tap again or check Chrome microphone permission.";
+        }
+      });
+    }
+  }
   button.addEventListener("click", sendMessage);
   input.addEventListener("keydown", function (event) {
     if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendMessage(); }
