@@ -736,7 +736,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
         const run = ++stkSpeechRun;
         synth.cancel();
         const chosen = getPreferredVoice(requestedLang);
-        const chunks = splitSpeechText(text, 180);
+        const speechText = String(text).replace(/```[\\s\\S]*?```/g, " Code block omitted from voice reply. ").replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^)]+)\\)/g, "$1").replace(/[*_#`>]/g, "").replace(/\\s+/g, " ").trim();\n        const chunks = splitSpeechText(speechText, 650);
         let index = 0;
         const speakNext = function () {
           if (run !== stkSpeechRun || index >= chunks.length) {
@@ -746,14 +746,14 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
           const utterance = new SpeechSynthesisUtterance(chunks[index++]);
           utterance.lang = chosen ? chosen.lang : requestedLang;
           if (chosen) utterance.voice = chosen;
-          utterance.rate = 0.90;
-          utterance.pitch = 0.82;
+          utterance.rate = 0.98;
+          utterance.pitch = 0.92;
           utterance.volume = 1;
           utterance.onstart = function () {
             if (voiceStatus) voiceStatus.textContent = "Speaking reply aloud…";
           };
           utterance.onend = function () {
-            if (run === stkSpeechRun) window.setTimeout(speakNext, 100);
+            if (run === stkSpeechRun) window.setTimeout(speakNext, 220);
           };
           utterance.onerror = function (event) {
             if (run !== stkSpeechRun || event.error === "canceled" || event.error === "interrupted") return;
