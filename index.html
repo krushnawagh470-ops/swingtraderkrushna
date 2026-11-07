@@ -513,8 +513,48 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
  urlField.value=getUrl();
  function addMessage(role,text){const item=document.createElement("div");item.style.cssText="padding:10px 11px;margin:8px 0;border:1px solid #1c3859;border-radius:9px;background:#091a2e;white-space:pre-wrap;overflow-wrap:anywhere";const label=document.createElement("b");label.textContent=role==="user"?"YOU":"SWINGTRADERKRUSHNA AI";label.style.cssText="display:block;font-size:9px;letter-spacing:.12em;color:#6ebeff;margin-bottom:5px";const body=document.createElement("div");body.textContent=text;body.style.fontSize="12px";item.append(label,body);out.appendChild(item);out.scrollTop=out.scrollHeight}
  async function testConnection(){const url=trimUrl(urlField.value);let host="";try{host=new URL(url).hostname}catch(e){}if(!url.startsWith("https://")||!host.endsWith(".workers.dev")){connectStatus.textContent="Enter a valid https://…workers.dev URL.";return false}connectStatus.textContent="Testing Worker…";try{const r=await fetch(url+"/health");const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||"Worker health check failed.");localStorage.setItem("stk_gemini_worker_url",url);connectStatus.textContent="Connected · Gemini secret detected on Worker.";if(state)state.textContent="CONNECTED · SECURE WORKER";if(name)name.textContent="Gemini workspace";return true}catch(e){connectStatus.textContent="Connection failed: "+e.message; if(state)state.textContent="WORKER NOT CONNECTED";return false}}
- connect?.addEventListener("click",testConnection);
+ /* Connection button is wired by the standalone fallback handler below. */
  async function ask(){const prompt=input.value.trim(),url=getUrl();if(!prompt){status.textContent="Type a message first.";input.focus();return}if(!url){status.textContent="Enter and test your Cloudflare Worker URL first.";urlField.focus();return}if(window.__stkrushnaBusy)return;window.__stkrushnaBusy=true;send.disabled=true;send.textContent="Thinking…";status.textContent="Sending to secure Gemini Worker…";addMessage("user",prompt);input.value="";try{const r=await fetch(url+"/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:[...history.slice(-8),{role:"user",content:prompt}]})});const d=await r.json();if(!r.ok)throw Error(d.error||("HTTP "+r.status));if(!d.reply)throw Error("Worker returned an empty reply.");history.push({role:"user",content:prompt},{role:"assistant",content:d.reply});addMessage("assistant",d.reply);status.textContent="Reply received · Gemini via secure Worker.";if(state)state.textContent="CONNECTED · GEMINI"}catch(e){addMessage("assistant","Connection error: "+e.message);status.textContent="AI request failed: "+e.message;input.value=prompt;if(state)state.textContent="REQUEST FAILED"}finally{window.__stkrushnaBusy=false;send.disabled=false;send.textContent="Send message"}}
  send.addEventListener("click",ask);input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ask()}});
  if(getUrl())testConnection();
-})();</script></body></html>
+})();</script>
+<script>
+/* Standalone connection handler: works even if another workspace script fails. */
+(function () {
+  const button = document.getElementById("agentSaveConnection");
+  const field = document.getElementById("agentWorkerUrl");
+  const status = document.getElementById("agentConnectStatus");
+  if (!button || !field || !status) return;
+  button.addEventListener("click", async function () {
+    const url = (field.value || "").trim().replace(/\/+$/, "");
+    let host = "";
+    try { host = new URL(url).hostname; } catch (_) {}
+    if (!url.startsWith("https://") || !host.endsWith(".workers.dev")) {
+      status.textContent = "Enter a valid https://…workers.dev URL.";
+      return;
+    }
+    button.disabled = true;
+    status.textContent = "Testing Worker…";
+    try {
+      const response = await fetch(url + "/health", { method: "GET", mode: "cors", cache: "no-store" });
+      let data;
+      try { data = await response.json(); }
+      catch (_) { throw new Error("Worker did not return JSON. Check that worker.js is deployed."); }
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || ("Worker returned HTTP " + response.status));
+      }
+      localStorage.setItem("stk_gemini_worker_url", url);
+      status.textContent = data.configured === false
+        ? "Worker is online, but GEMINI_API_KEY is missing. Add it as a Cloudflare Secret."
+        : "Connected · Gemini Worker is online.";
+      const state = document.getElementById("aiConnectionState");
+      if (state) state.textContent = data.configured === false ? "WORKER ONLINE · KEY MISSING" : "CONNECTED · SECURE WORKER";
+    } catch (error) {
+      status.textContent = "Connection failed: " + (error && error.message ? error.message : "Network or CORS error");
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
+</script>
+</body></html>
