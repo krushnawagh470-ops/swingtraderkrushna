@@ -1,7 +1,7 @@
 // SwingTraderKrushna secure Gemini proxy
 // Deploy this file as a Cloudflare Worker. Add GEMINI_API_KEY as a Secret.
 const ALLOWED_ORIGIN = "https://krushnawagh470-ops.github.io";
-const MODEL = "gemini-2.5-flash";
+const MODEL = "gemini-3.8-flash";
 
 function cors(origin) {
   const allowed = origin === ALLOWED_ORIGIN ? origin : ALLOWED_ORIGIN;
@@ -34,28 +34,36 @@ export default {
     if (!Array.isArray(body.messages) || body.messages.length === 0 || body.messages.length > 12) {
       return json({ error: "Send between 1 and 12 chat messages." }, 400, origin);
     }
-    const contents = [];
-    for (const item of body.messages) {
-      if (!item || !["user", "assistant"].includes(item.role) || typeof item.content !== "string" || !item.content.trim()) continue;
-      const role = item.role === "assistant" ? "model" : "user";
-      contents.push({ role, parts: [{ text: item.content.slice(0, 12000) }] });
-    }
-    if (!contents.length || contents[contents.length - 1].role !== "user") return json({ error: "The latest message must be from the user." }, 400, origin);
+    const validMessages = body.messages.filter(item => item && ["user", "assistant"].includes(item.role) && typeof item.content === "string" && item.content.trim()).slice(-12);
+    if (!validMessages.length || validMessages[validMessages.length - 1].role !== "user") return json({ error: "The latest message must be from the user." }, 400, origin);
+    const transcript = validMessages.map(item => (item.role === "assistant" ? "Assistant: " : "User: ") + item.content.slice(0, 12000)).join("\\n\\n");
     const systemPrompt = "You are SwingTraderKrushna AI, a practical, honest assistant for personal planning, learning, technology, business and trading. Explain forex concepts clearly and distinguish facts, assumptions and opinions. Never promise profits or guarantee trades. Do not claim live market prices, charts, news, broker access or tools unless actually provided. For XAUUSD, EURUSD and BTCUSD analysis, request timeframe, price data and context when missing. Focus on risk management and capital preservation. Be concise but useful.";
     try {
-      const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + encodeURIComponent(env.GEMINI_API_KEY), {
+      const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents,
-          generationConfig: { temperature: 0.6, maxOutputTokens: 1800 }
+          model: MODEL,
+          system_instruction: systemPrompt,
+          input: transcript,
+          store: false,
+          generation_config: { max_output_tokens: 1800, thinking_level: "low" }
         })
       });
       const data = await upstream.json();
       if (!upstream.ok) return json({ error: data?.error?.message || "Gemini provider request failed.", providerStatus: upstream.status }, upstream.status === 429 ? 429 : 502, origin);
-      const reply = (data?.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("\n").trim();
-      if (!reply) return json({ error: "Gemini returned an empty response." }, 502, origin);
+      let reply = typeof data?.output_text === "string" ? data.output_text.trim() : "";
+      if (!reply && Array.isArray(data?.steps)) {
+        for (const step of data.steps) {
+          if (step?.type === "model_output" && Array.isArray(step.content)) {
+            reply = step.content.filter(part => part?.type === "text").map(part => part.text || "").join("\\n").trim();
+          }
+        }
+      }
+      if (!reply && Array.isArray(data?.output)) {
+        reply = data.output.flatMap(item => item?.content || []).filter(part => part?.type === "text").map(part => part.text || "").join("\\n").trim();
+      }
+      if (!reply) return json({ error: "Gemini returned an empty response.", providerStatus: 502 }, 502, origin);
       return json({ reply, model: MODEL }, 200, origin);
     } catch (error) {
       return json({ error: error.message || "Could not reach Gemini." }, 502, origin);
