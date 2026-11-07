@@ -613,9 +613,15 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: [...messages.slice(-10), { role: "user", content: prompt }] })
       });
-      let data;
-      try { data = await response.json(); }
-      catch (_) { throw new Error("Worker returned an invalid response. Check its deployed code."); }
+      const rawResponse = await response.text();
+      let data = {};
+      try { data = rawResponse ? JSON.parse(rawResponse) : {}; }
+      catch (_) {
+        if (response.status === 524 || /error code:\\s*524|524 a timeout occurred/i.test(rawResponse)) {
+          throw new Error("Gemini is taking too long and Cloudflare timed out (524). Please retry with a shorter message.");
+        }
+        throw new Error("The AI server returned an invalid response (HTTP " + response.status + "). Please retry.");
+      }
       if (!response.ok) throw new Error(data.error || ("HTTP " + response.status));
       if (!data.reply) throw new Error("Gemini returned an empty reply.");
       messages.push({ role: "user", content: prompt }, { role: "assistant", content: data.reply });
