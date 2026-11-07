@@ -1,5 +1,10 @@
 name: Refresh terminal market data
 on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - ".github/workflows/refresh-market-data.yml"
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
@@ -18,9 +23,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Fetch free publisher RSS and economic calendar
+      - name: Fetch free live news and calendar data
         run: python scripts/fetch_market_data.py
-      - name: Publish changed snapshots
+      - name: Publish data snapshots
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
