@@ -3,7 +3,8 @@
 import json, os, re, urllib.request
 from datetime import datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
-from xml.etree import ElementTree as ET\nfrom urllib.parse import urlencode
+from xml.etree import ElementTree as ET
+from urllib.parse import urlencode
 BASE="https://biquote.io/api"
 FEEDS={
  "global":[("BBC World","https://feeds.bbci.co.uk/news/world/rss.xml"),("Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml"),("The Guardian","https://www.theguardian.com/world/rss"),("DW","https://rss.dw.com/xml/rss-en-all")],
