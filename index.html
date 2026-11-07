@@ -788,11 +788,11 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     voiceOn = !voiceOn;
     voiceToggle.textContent = voiceOn ? "🔊 Voice replies: ON" : "🔇 Voice replies: OFF";
     voiceToggle.setAttribute("aria-pressed", String(voiceOn));
-    if (!voiceOn && "speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (!voiceOn && "speechSynthesis" in window) { stkSpeechRun++; window.speechSynthesis.cancel(); }
     if (voiceStatus) voiceStatus.textContent = voiceOn ? "AI replies will be spoken aloud." : "Voice replies are muted; text replies remain on.";
   });
   if (stopVoice) stopVoice.addEventListener("click", function () {
-    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if ("speechSynthesis" in window) { stkSpeechRun++; window.speechSynthesis.cancel(); }
     if (recognition && listening) recognition.stop();
     if (voiceStatus) voiceStatus.textContent = "Voice playback stopped.";
   });
