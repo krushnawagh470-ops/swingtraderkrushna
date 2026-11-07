@@ -513,24 +513,7 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
  document.addEventListener("visibilitychange",()=>{if(document.hidden)cancelAnimationFrame(raf);else draw()});
 })();
 
-(function(){
- const toggle=document.getElementById("deskMoreToggle"),sheet=document.getElementById("deskMoreSheet");
- if(!toggle||!sheet)return;
- toggle.addEventListener("click",()=>{
-  const open=sheet.classList.toggle("open");
-  toggle.setAttribute("aria-expanded",String(open));
- });
- sheet.addEventListener("click",e=>{
-  if(e.target.closest("button[data-page]")){
-   sheet.classList.remove("open");toggle.setAttribute("aria-expanded","false");
-  }
- });
- document.addEventListener("click",e=>{
-  if(!sheet.contains(e.target)&&!toggle.contains(e.target)){
-   sheet.classList.remove("open");toggle.setAttribute("aria-expanded","false");
-  }
- });
-})();
+
 
 (function(){
  const b=document.getElementById("deskSideMore"),m=document.getElementById("deskSideSubnav");
