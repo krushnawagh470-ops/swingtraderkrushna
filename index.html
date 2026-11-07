@@ -200,7 +200,7 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
    <textarea id="aiWorkbenchPrompt" placeholder="Ask about trading, XAUUSD, strategy testing, coding, research or everyday work…"></textarea>
    <div class="stk-voice-bar" role="group" aria-label="Voice conversation controls">
     <button type="button" class="btn" id="stkVoiceMic" aria-pressed="false">🎙️ Talk to AI</button>
-    <select id="stkVoiceLanguage" aria-label="Voice language" style="background:#071225;color:#d9eaff;border:1px solid #27466e;border-radius:8px;padding:8px;font-size:11px"><option value="en-IN">English</option><option value="hi-IN">Hindi</option></select>
+    <select id="stkVoiceLanguage" aria-label="Voice language" style="background:#071225;color:#d9eaff;border:1px solid #27466e;border-radius:8px;padding:8px;font-size:11px"><option value="en-US" selected>English (US)</option><option value="hi-IN">Hindi</option><option value="mr-IN">Marathi</option></select>
     <select id="stkVoiceChoice" aria-label="AI voice selection" style="max-width:190px;background:#071225;color:#d9eaff;border:1px solid #27466e;border-radius:8px;padding:8px;font-size:11px"><option value="">Loading phone voices…</option></select>
     <button type="button" class="btn secondary" id="stkVoiceToggle" aria-pressed="true">🔊 Voice replies: ON</button>
     <button type="button" class="btn secondary" id="stkVoiceStop">■ Stop voice</button>
@@ -661,13 +661,12 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
       if (manuallyChosen) return manuallyChosen;
     }
     const lang = requestedLang.toLowerCase();
-    const base = lang.slice(0, 2);
     const matching = voices.filter(v => v.lang && v.lang.toLowerCase() === lang);
-    const sameLanguage = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(base));
+    const sameLanguage = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(lang));
     const maleHint = v => /male|daniel|david|james|george|arthur|oliver|rishi|guy|ryan/i.test((v.name||"")+" "+(v.voiceURI||"")) ? 8 : 0;
-    const british = v => /^en-GB/i.test(v.lang||"") ? 3 : 0;
+    const usEnglish = v => /^en-US$/i.test(v.lang||"") ? 5 : 0;
     const quality = v => /google|natural|neural|enhanced/i.test(v.name || "") ? 2 : 0;
-    const score = v => maleHint(v)+british(v)+quality(v)+(v.localService?1:0);
+    const score = v => maleHint(v)+usEnglish(v)+quality(v)+(v.localService?1:0);
     matching.sort((a,b)=>score(b)-score(a));
     sameLanguage.sort((a,b)=>score(b)-score(a));
     return matching[0] || sameLanguage[0] || null;
@@ -675,15 +674,14 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   function refreshVoiceChoices() {
     if (!voiceChoice) return;
     const voices = window.speechSynthesis.getVoices() || [];
-    if (!voices.length) { voiceChoice.innerHTML = '<option value="">Use phone default voice</option>'; return; }
-    const lang = selectedVoiceLanguage().slice(0,2).toLowerCase();
-    const available = voices.filter(v => (v.lang||"").toLowerCase().startsWith(lang));
-    const list = available.length ? available : voices;
+    if (!voices.length) { voiceChoice.innerHTML = '<option value="">Phone voices loading…</option>'; return; }
+    const lang = selectedVoiceLanguage().toLowerCase();
+    const list = voices.filter(v => (v.lang||"").toLowerCase() === lang);
     const previous = voiceChoice.value;
     voiceChoice.innerHTML = "";
     const automatic = document.createElement("option");
     automatic.value = "";
-    automatic.textContent = "JARVIS-style · Auto";
+    automatic.textContent = list.length ? "Automatic · best matching voice" : "No installed voice for this language";
     voiceChoice.appendChild(automatic);
     list.forEach(v => {
       const option = document.createElement("option");
@@ -698,7 +696,8 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     refreshVoiceChoices();
     window.speechSynthesis.addEventListener("voiceschanged", refreshVoiceChoices);
   }
-  if (voiceChoice) voiceChoice.addEventListener("change",()=>{if(voiceStatus)voiceStatus.textContent="Voice selected. Use Test voice by sending a message.";});
+  if (voiceLanguage) voiceLanguage.addEventListener("change",()=>{ if (recognition) recognition.lang=selectedVoiceLanguage(); refreshVoiceChoices(); if(voiceStatus)voiceStatus.textContent="Language set to "+voiceLanguage.options[voiceLanguage.selectedIndex].text+". Matching phone voices only are shown."; });
+  if (voiceChoice) voiceChoice.addEventListener("change",()=>{if(voiceStatus)voiceStatus.textContent="Voice selected for "+voiceLanguage.options[voiceLanguage.selectedIndex].text+".";});
   let stkSpeechRun = 0;
   function splitSpeechText(value, limit) {
     const sentences = String(value).replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
@@ -833,6 +832,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
       mic.addEventListener("click", function () {
         if (listening) { recognition.stop(); return; }
         try {
+          recognition.lang = selectedVoiceLanguage();
           if ("speechSynthesis" in window) window.speechSynthesis.cancel();
           recognition.start();
         } catch (error) {
