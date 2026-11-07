@@ -505,11 +505,12 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
 })();
 (function(){const urls={Claude:"https://claude.ai",ChatGPT:"https://chatgpt.com",Gemini:"https://gemini.google.com",Perplexity:"https://www.perplexity.ai",Grok:"https://grok.com",GitHub:"https://github.com/krushnawagh470-ops/swingtraderkrushna",Higgsfield:"https://higgsfield.ai",ElevenLabs:"https://elevenlabs.io"};document.addEventListener("click",e=>{const b=e.target.closest("button[data-agent]");if(!b)return;const name=b.dataset.agent;document.querySelectorAll("button[data-agent]").forEach(x=>x.classList.toggle("selected",x.dataset.agent===name));const description={Claude:"Open Claude for coding, research and planning. Sign in on the provider website.",ChatGPT:"Open ChatGPT for analysis, writing and project work.",Gemini:"Open Gemini for research and multimodal tasks.",Perplexity:"Open Perplexity for source-led web research.",Grok:"Open Grok for research and reasoning.",GitHub:"Open the SwingTraderKrushna repository.",Higgsfield:"Open Higgsfield for video and visual production.",ElevenLabs:"Open ElevenLabs for narration and voice generation."};const link=document.getElementById("aiProviderOpen"),linkAI=document.getElementById("aiProviderOpenAI");[link,linkAI].filter(Boolean).forEach(a=>{a.href=urls[name]||"https://claude.ai";a.textContent="Open "+name+" ↗";});const selectedName=document.getElementById("aiSelectedName"),selectedDesc=document.getElementById("aiSelectedDescription"),state=document.getElementById("aiConnectionState");if(selectedName)selectedName.textContent=name+" workspace";if(selectedDesc)selectedDesc.textContent=description[name]||"Open the selected provider workspace.";if(state)state.textContent="EXTERNAL SIGN-IN";});})();
 /* Secure Gemini chat via Cloudflare Worker. No API key is stored in this page. */
+window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.workers.dev";
 (function(){
  const send=document.getElementById("aiSendToClaude"),input=document.getElementById("aiWorkbenchPrompt"),urlField=document.getElementById("agentWorkerUrl"),out=document.getElementById("aiAgentConversation"),status=document.getElementById("aiWorkbenchStatus"),connect=document.getElementById("agentSaveConnection"),connectStatus=document.getElementById("agentConnectStatus"),name=document.getElementById("aiSelectedName"),state=document.getElementById("aiConnectionState");
  if(!send||!input||!urlField||!out)return;
  const history=[];
- const trimUrl=v=>{v=(v||"").trim();return v.endsWith("/")?v.slice(0,-1):v}; const getUrl=()=>trimUrl(localStorage.getItem("stk_gemini_worker_url")||"");
+ const trimUrl=v=>{v=(v||"").trim();return v.endsWith("/")?v.slice(0,-1):v}; const getUrl=()=>trimUrl(localStorage.getItem("stk_gemini_worker_url")||window.STK_DEFAULT_WORKER_URL||"");
  urlField.value=getUrl();
  function addMessage(role,text){const item=document.createElement("div");item.style.cssText="padding:10px 11px;margin:8px 0;border:1px solid #1c3859;border-radius:9px;background:#091a2e;white-space:pre-wrap;overflow-wrap:anywhere";const label=document.createElement("b");label.textContent=role==="user"?"YOU":"SWINGTRADERKRUSHNA AI";label.style.cssText="display:block;font-size:9px;letter-spacing:.12em;color:#6ebeff;margin-bottom:5px";const body=document.createElement("div");body.textContent=text;body.style.fontSize="12px";item.append(label,body);out.appendChild(item);out.scrollTop=out.scrollHeight}
  async function testConnection(){const url=trimUrl(urlField.value);let host="";try{host=new URL(url).hostname}catch(e){}if(!url.startsWith("https://")||!host.endsWith(".workers.dev")){connectStatus.textContent="Enter a valid https://…workers.dev URL.";return false}connectStatus.textContent="Testing Worker…";try{const r=await fetch(url+"/health");const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||"Worker health check failed.");localStorage.setItem("stk_gemini_worker_url",url);connectStatus.textContent="Connected · Gemini secret detected on Worker.";if(state)state.textContent="CONNECTED · SECURE WORKER";if(name)name.textContent="Gemini workspace";return true}catch(e){connectStatus.textContent="Connection failed: "+e.message; if(state)state.textContent="WORKER NOT CONNECTED";return false}}
@@ -525,6 +526,8 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
   const field = document.getElementById("agentWorkerUrl");
   const status = document.getElementById("agentConnectStatus");
   if (!button || !field || !status) return;
+  const defaultWorker = window.STK_DEFAULT_WORKER_URL || "https://floral-wood-dfe4.swingtraderkrushna.workers.dev";
+  if (!field.value.trim()) field.value = defaultWorker;
   button.addEventListener("click", async function () {
     const url = (field.value || "").trim().replace(/\/+$/, "");
     let host = "";
@@ -543,7 +546,7 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
       if (!response.ok || !data.ok) {
         throw new Error(data.error || ("Worker returned HTTP " + response.status));
       }
-      localStorage.setItem("stk_gemini_worker_url", url);
+      try { localStorage.setItem("stk_gemini_worker_url", url); } catch (_) {}
       status.textContent = data.configured === false
         ? "Worker is online, but GEMINI_API_KEY is missing. Add it as a Cloudflare Secret."
         : "Connected · Gemini Worker is online.";
@@ -585,7 +588,7 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
   async function sendMessage() {
     if (busy) return;
     const prompt = input.value.trim();
-    const url = (localStorage.getItem("stk_gemini_worker_url") || "").trim().replace(/\\/+$/, "");
+    const url = (localStorage.getItem("stk_gemini_worker_url") || window.STK_DEFAULT_WORKER_URL || "https://floral-wood-dfe4.swingtraderkrushna.workers.dev").trim().replace(/\\/+$/, "");
     if (!prompt) { status.textContent = "Type a message first."; input.focus(); return; }
     if (!url) { status.textContent = "Worker is not connected. Save and test the Worker URL first."; return; }
     busy = true;
