@@ -699,6 +699,33 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     window.speechSynthesis.addEventListener("voiceschanged", refreshVoiceChoices);
   }
   if (voiceChoice) voiceChoice.addEventListener("change",()=>{if(voiceStatus)voiceStatus.textContent="Voice selected. Use Test voice by sending a message.";});
+  let stkSpeechRun = 0;
+  function splitSpeechText(value, limit) {
+    const sentences = String(value).replace(/\s+/g, " ").trim().match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
+    const chunks = [];
+    let current = "";
+    sentences.forEach(sentence => {
+      const part = sentence.trim();
+      if (!part) return;
+      if ((current + " " + part).trim().length <= limit) current = (current + " " + part).trim();
+      else {
+        if (current) chunks.push(current);
+        if (part.length <= limit) current = part;
+        else {
+          const words = part.split(" ");
+          current = "";
+          words.forEach(word => {
+            if ((current + " " + word).trim().length > limit && current) {
+              chunks.push(current);
+              current = word;
+            } else current = (current + " " + word).trim();
+          });
+        }
+      }
+    });
+    if (current) chunks.push(current);
+    return chunks;
+  }
   window.stkSpeakReply = function (text) {
     if (!voiceOn || !("speechSynthesis" in window) || !text) {
       if (voiceStatus) voiceStatus.textContent = "Voice replies are off or speech playback is unavailable.";
@@ -708,31 +735,41 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     const requestedLang = selectedVoiceLanguage();
     const speak = function () {
       try {
+        const run = ++stkSpeechRun;
         synth.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
         const chosen = getPreferredVoice(requestedLang);
-        utterance.lang = chosen ? chosen.lang : requestedLang;
-        if (chosen) utterance.voice = chosen;
-        utterance.rate = 0.92;
-        utterance.pitch = 0.82;
-        utterance.volume = 1;
-        utterance.onstart = function () {
-          if (voiceStatus) voiceStatus.textContent = "Speaking with your phone's selected voice…";
+        const chunks = splitSpeechText(text, 180);
+        let index = 0;
+        const speakNext = function () {
+          if (run !== stkSpeechRun || index >= chunks.length) {
+            if (run === stkSpeechRun && voiceStatus) voiceStatus.textContent = "Finished speaking. Tap Talk to AI to continue.";
+            return;
+          }
+          const utterance = new SpeechSynthesisUtterance(chunks[index++]);
+          utterance.lang = chosen ? chosen.lang : requestedLang;
+          if (chosen) utterance.voice = chosen;
+          utterance.rate = 0.90;
+          utterance.pitch = 0.82;
+          utterance.volume = 1;
+          utterance.onstart = function () {
+            if (voiceStatus) voiceStatus.textContent = "Speaking reply aloud…";
+          };
+          utterance.onend = function () {
+            if (run === stkSpeechRun) window.setTimeout(speakNext, 100);
+          };
+          utterance.onerror = function (event) {
+            if (run !== stkSpeechRun || event.error === "canceled" || event.error === "interrupted") return;
+            if (voiceStatus) voiceStatus.textContent = "Phone speech error: " + (event.error || "unknown") + ". Check Android text-to-speech settings.";
+          };
+          synth.resume();
+          synth.speak(utterance);
         };
-        utterance.onend = function () {
-          if (voiceStatus) voiceStatus.textContent = "Finished speaking. Tap Talk to AI to continue.";
-        };
-        utterance.onerror = function (event) {
-          if (voiceStatus) voiceStatus.textContent = "Phone speech voice error: " + (event.error || "unknown") + ". Check Android text-to-speech settings.";
-        };
-        synth.resume();
-        synth.speak(utterance);
+        speakNext();
         if (voiceStatus) voiceStatus.textContent = "Preparing spoken reply…";
       } catch (error) {
         if (voiceStatus) voiceStatus.textContent = "Could not start speech: " + (error.message || "unknown error");
       }
     };
-    // Android/Chrome may load its installed voice list asynchronously.
     if (synth.getVoices().length) speak();
     else {
       if (voiceStatus) voiceStatus.textContent = "Loading installed phone voices…";
