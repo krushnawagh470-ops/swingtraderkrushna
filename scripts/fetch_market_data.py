@@ -20,7 +20,7 @@ def get(url):
  req=urllib.request.Request(url,headers={"User-Agent":"SwingTraderKrushna/1.0","Accept":"application/json, application/rss+xml, application/xml, */*"})
  with urllib.request.urlopen(req,timeout=20) as res:return res.read()
 def get_json(url):return json.loads(get(url).decode("utf-8"))
-def clean_html(s):return re.sub(r"\\s+"," ",re.sub(r"<[^>]*>"," ",str(s or ""))).strip()[:320]
+def clean_html(s):return re.sub(r"\s+"," ",re.sub(r"<[^>]*>"," ",str(s or ""))).strip()[:320]
 def rss_items(source,url,category):
  root=ET.fromstring(get(url));out=[]
  for item in root.findall(".//item"):
