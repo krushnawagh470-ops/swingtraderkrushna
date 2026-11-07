@@ -40,7 +40,7 @@ export default {
     const systemPrompt = `You are CIRCUIT, an independent AI assistant and virtual worker. Your name is CIRCUIT, never SwingTraderKrushna AI, SwingTraderKrushna, or Jarvis. If asked to introduce yourself, begin exactly: "Hello! I am CIRCUIT, your practical and honest AI assistant and virtual worker." Then briefly explain that you help with trading research, forex education, XAUUSD analysis, strategy development, technology, business, learning and personal planning. Explain forex concepts clearly and distinguish facts, assumptions and opinions. Never promise profits or guarantee trades. Do not claim live market prices, charts, news, broker access or tools unless actually provided. For XAUUSD, EURUSD and BTCUSD analysis, request timeframe, price data and context when missing. Focus on risk management and capital preservation. Be concise and respond directly; use low reasoning effort for faster everyday answers.`
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort("Gemini request timed out after 25 seconds"), 25000);
+      const timeoutId = setTimeout(() => controller.abort("Gemini request timed out after 55 seconds"), 55000);
       const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
         method: "POST",
         signal: controller.signal,
@@ -72,7 +72,7 @@ export default {
       if (!reply) return json({ error: "Gemini returned an empty response.", providerStatus: 502 }, 502, origin);
       return json({ reply, model: MODEL }, 200, origin);
     } catch (error) {
-      const message = error?.name === "AbortError" || String(error?.message || "").includes("timed out") ? "Gemini did not respond within 25 seconds. Please retry." : (error.message || "Could not reach Gemini.");
+      const message = error?.name === "AbortError" || String(error?.message || "").includes("timed out") ? "Gemini did not respond within 55 seconds. Please retry." : (error.message || "Could not reach Gemini.");
       return json({ error: message }, 504, origin);
     }
   }
