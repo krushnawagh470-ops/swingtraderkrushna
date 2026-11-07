@@ -142,6 +142,9 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 .desk-drawer-backdrop{display:none}
 .ai-selected-intro{padding:10px 2px 2px}.ai-selected-intro p{margin:5px 0 12px}
 @media(max-width:650px){.side.mobile-open{display:block!important;position:fixed!important;z-index:61;inset:0 auto 0 0;width:min(84vw,310px);height:100dvh;overflow-y:auto;padding:18px 14px 90px;box-shadow:18px 0 55px #0009;border-right:1px solid #2b5b8d}.side.mobile-open .desk-workspace-nav{display:grid!important}.desk-drawer-backdrop.open{display:block;position:fixed;inset:0;z-index:60;background:#020713b8;backdrop-filter:blur(3px)}.mobile-nav{z-index:62}.desk-more-sheet{display:none!important}}
+
+/* Hard-hide any legacy CIRCUIT greeting bubble left in cached markup */
+.ai-agent-speech,.ai-agent-speech *{display:none!important;visibility:hidden!important;}
 </style></head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -914,7 +917,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
  input.addEventListener("input",function(){
   if(input.value.trim()){
    if(!steps[0].classList.contains("done")){step(1,"active","Instruction received","●");setState("thinking","I’m understanding your task.");}
-  }else if(!window.__circuitBusy){setState("idle","I’m CIRCUIT. Ready when you are.");}
+  }else if(!window.__circuitBusy){setState("idle","STANDING BY");}
  });
  send.addEventListener("click",function(){
   const prompt=input.value.trim();
