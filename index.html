@@ -181,13 +181,13 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
   <div>
    <div class="ai-agent-visual" id="aiAgentVisual" aria-label="Animated AI agent visual"><canvas id="aiNetworkCanvas"></canvas><div class="ai-agent-orb"></div><div class="ai-agent-hand" aria-hidden="true">👋</div><div class="ai-agent-speech">I’m ready to help plan your next task<span>•••</span></div><div class="ai-agent-caption">SWINGTRADERKRUSHNA · ASSISTANT CORE</div></div>
    <div class="ai-agent-tools" id="aiAgentChoices">
-    <button class="selected" data-agent="Claude">Claude</button><button data-agent="ChatGPT">ChatGPT</button><button data-agent="Gemini">Gemini</button><button data-agent="Perplexity">Perplexity</button><button data-agent="Grok">Grok</button><button data-agent="GitHub">GitHub</button><button data-agent="Higgsfield">Higgsfield</button><button data-agent="ElevenLabs">ElevenLabs</button>
+    <button data-agent="Claude">Claude</button><button data-agent="ChatGPT">ChatGPT</button><button class="selected" data-agent="Gemini">Gemini</button><button data-agent="Perplexity">Perplexity</button><button data-agent="Grok">Grok</button><button data-agent="GitHub">GitHub</button><button data-agent="Higgsfield">Higgsfield</button><button data-agent="ElevenLabs">ElevenLabs</button>
    </div>
    <div class="ai-handoff-note">The animated agent is a visual interface, not a connected autonomous model. A provider's official API, authorization and secure server-side key storage are required before tasks can be executed from this website.</div>
   </div>
   <div class="ai-workspace-panel">
-   <div class="row"><div><div class="terminal-label">CURRENT WORKSPACE</div><b id="aiSelectedName">Claude workspace</b></div><span class="signal-tag" id="aiConnectionState">NOT CONNECTED</span><a class="btn secondary small" id="aiProviderOpen" href="https://claude.ai" target="_blank" rel="noopener">Open Claude ↗</a></div>
-   <p class="muted" id="aiSelectedDescription">Claude runs through a secure Cloudflare Worker. Your Anthropic API key stays on the server and is never placed in this public website.</p>
+   <div class="row"><div><div class="terminal-label">CURRENT WORKSPACE</div><b id="aiSelectedName">Gemini workspace</b></div><span class="signal-tag" id="aiConnectionState">FREE API · KEY REQUIRED</span><a class="btn secondary small" id="aiProviderOpen" href="https://gemini.google.com" target="_blank" rel="noopener">Open Gemini ↗</a></div>
+   <p class="muted" id="aiSelectedDescription">Gemini is the active free-tier AI provider for this workspace. Add your Google AI Studio API key to start chatting.</p>
    <div class="card" style="margin:12px 0;padding:12px">
     <div class="terminal-label">FREE AI CONNECTION · GEMINI</div>
     <label class="terminal-label" for="geminiApiKey">Gemini API key</label><input id="geminiApiKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste your Google AI Studio API key">
@@ -525,6 +525,7 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
  async function ask(){
   const prompt=input.value.trim(),apiKey=keyField.value.trim();
   if(!prompt){status.textContent="Type a message first.";input.focus();return}
+  if(name&&name.textContent!=="Gemini workspace"){status.textContent="In-terminal free mode currently supports Gemini. Choose Gemini or open the selected provider externally.";return}
   if(!apiKey){status.textContent="Add your Gemini API key first. Get one from Google AI Studio.";keyField.focus();return}
   if(window.__stkrushnaBusy)return;
   window.__stkrushnaBusy=true;send.disabled=true;send.textContent="Thinking…";status.textContent="Sending securely to Google Gemini…";
