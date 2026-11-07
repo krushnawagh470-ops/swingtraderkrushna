@@ -272,7 +272,7 @@ deskBackdrop?.addEventListener('click',closeDeskDrawer);
 document.querySelectorAll('#sideNav [data-agent]').forEach(btn=>btn.addEventListener('click',()=>{const target=document.querySelector('#aiAgentChoices [data-agent="'+btn.dataset.agent+'"]');if(target)target.click();showPage('ai');closeDeskDrawer()}));
 document.querySelectorAll('#sideNav .desk-nav-subnav [data-page]:not([data-agent])').forEach(btn=>btn.addEventListener('click',()=>closeDeskDrawer()));
 
-\ndocument.getElementById("today").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+document.getElementById("today").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 function setChart(s){currentSymbol=String(s).replace(/^.*:/,"");const n=document.getElementById("chartName");if(n)n.textContent=chartNames[currentSymbol]||currentSymbol;const sel=document.getElementById("symbolSelect");if(sel)sel.value=currentSymbol;renderChart()}
 function setIntervalChart(i){currentInterval=({"5":"5m","15":"15m","60":"1h","240":"4h","D":"1d"}[i]||i);renderChart()}
 function openChart(s){showPage("charts");setChart(s)}
