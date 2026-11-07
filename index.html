@@ -197,7 +197,7 @@ async function loadNativeNews(force=false){
  el.textContent="Fetching headlines from the news pipeline…";
  try{
   const requests={
-   global:["/news/market?language=en&maxResults=40"],
+   global:["/news/market?language=en&country=US&maxResults=20","/news/market?language=en&country=GB&maxResults=15","/news/market?language=en&country=IN&maxResults=15","/news/market?language=en&country=DE&maxResults=10","/news/market?language=en&country=JP&maxResults=10"],
    usa:["/news/market?language=en&country=US&maxResults=40"],
    forex:["/news/market?symbol=EURUSD&language=en&maxResults=20","/news/market?symbol=GBPUSD&language=en&maxResults=15","/news/market?symbol=USDJPY&language=en&maxResults=15"],
    financial:["/news/market?symbol=XAUUSD&language=en&maxResults=20","/news/market?symbol=BTCUSD&language=en&maxResults=20","/news/market?language=en&country=US&maxResults=20"]
