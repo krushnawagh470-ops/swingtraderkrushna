@@ -181,7 +181,13 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
  <div class="ai-workbench-head"><div><div class="eyebrow">AI AGENT · VISUAL WORKSPACE</div><b style="font-size:16px">Your AI work desk</b><div class="q-meta">Choose an assistant, prepare a task and review the handoff plan here.</div></div><span class="signal-tag">VISUAL AGENT PREVIEW</span></div>
  <div class="ai-workbench-grid">
   <div>
-   <div class="ai-agent-visual" id="aiAgentVisual" aria-label="Animated AI agent visual"><canvas id="aiNetworkCanvas"></canvas><div class="ai-agent-orb"></div><div class="ai-agent-hand" aria-hidden="true">👋</div><div class="ai-agent-speech">I’m ready to help plan your next task<span>•••</span></div><div class="ai-agent-caption">SWINGTRADERKRUSHNA · ASSISTANT CORE</div></div>
+   <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="CIRCUIT animated virtual AI worker">
+    <div class="circuit-grid-glow"></div><div class="circuit-bot" aria-hidden="true"><div class="bot-aura"></div><div class="bot-head"><span class="bot-ear left"></span><span class="bot-ear right"></span><div class="bot-face"><i class="bot-eye"></i><i class="bot-eye"></i><span class="bot-mouth"></span></div></div><div class="bot-neck"></div><div class="bot-body"><span class="bot-core"></span><span class="bot-panel"></span></div><div class="bot-arm left"></div><div class="bot-arm right"></div></div>
+    <div class="circuit-data data-one">TASK QUEUE <b>●●●</b></div><div class="circuit-data data-two">AI CORE <b>ONLINE</b></div>
+    <div class="ai-agent-speech" id="circuitSpeech">I’m CIRCUIT. Ready when you are.</div>
+    <div class="circuit-state-label"><span class="circuit-live-dot"></span><b id="circuitStateText">STANDING BY</b></div>
+    <div class="ai-agent-caption">CIRCUIT · VIRTUAL AI WORKER</div>
+   </div>
    <div class="ai-agent-tools" id="aiAgentChoices">
     <button data-agent="Claude">Claude</button><button data-agent="ChatGPT">ChatGPT</button><button class="selected" data-agent="Gemini">Gemini</button><button data-agent="Perplexity">Perplexity</button><button data-agent="Grok">Grok</button><button data-agent="GitHub">GitHub</button><button data-agent="Higgsfield">Higgsfield</button><button data-agent="ElevenLabs">ElevenLabs</button>
    </div>
@@ -207,14 +213,15 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
    </div>
    <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><button type="button" class="btn" id="aiSendToClaude">Send message</button><button class="btn secondary" id="aiPrepareTask">Prepare task</button><button class="btn secondary" id="aiCopyPrepared">Copy prompt</button><span id="aiWorkbenchStatus" class="q-meta" aria-live="polite">Connect your Cloudflare Worker before sending a message.</span></div>
    <div id="aiAgentConversation" class="card" style="margin-top:12px;min-height:76px;white-space:pre-wrap;overflow-wrap:anywhere" aria-live="polite">Your AI conversation will appear here after the secure Worker connects.</div>
-   <div class="section-title" style="margin:16px 0 8px">Work process & viewer tour</div>
-   <div class="q-meta">A transparent checklist of the handoff stages. Stages are not marked complete unless an integration reports completion.</div>
-   <div class="ai-task-steps" id="aiTaskSteps">
-    <div class="ai-task-step"><i>1</i><div><b>Understand the task</b><small>Waiting for your instructions</small></div></div>
-    <div class="ai-task-step"><i>2</i><div><b>Prepare context and tools</b><small>Not started</small></div></div>
-    <div class="ai-task-step"><i>3</i><div><b>Send to selected AI</b><small>Requires provider API connection</small></div></div>
-    <div class="ai-task-step"><i>4</i><div><b>Review result and next actions</b><small>Waiting for provider response</small></div></div>
+   <div class="section-title" style="margin:16px 0 8px">CIRCUIT · LIVE TASK EXECUTION</div>
+   <div class="q-meta">Follow the real handoff from your instruction to the provider response. A stage changes only when its corresponding event occurs.</div>
+   <div class="ai-task-steps circuit-steps" id="aiTaskSteps">
+    <div class="ai-task-step" data-step="1"><i>1</i><div><b>Understand the task</b><small id="circuitStep1">Waiting for your instructions</small></div><span class="step-mark">—</span></div>
+    <div class="ai-task-step" data-step="2"><i>2</i><div><b>Prepare context and tools</b><small id="circuitStep2">Not started</small></div><span class="step-mark">—</span></div>
+    <div class="ai-task-step" data-step="3"><i>3</i><div><b>Send to selected AI</b><small id="circuitStep3">Waiting for a send action</small></div><span class="step-mark">—</span></div>
+    <div class="ai-task-step" data-step="4"><i>4</i><div><b>Review result and next actions</b><small id="circuitStep4">Waiting for provider response</small></div><span class="step-mark">—</span></div>
    </div>
+   <div class="circuit-activity"><div class="row"><b>LIVE ACTIVITY</b><span class="q-meta" id="circuitActivityCount">0 events</span></div><div id="circuitActivityLog" aria-live="polite"><p class="circuit-empty">CIRCUIT activity will appear here when you send a task.</p></div></div>
   </div>
  </div>
 </div>
@@ -839,4 +846,148 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   });
 })();
 </script>
+
+<style>
+/* CIRCUIT virtual worker — responsive animated character and truthful task telemetry */
+.ai-agent-visual.circuit-stage{min-height:310px;background:radial-gradient(ellipse at 50% 48%,#173d68 0%,#0a1a31 42%,#050d1a 82%);isolation:isolate}
+.circuit-grid-glow{position:absolute;inset:0;opacity:.26;background-image:linear-gradient(#4ba9ff18 1px,transparent 1px),linear-gradient(90deg,#4ba9ff18 1px,transparent 1px);background-size:28px 28px;mask-image:radial-gradient(ellipse at center,#000 15%,transparent 78%)}
+.circuit-bot{position:absolute;left:50%;top:46%;width:170px;height:205px;transform:translate(-50%,-50%);filter:drop-shadow(0 0 24px #4aaaff30);animation:botFloat 3.8s ease-in-out infinite}
+.bot-aura{position:absolute;width:170px;height:170px;left:0;top:12px;border:1px solid #64c4ff33;border-radius:50%;box-shadow:0 0 35px #4aaaff24,inset 0 0 28px #4aaaff17;animation:auraPulse 3s ease-in-out infinite}
+.bot-head{position:absolute;z-index:2;left:39px;top:16px;width:92px;height:79px;border:2px solid #8dd9ff;border-radius:29px 29px 25px 25px;background:linear-gradient(145deg,#d7efff 0%,#6a9fca 18%,#193b61 42%,#08182d 100%);box-shadow:inset 0 0 13px #d7f5ff80,0 0 18px #51b9ff70}
+.bot-ear{position:absolute;top:25px;width:10px;height:28px;border:2px solid #74caff;background:#153b62;border-radius:5px}.bot-ear.left{left:-9px}.bot-ear.right{right:-9px}
+.bot-face{position:absolute;inset:13px 10px 12px;border:1px solid #6bc8ff88;border-radius:18px;background:linear-gradient(150deg,#071a30,#102d4b);display:flex;align-items:center;justify-content:center;gap:17px}
+.bot-eye{width:10px;height:13px;border-radius:50%;background:#9ceaff;box-shadow:0 0 9px #4fc4ff,0 0 18px #4fc4ff;animation:eyeBlink 5s infinite}
+.bot-mouth{position:absolute;bottom:10px;width:17px;height:3px;border-radius:5px;background:#6ccfff;box-shadow:0 0 8px #4fc4ff}
+.bot-neck{position:absolute;top:94px;left:75px;width:20px;height:13px;background:linear-gradient(90deg,#183957,#9ac9e7,#183957);border-radius:3px}
+.bot-body{position:absolute;top:105px;left:43px;width:84px;height:75px;border:2px solid #6eb9e8;border-radius:24px 24px 18px 18px;background:linear-gradient(145deg,#477ca5,#163657 48%,#08172b);box-shadow:inset 0 0 14px #c3edff55}
+.bot-core{position:absolute;left:29px;top:19px;width:22px;height:22px;border:2px solid #9ceaff;border-radius:50%;background:#2f9ee7;box-shadow:0 0 10px #56c7ff,0 0 23px #4baaff;animation:coreBeat 1.8s ease-in-out infinite}
+.bot-panel{position:absolute;left:25px;bottom:8px;width:32px;height:3px;border-radius:4px;background:#8ddcff88}
+.bot-arm{position:absolute;top:116px;width:15px;height:58px;border:2px solid #70b9e7;border-radius:12px;background:linear-gradient(#4e8ab5,#102b48);transform-origin:top center}
+.bot-arm.left{left:30px;transform:rotate(13deg)}.bot-arm.right{right:30px;transform:rotate(-13deg)}
+.circuit-data{position:absolute;padding:6px 8px;border:1px solid #2c5b83;border-radius:6px;background:#07182bdc;color:#9bc9ed;font-size:8px;letter-spacing:.13em}
+.circuit-data b{display:block;color:#61c8ff;font-size:9px;margin-top:2px}
+.data-one{left:12px;top:24px}.data-two{right:12px;top:58px}
+.ai-agent-speech{position:absolute;left:12px;right:12px;bottom:48px;text-align:center;color:#d8edff;font-size:11px}
+.circuit-state-label{position:absolute;left:0;right:0;bottom:29px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:9px;letter-spacing:.16em;color:#70caff}
+.circuit-live-dot{width:6px;height:6px;border-radius:50%;background:#28d9bb;box-shadow:0 0 9px #28d9bb}
+.ai-agent-caption{bottom:9px;font-size:8px}
+.circuit-stage.state-listening .bot-head{animation:botListen .7s ease-in-out infinite alternate}
+.circuit-stage.state-thinking .bot-eye{animation:eyeThink .5s ease-in-out infinite alternate}
+.circuit-stage.state-researching .bot-aura{border-style:dashed;animation:auraSpin 5s linear infinite}
+.circuit-stage.state-executing .bot-arm.right{animation:botWork .32s ease-in-out infinite alternate}
+.circuit-stage.state-reviewing .bot-head{transform:rotate(-5deg)}
+.circuit-stage.state-completed .bot-core{background:#28d9bb;box-shadow:0 0 20px #28d9bb}
+.circuit-stage.state-error .bot-core{background:#ff6689;box-shadow:0 0 20px #ff6689}
+.circuit-stage.state-listening .circuit-live-dot,.circuit-stage.state-thinking .circuit-live-dot,.circuit-stage.state-researching .circuit-live-dot,.circuit-stage.state-executing .circuit-live-dot,.circuit-stage.state-reviewing .circuit-live-dot{animation:dotFlash .8s infinite alternate}
+@keyframes botFloat{0%,100%{margin-top:0}50%{margin-top:-7px}}
+@keyframes auraPulse{0%,100%{transform:scale(.94);opacity:.5}50%{transform:scale(1.06);opacity:1}}
+@keyframes coreBeat{0%,100%{transform:scale(.9);opacity:.8}50%{transform:scale(1.12);opacity:1}}
+@keyframes eyeBlink{0%,46%,50%,100%{transform:scaleY(1)}48%{transform:scaleY(.12)}}
+@keyframes eyeThink{to{transform:translateY(-4px);box-shadow:0 0 16px #fff}}
+@keyframes botListen{to{transform:translateY(-4px) rotate(3deg)}}
+@keyframes botWork{to{transform:rotate(24deg)}}
+@keyframes auraSpin{to{transform:rotate(360deg)}}
+@keyframes dotFlash{to{opacity:.35}}
+.circuit-steps .ai-task-step{align-items:center;transition:border-color .2s,background .2s}
+.circuit-steps .ai-task-step.active{border-color:#55baff;background:#0d2845;box-shadow:inset 3px 0 #55baff}
+.circuit-steps .ai-task-step.done{border-color:#1d806e}
+.circuit-steps .ai-task-step.error{border-color:#a74360}
+.circuit-steps .step-mark{margin-left:auto;color:#7793b5;font-size:11px}
+.circuit-steps .done .step-mark{color:#29d9bb}.circuit-steps .active .step-mark{color:#61bdff}.circuit-steps .error .step-mark{color:#ff6689}
+.circuit-activity{margin-top:12px;padding:11px;border:1px solid #1b3b60;border-radius:9px;background:#071326}
+.circuit-activity .row b{font-size:9px;letter-spacing:.15em;color:#8ecfff}
+#circuitActivityLog{display:grid;gap:6px;margin-top:8px;max-height:150px;overflow:auto}
+.circuit-event{display:flex;gap:8px;align-items:flex-start;font-size:10px;color:#b9cee5;padding:6px 7px;border-left:2px solid #3d8fca;background:#0a1b30;border-radius:0 5px 5px 0}
+.circuit-event time{flex:0 0 auto;color:#6f93b8;font-variant-numeric:tabular-nums}
+.circuit-empty{margin:0;color:#7189a8;font-size:10px}
+@media(max-width:650px){.ai-agent-visual.circuit-stage{min-height:280px}.circuit-bot{transform:translate(-50%,-50%) scale(.9)}.circuit-data{font-size:7px}.ai-agent-speech{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.circuit-stage *{animation:none!important;transition:none!important}}
+</style>
+<script>
+/* CIRCUIT event-driven state: UI follows actual input, send, and provider response events. */
+(function(){
+ const root=document.getElementById("aiAgentVisual");
+ const stateText=document.getElementById("circuitStateText");
+ const speech=document.getElementById("circuitSpeech");
+ const input=document.getElementById("aiWorkbenchPrompt");
+ const send=document.getElementById("aiSendToClaude");
+ const output=document.getElementById("aiAgentConversation");
+ const status=document.getElementById("aiWorkbenchStatus");
+ const steps=[1,2,3,4].map(n=>document.querySelector('[data-step="'+n+'"]'));
+ const stepText=[1,2,3,4].map(n=>document.getElementById("circuitStep"+n));
+ const log=document.getElementById("circuitActivityLog");
+ const count=document.getElementById("circuitActivityCount");
+ if(!root||!stateText||!speech||!input||!send||!status||!log)return;
+ let events=0,lastStatus="";
+ const labels={idle:"STANDING BY",listening:"LISTENING",thinking:"THINKING",researching:"PREPARING CONTEXT",executing:"SENDING TO AI",reviewing:"REVIEWING RESPONSE",completed:"TASK RESPONSE RECEIVED",error:"REQUEST ERROR"};
+ function setState(name,message){
+  root.className="ai-agent-visual circuit-stage state-"+name;
+  stateText.textContent=labels[name]||"STANDING BY";
+  speech.textContent=message||"";
+ }
+ function activity(message){
+  const empty=log.querySelector(".circuit-empty");if(empty)empty.remove();
+  const item=document.createElement("div");item.className="circuit-event";
+  const time=document.createElement("time");time.textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const body=document.createElement("span");body.textContent=message;
+  item.append(time,body);log.appendChild(item);log.scrollTop=log.scrollHeight;
+  events++;count.textContent=events+" event"+(events===1?"":"s");
+ }
+ function step(n,kind,message,mark){
+  const el=steps[n-1];if(!el)return;
+  el.classList.remove("active","done","error");if(kind)el.classList.add(kind);
+  if(stepText[n-1])stepText[n-1].textContent=message;
+  const badge=el.querySelector(".step-mark");if(badge)badge.textContent=mark||"—";
+ }
+ function resetSteps(){
+  step(1,"active","Reading your instruction","●");
+  step(2,"","Waiting to prepare context","—");
+  step(3,"","Waiting for send action","—");
+  step(4,"","Waiting for provider response","—");
+ }
+ input.addEventListener("input",function(){
+  if(input.value.trim()){
+   if(!steps[0].classList.contains("done")){step(1,"active","Instruction received","●");setState("thinking","I’m understanding your task.");}
+  }else if(!window.__circuitBusy){setState("idle","I’m CIRCUIT. Ready when you are.");}
+ });
+ send.addEventListener("click",function(){
+  const prompt=input.value.trim();
+  if(!prompt)return;
+  resetSteps();step(1,"done","Instruction received","✓");step(2,"active","Preparing message and provider connection","●");
+  setState("researching","Preparing your instruction for the connected AI provider.");
+  activity("Task received: "+prompt.slice(0,110));
+  activity("Preparing context and checking the secure Worker connection.");
+ });
+ const mic=document.getElementById("stkVoiceMic");
+ if(mic){
+  mic.addEventListener("click",function(){if(!mic.disabled){setState("listening","I’m listening. Speak your instruction.");activity("Microphone listening started.");}});
+ }
+ if(status){
+  const observer=new MutationObserver(function(){
+   const value=status.textContent.trim();if(!value||value===lastStatus)return;lastStatus=value;
+   if(/sending message|sending to secure|thinking|sending to gemini/i.test(value)){
+    step(1,"done","Instruction received","✓");step(2,"done","Context prepared for provider request","✓");step(3,"active","Request sent; waiting for provider","●");
+    setState("executing","Your task has been sent. Waiting for the provider response.");activity(value);
+   }else if(/reply received/i.test(value)){
+    step(1,"done","Instruction received","✓");step(2,"done","Context prepared","✓");step(3,"done","Provider returned a response","✓");step(4,"done","Response received and displayed","✓");
+    setState("completed","The provider returned a response. Review it in the conversation panel.");activity(value);
+   }else if(/failed|error|timed out|connection failed/i.test(value)){
+    step(3,"error","Provider request failed","!");step(4,"error","Review the error and retry when ready","!");
+    setState("error","The request did not complete. Check the error message before retrying.");activity(value);
+   }else if(/connect your|not connected|worker is not connected/i.test(value)){
+    setState("idle","Connect the secure Worker before sending a task.");activity(value);
+   }
+  });
+  observer.observe(status,{childList:true,subtree:true,characterData:true});
+ }
+ if(output){
+  const outputObserver=new MutationObserver(function(){
+   if(output.querySelector("div")){setState("reviewing","A provider response is visible. CIRCUIT is ready for your review.");}
+  });
+  outputObserver.observe(output,{childList:true,subtree:true});
+ }
+ resetSteps();setState("idle","I’m CIRCUIT. Ready when you are.");
+})();
+</script>
+
 </body></html>
