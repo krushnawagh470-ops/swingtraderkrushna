@@ -25,7 +25,7 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(origin) });
     const url = new URL(request.url);
     if (url.pathname === "/health" && request.method === "GET") {
-      return json({ ok: true, configured: Boolean(env.GEMINI_API_KEY), model: MODEL }, 200, origin);
+      return json({ ok: true, configured: Boolean(env.GEMINI_API_KEY), model: MODEL, build: "circuit-2026-11-08-55s", timeout_seconds: 55 }, 200, origin);
     }
     if (url.pathname !== "/chat" || request.method !== "POST") return json({ error: "Not found." }, 404, origin);
     if (!env.GEMINI_API_KEY) return json({ error: "Server secret GEMINI_API_KEY is not configured yet." }, 503, origin);
