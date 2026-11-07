@@ -598,7 +598,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   async function sendMessage() {
     if (busy) return;
     const prompt = input.value.trim();
-    const url = (localStorage.getItem("stk_gemini_worker_url") || window.STK_DEFAULT_WORKER_URL || "https://floral-wood-dfe4.swingtraderkrushna.workers.dev").trim().replace(/\\/+$/, "");
+    const url = (localStorage.getItem("stk_gemini_worker_url") || window.STK_DEFAULT_WORKER_URL || "https://floral-wood-dfe4.swingtraderkrushna.workers.dev").trim().replace(/\/+$/, "");
     if (!prompt) { status.textContent = "Type a message first."; input.focus(); return; }
     if (!url) { status.textContent = "Worker is not connected. Save and test the Worker URL first."; return; }
     busy = true;
