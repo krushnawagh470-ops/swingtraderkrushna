@@ -34,9 +34,9 @@ export default {
     if (!Array.isArray(body.messages) || body.messages.length === 0 || body.messages.length > 12) {
       return json({ error: "Send between 1 and 12 chat messages." }, 400, origin);
     }
-    const validMessages = body.messages.filter(item => item && ["user", "assistant"].includes(item.role) && typeof item.content === "string" && item.content.trim()).slice(-12);
+    const validMessages = body.messages.filter(item => item && ["user", "assistant"].includes(item.role) && typeof item.content === "string" && item.content.trim()).slice(-6);
     if (!validMessages.length || validMessages[validMessages.length - 1].role !== "user") return json({ error: "The latest message must be from the user." }, 400, origin);
-    const transcript = validMessages.map(item => (item.role === "assistant" ? "Assistant: " : "User: ") + item.content.slice(0, 12000)).join("\\n\\n");
+    const transcript = validMessages.map(item => (item.role === "assistant" ? "Assistant: " : "User: ") + item.content.slice(0, 3500)).join("\\n\\n");
     const systemPrompt = "You are SwingTraderKrushna AI, a practical, honest assistant for personal planning, learning, technology, business and trading. Explain forex concepts clearly and distinguish facts, assumptions and opinions. Never promise profits or guarantee trades. Do not claim live market prices, charts, news, broker access or tools unless actually provided. For XAUUSD, EURUSD and BTCUSD analysis, request timeframe, price data and context when missing. Focus on risk management and capital preservation. Be concise but useful.";
     try {
       const upstream = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
@@ -47,7 +47,7 @@ export default {
           system_instruction: systemPrompt,
           input: transcript,
           store: false,
-          generation_config: { max_output_tokens: 1800, thinking_level: "low" }
+          generation_config: { max_output_tokens: 900, thinking_level: "low" }
         })
       });
       const data = await upstream.json();
