@@ -651,38 +651,65 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   let recognition = null;
   let listening = false;
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  function getPreferredVoice(requestedLang) {
+    const voices = window.speechSynthesis.getVoices() || [];
+    if (!voices.length) return null;
+    const lang = requestedLang.toLowerCase();
+    const base = lang.slice(0, 2);
+    const matching = voices.filter(v => v.lang && v.lang.toLowerCase() === lang);
+    const sameLanguage = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(base));
+    const quality = v => /google|natural|neural|enhanced/i.test(v.name || "") ? 2 : 0;
+    const local = v => v.localService ? 1 : 0;
+    matching.sort((a,b) => (quality(b)*3+local(b))-(quality(a)*3+local(a)));
+    sameLanguage.sort((a,b) => (quality(b)*3+local(b))-(quality(a)*3+local(a)));
+    return matching[0] || sameLanguage[0] || null;
+  }
   window.stkSpeakReply = function (text) {
     if (!voiceOn || !("speechSynthesis" in window) || !text) {
       if (voiceStatus) voiceStatus.textContent = "Voice replies are off or speech playback is unavailable.";
       return;
     }
-    try {
-      const synth = window.speechSynthesis;
-      synth.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      const requestedLang = selectedVoiceLanguage();
-      const voices = synth.getVoices();
-      const chosen = voices.find(v => v.lang && v.lang.toLowerCase() === requestedLang.toLowerCase())
-        || voices.find(v => v.lang && v.lang.toLowerCase().startsWith(requestedLang.slice(0,2).toLowerCase()))
-        || voices.find(v => v.lang && v.lang.toLowerCase().startsWith("en"));
-      utterance.lang = chosen ? chosen.lang : requestedLang;
-      if (chosen) utterance.voice = chosen;
-      utterance.rate = 0.95;
-      utterance.pitch = 1;
-      utterance.onstart = function () {
-        if (voiceStatus) voiceStatus.textContent = "Speaking AI reply aloud…";
+    const synth = window.speechSynthesis;
+    const requestedLang = selectedVoiceLanguage();
+    const speak = function () {
+      try {
+        synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        const chosen = getPreferredVoice(requestedLang);
+        utterance.lang = chosen ? chosen.lang : requestedLang;
+        if (chosen) utterance.voice = chosen;
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        utterance.onstart = function () {
+          if (voiceStatus) voiceStatus.textContent = "Speaking with your phone's selected voice…";
+        };
+        utterance.onend = function () {
+          if (voiceStatus) voiceStatus.textContent = "Finished speaking. Tap Talk to AI to continue.";
+        };
+        utterance.onerror = function (event) {
+          if (voiceStatus) voiceStatus.textContent = "Phone speech voice error: " + (event.error || "unknown") + ". Check Android text-to-speech settings.";
+        };
+        synth.resume();
+        synth.speak(utterance);
+        if (voiceStatus) voiceStatus.textContent = "Preparing spoken reply…";
+      } catch (error) {
+        if (voiceStatus) voiceStatus.textContent = "Could not start speech: " + (error.message || "unknown error");
+      }
+    };
+    // Android/Chrome may load its installed voice list asynchronously.
+    if (synth.getVoices().length) speak();
+    else {
+      if (voiceStatus) voiceStatus.textContent = "Loading installed phone voices…";
+      let done = false;
+      const ready = function () {
+        if (done) return;
+        done = true;
+        synth.removeEventListener("voiceschanged", ready);
+        speak();
       };
-      utterance.onend = function () {
-        if (voiceStatus) voiceStatus.textContent = "Finished speaking. Tap Talk to AI to continue.";
-      };
-      utterance.onerror = function (event) {
-        if (voiceStatus) voiceStatus.textContent = "Speech playback error: " + (event.error || "unknown") + ". Check phone media volume and text-to-speech settings.";
-      };
-      synth.resume();
-      synth.speak(utterance);
-      if (voiceStatus) voiceStatus.textContent = "Preparing spoken reply…";
-    } catch (error) {
-      if (voiceStatus) voiceStatus.textContent = "Could not start speech: " + (error.message || "unknown error");
+      synth.addEventListener("voiceschanged", ready);
+      window.setTimeout(ready, 1200);
     }
   };
   if (voiceToggle) voiceToggle.addEventListener("click", function () {
