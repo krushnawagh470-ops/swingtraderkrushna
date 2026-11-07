@@ -110,9 +110,6 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 .ai-agent-visual{min-height:310px;background:radial-gradient(circle at 50% 45%,#204d7c 0%,#102847 35%,#071326 74%);border-color:#2a5883}.ai-agent-orb{width:96px;height:96px}
 .ai-agent-hand{font-size:37px;left:calc(50% + 43px);top:calc(47% + 27px);animation:handGesture 1.7s ease-in-out infinite;transform-origin:20% 80%}
 @keyframes handGesture{0%,100%{transform:rotate(-20deg) translate(0,4px) scale(.96)}25%{transform:rotate(18deg) translate(5px,-7px) scale(1.04)}50%{transform:rotate(-8deg) translate(-3px,-2px) scale(1.08)}75%{transform:rotate(24deg) translate(4px,-9px) scale(1.02)}}
-.ai-agent-speech{position:absolute;top:18px;left:50%;transform:translateX(-50%);padding:7px 11px;border:1px solid #3b78aa;border-radius:8px;background:#0a1b30;color:#c5e7ff;font-size:10px;white-space:nowrap;animation:speechGlow 2.2s ease-in-out infinite}
-.ai-agent-speech span{margin-left:8px;color:#5dbaff;letter-spacing:2px;animation:talkDots 1s steps(3,end) infinite}
-@keyframes speechGlow{50%{box-shadow:0 0 18px #58baff33;border-color:#64bfff}}@keyframes talkDots{0%{opacity:.25}100%{opacity:1}}
 .ai-agent-tools button,.provider-dock button{border:1px solid #294f76;background:#0b1d34;color:#cfe6ff;border-radius:7px;padding:8px 11px;font-size:10px}
 .ai-agent-tools button.selected,.provider-dock button.selected{background:#16416a;border-color:#63bdff;color:#fff;box-shadow:0 0 16px #3d9fff24}
 .ai-workspace-panel{background:#071528;border-color:#244b73}.ai-task-step{animation:stepIn .45s both}.ai-task-step:nth-child(2){animation-delay:.08s}.ai-task-step:nth-child(3){animation-delay:.16s}.ai-task-step:nth-child(4){animation-delay:.24s}
@@ -123,7 +120,7 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 .news-provider-dock a:hover{border-color:#65bfff}.news-provider-dock small{width:100%;font-size:9px;color:#8199b7}
 .btn{background:linear-gradient(135deg,#5fc0ff,#438fff);color:#04101f;border-radius:7px}.btn.secondary{background:#0e2340;border-color:#2a5078;color:#d6eaff}.card{border-radius:10px}
 @media(max-width:900px){.ops-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.home-modules{grid-template-columns:repeat(2,minmax(0,1fr))}.terminal-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:650px){.side{display:none}.main{padding:9px 9px 94px}.top{padding:10px 11px;margin-bottom:10px}.terminal-hero{align-items:flex-start;padding:16px 13px;gap:9px}.terminal-hero h2{font-size:23px}.terminal-hero p{font-size:10px;line-height:1.5}.hero-state{min-width:94px;padding:8px 6px;font-size:8px}.hero-state small{font-size:8px}.terminal-metrics{gap:7px;margin:8px 0 15px}.terminal-metric{padding:9px}.terminal-metric>b{font-size:12px}.terminal-metric>small{font-size:9px}.terminal-section-head{margin:15px 0 8px}.terminal-section-head h3{font-size:15px}.ops-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ops-card{min-height:158px;padding:10px}.ops-card b{font-size:12px}.ops-card small{font-size:9px}.ops-label{font-size:8px}.home-modules{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.home-module{min-height:100px;padding:10px}.home-module b{font-size:12px}.home-module small{font-size:9px}.live-grid{grid-template-columns:1fr;gap:7px}.live-quote{padding:9px}.ai-workbench-grid{grid-template-columns:1fr;padding:10px}.ai-agent-visual{min-height:245px}.ai-agent-speech{font-size:9px;top:12px}.ai-workbench-head{padding:12px}.ai-workspace-panel{padding:11px}.provider-dock{gap:6px;padding:9px}.provider-dock button{padding:7px 8px;font-size:9px}.news-provider-dock{gap:6px;padding:9px}.news-provider-dock a{font-size:9px}.mobile-nav{background:rgba(4,10,22,.97);backdrop-filter:blur(16px);border-top:1px solid #254b72;overflow-x:auto;justify-content:flex-start;padding:7px 4px calc(7px + env(safe-area-inset-bottom))}.mobile-nav button{flex:0 0 54px;min-width:54px;font-size:9px}.mobile-nav button.active{color:#62bdff}}
+@media(max-width:650px){.side{display:none}.main{padding:9px 9px 94px}.top{padding:10px 11px;margin-bottom:10px}.terminal-hero{align-items:flex-start;padding:16px 13px;gap:9px}.terminal-hero h2{font-size:23px}.terminal-hero p{font-size:10px;line-height:1.5}.hero-state{min-width:94px;padding:8px 6px;font-size:8px}.hero-state small{font-size:8px}.terminal-metrics{gap:7px;margin:8px 0 15px}.terminal-metric{padding:9px}.terminal-metric>b{font-size:12px}.terminal-metric>small{font-size:9px}.terminal-section-head{margin:15px 0 8px}.terminal-section-head h3{font-size:15px}.ops-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.ops-card{min-height:158px;padding:10px}.ops-card b{font-size:12px}.ops-card small{font-size:9px}.ops-label{font-size:8px}.home-modules{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.home-module{min-height:100px;padding:10px}.home-module b{font-size:12px}.home-module small{font-size:9px}.live-grid{grid-template-columns:1fr;gap:7px}.live-quote{padding:9px}.ai-workbench-grid{grid-template-columns:1fr;padding:10px}.ai-agent-visual{min-height:245px}.ai-workbench-head{padding:12px}.ai-workspace-panel{padding:11px}.provider-dock{gap:6px;padding:9px}.provider-dock button{padding:7px 8px;font-size:9px}.news-provider-dock{gap:6px;padding:9px}.news-provider-dock a{font-size:9px}.mobile-nav{background:rgba(4,10,22,.97);backdrop-filter:blur(16px);border-top:1px solid #254b72;overflow-x:auto;justify-content:flex-start;padding:7px 4px calc(7px + env(safe-area-inset-bottom))}.mobile-nav button{flex:0 0 54px;min-width:54px;font-size:9px}.mobile-nav button.active{color:#62bdff}}
 
 /* Handwritten Desk → Workspace landing page */
 .desk-workspace-nav{display:grid;gap:7px;margin-top:25px}
@@ -184,7 +181,6 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
    <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="CIRCUIT animated virtual AI worker">
     <div class="circuit-grid-glow"></div><div class="circuit-bot" aria-hidden="true"><div class="bot-aura"></div><div class="bot-head"><span class="bot-ear left"></span><span class="bot-ear right"></span><div class="bot-face"><i class="bot-eye"></i><i class="bot-eye"></i><span class="bot-mouth"></span></div></div><div class="bot-neck"></div><div class="bot-body"><span class="bot-core"></span><span class="bot-panel"></span></div><div class="bot-arm left"></div><div class="bot-arm right"></div></div>
     <div class="circuit-data data-one">TASK QUEUE <b>●●●</b></div><div class="circuit-data data-two">AI CORE <b>ONLINE</b></div>
-    <div class="ai-agent-speech" id="circuitSpeech">I’m CIRCUIT. Ready when you are.</div>
     <div class="circuit-state-label"><span class="circuit-live-dot"></span><b id="circuitStateText">STANDING BY</b></div>
     <div class="ai-agent-caption">CIRCUIT · VIRTUAL AI WORKER</div>
    </div>
@@ -840,7 +836,6 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 .circuit-data{position:absolute;padding:6px 8px;border:1px solid #2c5b83;border-radius:6px;background:#07182bdc;color:#9bc9ed;font-size:8px;letter-spacing:.13em}
 .circuit-data b{display:block;color:#61c8ff;font-size:9px;margin-top:2px}
 .data-one{left:12px;top:24px}.data-two{right:12px;top:58px}
-.ai-agent-speech{position:absolute;left:12px;right:12px;bottom:48px;text-align:center;color:#d8edff;font-size:11px}
 .circuit-state-label{position:absolute;left:0;right:0;bottom:29px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:9px;letter-spacing:.16em;color:#70caff}
 .circuit-live-dot{width:6px;height:6px;border-radius:50%;background:#28d9bb;box-shadow:0 0 9px #28d9bb}
 .ai-agent-caption{bottom:9px;font-size:8px}
@@ -873,7 +868,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 .circuit-event{display:flex;gap:8px;align-items:flex-start;font-size:10px;color:#b9cee5;padding:6px 7px;border-left:2px solid #3d8fca;background:#0a1b30;border-radius:0 5px 5px 0}
 .circuit-event time{flex:0 0 auto;color:#6f93b8;font-variant-numeric:tabular-nums}
 .circuit-empty{margin:0;color:#7189a8;font-size:10px}
-@media(max-width:650px){.ai-agent-visual.circuit-stage{min-height:280px}.circuit-bot{transform:translate(-50%,-50%) scale(.9)}.circuit-data{font-size:7px}.ai-agent-speech{font-size:10px}}
+@media(max-width:650px){.ai-agent-visual.circuit-stage{min-height:280px}.circuit-bot{transform:translate(-50%,-50%) scale(.9)}.circuit-data{font-size:7px}}
 @media(prefers-reduced-motion:reduce){.circuit-stage *{animation:none!important;transition:none!important}}
 </style>
 <script>
@@ -881,7 +876,6 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 (function(){
  const root=document.getElementById("aiAgentVisual");
  const stateText=document.getElementById("circuitStateText");
- const speech=document.getElementById("circuitSpeech");
  const input=document.getElementById("aiWorkbenchPrompt");
  const send=document.getElementById("aiSendToClaude");
  const output=document.getElementById("aiAgentConversation");
@@ -890,13 +884,12 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
  const stepText=[1,2,3,4].map(n=>document.getElementById("circuitStep"+n));
  const log=document.getElementById("circuitActivityLog");
  const count=document.getElementById("circuitActivityCount");
- if(!root||!stateText||!speech||!input||!send||!status||!log)return;
+ if(!root||!stateText||!input||!send||!status||!log)return;
  let events=0,lastStatus="";
  const labels={idle:"STANDING BY",listening:"LISTENING",thinking:"THINKING",researching:"PREPARING CONTEXT",executing:"SENDING TO AI",reviewing:"REVIEWING RESPONSE",completed:"TASK RESPONSE RECEIVED",error:"REQUEST ERROR"};
  function setState(name,message){
   root.className="ai-agent-visual circuit-stage state-"+name;
   stateText.textContent=labels[name]||"STANDING BY";
-  speech.textContent=message||"";
  }
  function activity(message){
   const empty=log.querySelector(".circuit-empty");if(empty)empty.remove();
