@@ -3,7 +3,7 @@
 import json, os, re, urllib.request
 from datetime import datetime, timezone, timedelta
 from email.utils import parsedate_to_datetime
-from xml.etree import ElementTree as ET
+from xml.etree import ElementTree as ET\nfrom urllib.parse import urlencode
 BASE="https://biquote.io/api"
 FEEDS={
  "global":[("BBC World","https://feeds.bbci.co.uk/news/world/rss.xml"),("Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml"),("The Guardian","https://www.theguardian.com/world/rss"),("DW","https://rss.dw.com/xml/rss-en-all")],
@@ -33,7 +33,7 @@ def rss_items(source,url,category):
  return out
 def fetch_news_category(category):
  specs={
-  "global":["/news/market?language=en&maxResults=40"],
+  "global":["/news/market?language=en&country=US&maxResults=20","/news/market?language=en&country=GB&maxResults=15","/news/market?language=en&country=IN&maxResults=15","/news/market?language=en&country=DE&maxResults=10","/news/market?language=en&country=JP&maxResults=10"],
   "usa":["/news/market?language=en&country=US&maxResults=40"],
   "forex":["/news/market?symbol=EURUSD&language=en&maxResults=20","/news/market?symbol=GBPUSD&language=en&maxResults=15","/news/market?symbol=USDJPY&language=en&maxResults=15"],
   "financial":["/news/market?symbol=XAUUSD&language=en&maxResults=20","/news/market?symbol=BTCUSD&language=en&maxResults=20","/news/market?language=en&country=US&maxResults=20"]
@@ -57,7 +57,7 @@ def fetch_news_category(category):
  return {"items":sorted(unique.values(),key=lambda x:x["published"],reverse=True)[:60],"feedCount":len(specs[category])-len(errors) if provider.startswith("Biquote") else len(FEEDS[category])-len(errors),"feedTotal":len(specs[category]) if provider.startswith("Biquote") else len(FEEDS[category]),"provider":provider,"errors":errors}
 def fetch_calendar():
  now=datetime.now(timezone.utc);end=now+timedelta(days=7)
- url=BASE+"/calendar?from="+now.isoformat()+"&to="+end.isoformat()+"&countries=US,EU,GB,JP,CA,AU&limit=250"
+ url=BASE+"/calendar?"+urlencode({"from":now.isoformat(),"to":end.isoformat(),"countries":"US,EU,GB,JP,CA,AU","limit":250})
  try:
   rows=get_json(url)
   if isinstance(rows,list):return {"provider":"Biquote economic calendar","events":rows,"error":None}
