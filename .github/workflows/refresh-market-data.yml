@@ -1,0 +1,33 @@
+name: Refresh terminal market data
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: terminal-market-data
+  cancel-in-progress: true
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch free publisher RSS and economic calendar
+        run: python scripts/fetch_market_data.py
+      - name: Publish changed snapshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/news.json data/calendar.json
+          if git diff --cached --quiet; then
+            echo "No market data changes."
+          else
+            git commit -m "chore: refresh terminal news and calendar data"
+            git push
+          fi
