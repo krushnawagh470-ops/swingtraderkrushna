@@ -515,7 +515,7 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
  async function testConnection(){const url=trimUrl(urlField.value);let host="";try{host=new URL(url).hostname}catch(e){}if(!url.startsWith("https://")||!host.endsWith(".workers.dev")){connectStatus.textContent="Enter a valid https://…workers.dev URL.";return false}connectStatus.textContent="Testing Worker…";try{const r=await fetch(url+"/health");const d=await r.json();if(!r.ok||!d.ok)throw Error(d.error||"Worker health check failed.");localStorage.setItem("stk_gemini_worker_url",url);connectStatus.textContent="Connected · Gemini secret detected on Worker.";if(state)state.textContent="CONNECTED · SECURE WORKER";if(name)name.textContent="Gemini workspace";return true}catch(e){connectStatus.textContent="Connection failed: "+e.message; if(state)state.textContent="WORKER NOT CONNECTED";return false}}
  /* Connection button is wired by the standalone fallback handler below. */
  async function ask(){const prompt=input.value.trim(),url=getUrl();if(!prompt){status.textContent="Type a message first.";input.focus();return}if(!url){status.textContent="Enter and test your Cloudflare Worker URL first.";urlField.focus();return}if(window.__stkrushnaBusy)return;window.__stkrushnaBusy=true;send.disabled=true;send.textContent="Thinking…";status.textContent="Sending to secure Gemini Worker…";addMessage("user",prompt);input.value="";try{const r=await fetch(url+"/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:[...history.slice(-8),{role:"user",content:prompt}]})});const d=await r.json();if(!r.ok)throw Error(d.error||("HTTP "+r.status));if(!d.reply)throw Error("Worker returned an empty reply.");history.push({role:"user",content:prompt},{role:"assistant",content:d.reply});addMessage("assistant",d.reply);status.textContent="Reply received · Gemini via secure Worker.";if(state)state.textContent="CONNECTED · GEMINI"}catch(e){addMessage("assistant","Connection error: "+e.message);status.textContent="AI request failed: "+e.message;input.value=prompt;if(state)state.textContent="REQUEST FAILED"}finally{window.__stkrushnaBusy=false;send.disabled=false;send.textContent="Send message"}}
- send.addEventListener("click",ask);input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();ask()}});
+ /* Send events are wired by the standalone handler below. */
  if(getUrl())testConnection();
 })();</script>
 <script>
@@ -554,6 +554,73 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
     } finally {
       button.disabled = false;
     }
+  });
+})();
+</script>
+
+<script>
+/* Independent Gemini chat handler; does not depend on the main workspace script. */
+(function () {
+  const button = document.getElementById("aiSendToClaude");
+  const input = document.getElementById("aiWorkbenchPrompt");
+  const output = document.getElementById("aiAgentConversation");
+  const status = document.getElementById("aiWorkbenchStatus");
+  if (!button || !input || !output || !status) return;
+  let messages = [];
+  let busy = false;
+  function add(role, value) {
+    const wrap = document.createElement("div");
+    wrap.style.cssText = "padding:10px 11px;margin:8px 0;border:1px solid #1c3859;border-radius:9px;background:#091a2e;white-space:pre-wrap;overflow-wrap:anywhere";
+    const heading = document.createElement("b");
+    heading.textContent = role === "user" ? "YOU" : "SWINGTRADERKRUSHNA AI";
+    heading.style.cssText = "display:block;font-size:9px;letter-spacing:.12em;color:#6ebeff;margin-bottom:5px";
+    const body = document.createElement("div");
+    body.textContent = value;
+    body.style.fontSize = "12px";
+    wrap.append(heading, body);
+    if (output.dataset.placeholder !== "cleared") { output.textContent = ""; output.dataset.placeholder = "cleared"; }
+    output.appendChild(wrap);
+    output.scrollTop = output.scrollHeight;
+  }
+  async function sendMessage() {
+    if (busy) return;
+    const prompt = input.value.trim();
+    const url = (localStorage.getItem("stk_gemini_worker_url") || "").trim().replace(/\\/+$/, "");
+    if (!prompt) { status.textContent = "Type a message first."; input.focus(); return; }
+    if (!url) { status.textContent = "Worker is not connected. Save and test the Worker URL first."; return; }
+    busy = true;
+    button.disabled = true;
+    button.textContent = "Thinking…";
+    status.textContent = "Sending message to Gemini…";
+    add("user", prompt);
+    input.value = "";
+    try {
+      const response = await fetch(url + "/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: [...messages.slice(-10), { role: "user", content: prompt }] })
+      });
+      let data;
+      try { data = await response.json(); }
+      catch (_) { throw new Error("Worker returned an invalid response. Check its deployed code."); }
+      if (!response.ok) throw new Error(data.error || ("HTTP " + response.status));
+      if (!data.reply) throw new Error("Gemini returned an empty reply.");
+      messages.push({ role: "user", content: prompt }, { role: "assistant", content: data.reply });
+      add("assistant", data.reply);
+      status.textContent = "Reply received · " + (data.model || "Gemini");
+    } catch (error) {
+      add("assistant", "Request failed: " + (error.message || "Network error"));
+      status.textContent = "AI request failed: " + (error.message || "Network or CORS error");
+      input.value = prompt;
+    } finally {
+      busy = false;
+      button.disabled = false;
+      button.textContent = "Send message";
+    }
+  }
+  button.addEventListener("click", sendMessage);
+  input.addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendMessage(); }
   });
 })();
 </script>
