@@ -646,13 +646,38 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   let listening = false;
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   window.stkSpeakReply = function (text) {
-    if (!voiceOn || !("speechSynthesis" in window) || !text) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = selectedVoiceLanguage();
-    utterance.rate = 1;
-    utterance.pitch = 1;
-    window.speechSynthesis.speak(utterance);
+    if (!voiceOn || !("speechSynthesis" in window) || !text) {
+      if (voiceStatus) voiceStatus.textContent = "Voice replies are off or speech playback is unavailable.";
+      return;
+    }
+    try {
+      const synth = window.speechSynthesis;
+      synth.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      const requestedLang = selectedVoiceLanguage();
+      const voices = synth.getVoices();
+      const chosen = voices.find(v => v.lang && v.lang.toLowerCase() === requestedLang.toLowerCase())
+        || voices.find(v => v.lang && v.lang.toLowerCase().startsWith(requestedLang.slice(0,2).toLowerCase()))
+        || voices.find(v => v.lang && v.lang.toLowerCase().startsWith("en"));
+      utterance.lang = chosen ? chosen.lang : requestedLang;
+      if (chosen) utterance.voice = chosen;
+      utterance.rate = 0.95;
+      utterance.pitch = 1;
+      utterance.onstart = function () {
+        if (voiceStatus) voiceStatus.textContent = "Speaking AI reply aloud…";
+      };
+      utterance.onend = function () {
+        if (voiceStatus) voiceStatus.textContent = "Finished speaking. Tap Talk to AI to continue.";
+      };
+      utterance.onerror = function (event) {
+        if (voiceStatus) voiceStatus.textContent = "Speech playback error: " + (event.error || "unknown") + ". Check phone media volume and text-to-speech settings.";
+      };
+      synth.resume();
+      synth.speak(utterance);
+      if (voiceStatus) voiceStatus.textContent = "Preparing spoken reply…";
+    } catch (error) {
+      if (voiceStatus) voiceStatus.textContent = "Could not start speech: " + (error.message || "unknown error");
+    }
   };
   if (voiceToggle) voiceToggle.addEventListener("click", function () {
     voiceOn = !voiceOn;
