@@ -33,7 +33,7 @@ function cors() {
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Vary": "Origin"
   };
 }
@@ -74,6 +74,106 @@ function validMessages(input) {
   return messages;
 }
 
+
+function b64url(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+function fromB64url(value) {
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((value.length + 3) % 4);
+  const binary = atob(padded);
+  return Uint8Array.from(binary, c => c.charCodeAt(0));
+}
+async function hmacKey(secret) {
+  return crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+}
+async function issueMemoryToken(secret) {
+  const header = b64url(new TextEncoder().encode(JSON.stringify({ alg: "HS256", typ: "JWT" })));
+  const payload = b64url(new TextEncoder().encode(JSON.stringify({ sub: "owner", iss: "circuit-memory", iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000)+43200 })));
+  const input = header + "." + payload;
+  const signature = new Uint8Array(await crypto.subtle.sign("HMAC", await hmacKey(secret), new TextEncoder().encode(input)));
+  return input + "." + b64url(signature);
+}
+async function verifyMemoryToken(token, secret) {
+  try {
+    const parts = String(token || "").split(".");
+    if (parts.length !== 3) return false;
+    const input = parts[0] + "." + parts[1];
+    const valid = await crypto.subtle.verify("HMAC", await hmacKey(secret), fromB64url(parts[2]), new TextEncoder().encode(input));
+    if (!valid) return false;
+    const payload = JSON.parse(new TextDecoder().decode(fromB64url(parts[1])));
+    return payload.iss === "circuit-memory" && payload.sub === "owner" && Number(payload.exp) > Math.floor(Date.now()/1000);
+  } catch (_) { return false; }
+}
+async function sha256Hex(value) {
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
+  return Array.from(digest, b => b.toString(16).padStart(2, "0")).join("");
+}
+async function memoryRoute(request, env, url) {
+  if (!env.DB || !env.CIRCUIT_MEMORY_PASSWORD || !env.CIRCUIT_MEMORY_JWT_SECRET) {
+    return json({ error: "Persistent memory is not configured yet. Set the D1 binding DB and both CIRCUIT_MEMORY secrets in Cloudflare." }, 503);
+  }
+  if (url.pathname === "/memory/login" && request.method === "POST") {
+    let body;
+    try { body = await request.json(); } catch (_) { return json({ error: "Invalid JSON request." }, 400); }
+    const supplied = typeof body.password === "string" ? body.password : "";
+    if (supplied.length < 1 || supplied.length > 256) return json({ error: "Enter your memory passphrase." }, 400);
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const ipHash = await sha256Hex(ip + ":" + env.CIRCUIT_MEMORY_JWT_SECRET);
+    const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM memory_login_attempts WHERE ip_hash = ? AND attempted_at > ?").bind(ipHash, Date.now()-900000).first();
+    if (Number(recent?.n || 0) >= 5) return json({ error: "Too many login attempts. Wait 15 minutes and try again." }, 429);
+    if (supplied !== env.CIRCUIT_MEMORY_PASSWORD) {
+      await env.DB.prepare("INSERT INTO memory_login_attempts (ip_hash, attempted_at) VALUES (?, ?)").bind(ipHash, Date.now()).run();
+      return json({ error: "Incorrect memory passphrase." }, 401);
+    }
+    await env.DB.prepare("DELETE FROM memory_login_attempts WHERE ip_hash = ?").bind(ipHash).run();
+    const token = await issueMemoryToken(env.CIRCUIT_MEMORY_JWT_SECRET);
+    return json({ token, expiresIn: 43200, message: "Memory session started." });
+  }
+  const auth = request.headers.get("Authorization") || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+  if (!(await verifyMemoryToken(token, env.CIRCUIT_MEMORY_JWT_SECRET))) return json({ error: "Memory session expired or not signed in. Sign in again." }, 401);
+
+  if (url.pathname === "/memory" && request.method === "GET") {
+    const result = await env.DB.prepare("SELECT id, category, content, created_at, updated_at FROM circuit_memories WHERE user_id = 'owner' ORDER BY updated_at DESC LIMIT 100").all();
+    return json({ memories: result.results || [] });
+  }
+  if (url.pathname === "/memory" && request.method === "POST") {
+    let body;
+    try { body = await request.json(); } catch (_) { return json({ error: "Invalid JSON request." }, 400); }
+    const content = typeof body.content === "string" ? body.content.trim() : "";
+    const category = typeof body.category === "string" ? body.category.trim().slice(0, 40) : "General";
+    if (!content || content.length > 1200) return json({ error: "Memory must contain 1–1,200 characters." }, 400);
+    const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM circuit_memories WHERE user_id = 'owner'").first();
+    if (Number(count?.n || 0) >= 100) return json({ error: "Memory limit reached (100). Delete an old memory before adding another." }, 409);
+    const id = crypto.randomUUID(), now = Date.now();
+    await env.DB.prepare("INSERT INTO circuit_memories (id, user_id, category, content, created_at, updated_at) VALUES (?, 'owner', ?, ?, ?, ?)").bind(id, category, content, now, now).run();
+    return json({ memory: { id, category, content, created_at: now, updated_at: now } }, 201);
+  }
+  const match = url.pathname.match(/^\/memory\/([0-9a-f-]{36})$/i);
+  if (match && request.method === "PUT") {
+    let body;
+    try { body = await request.json(); } catch (_) { return json({ error: "Invalid JSON request." }, 400); }
+    const content = typeof body.content === "string" ? body.content.trim() : "";
+    const category = typeof body.category === "string" ? body.category.trim().slice(0, 40) : "General";
+    if (!content || content.length > 1200) return json({ error: "Memory must contain 1–1,200 characters." }, 400);
+    const result = await env.DB.prepare("UPDATE circuit_memories SET category = ?, content = ?, updated_at = ? WHERE id = ? AND user_id = 'owner'").bind(category, content, Date.now(), match[1]).run();
+    if (!result.meta?.changes) return json({ error: "Memory not found." }, 404);
+    return json({ ok: true });
+  }
+  if (match && request.method === "DELETE") {
+    const result = await env.DB.prepare("DELETE FROM circuit_memories WHERE id = ? AND user_id = 'owner'").bind(match[1]).run();
+    if (!result.meta?.changes) return json({ error: "Memory not found." }, 404);
+    return json({ ok: true });
+  }
+  if (url.pathname === "/memory/clear" && request.method === "DELETE") {
+    await env.DB.prepare("DELETE FROM circuit_memories WHERE user_id = 'owner'").run();
+    return json({ ok: true, message: "All cloud memories deleted." });
+  }
+  return json({ error: "Memory route not found." }, 404);
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
@@ -93,10 +193,12 @@ export default {
         brain: "CIRCUIT Core v2",
         providerMode: provider,
         build: "circuit-core-provider-adapter-2026-11-08-v2",
-        timeout_seconds: TIMEOUT_MS / 1000
+        timeout_seconds: TIMEOUT_MS / 1000,
+        memoryConfigured: Boolean(env.DB && env.CIRCUIT_MEMORY_PASSWORD && env.CIRCUIT_MEMORY_JWT_SECRET)
       });
     }
 
+    if (url.pathname === "/memory" || url.pathname.startsWith("/memory/")) return memoryRoute(request, env, url);
     if (url.pathname !== "/chat" || request.method !== "POST") return json({ error: "Not found." }, 404);
     if (!config.key) {
       const secret = provider === "openai" ? "OPENAI_API_KEY" : "GROQ_API_KEY";
