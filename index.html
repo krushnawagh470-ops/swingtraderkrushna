@@ -262,6 +262,16 @@ body.circuit-admin-mode #settings.active{display:block!important}
 .ai-workbench-grid>div:first-child{display:none!important}
 .ai-workbench-grid>.ai-workspace-panel{display:block!important;width:100%;min-width:0}
 </style>
+
+<style id="circuit-ai-agent-horizontal-stack">
+/* Desktop: wide horizontal AI agent visual first, full-width workspace panel directly below. */
+#ai .ai-workbench-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;align-items:stretch!important;gap:14px!important}
+#ai .ai-workbench-grid>div:first-child{display:block!important;width:100%!important;min-width:0!important}
+#ai .ai-workbench-grid>.ai-workspace-panel{display:block!important;width:100%!important;min-width:0!important}
+#ai .ai-agent-visual.circuit-stage{width:100%!important;min-height:0!important;height:auto!important;max-height:300px!important;aspect-ratio:16/5!important}
+#ai .circuit-state-label{font-size:11px!important;letter-spacing:.16em!important}
+@media(max-width:720px){#ai .ai-agent-visual.circuit-stage{aspect-ratio:16/9!important;max-height:none!important;min-height:190px!important}}
+</style>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -300,15 +310,15 @@ body.circuit-admin-mode #settings.active{display:block!important}
   <div>
    <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="CIRCUIT animated neural-network virtual intelligence">
 <canvas id="circuitNeuralCanvas" aria-hidden="true"></canvas>
-    <div class="circuit-state-label"><span class="circuit-live-dot"></span><span id="circuitStateText">NEURAL CORE ONLINE</span></div>
+    <div class="circuit-state-label"><span class="circuit-live-dot"></span><span id="circuitStateText">CIRCUIT AI AGENT</span></div>
    </div>
    <div class="ai-handoff-note">CIRCUIT · GROQ AI CORE · SECURE CONNECTION</div>
 
    <div class="ai-handoff-note">Drag the globe to rotate its longitude field. On mobile, swipe across the hemisphere to interact; the particle field stays live while CIRCUIT is idle.</div>
   </div>
   <div class="ai-workspace-panel">
-   <div class="row"><div><div class="terminal-label">CURRENT WORKSPACE</div><b id="aiSelectedName">CIRCUIT · Groq workspace</b></div><span class="signal-tag" id="aiConnectionState">WORKER · NOT CONNECTED</span></div>
-   <p class="muted" id="aiSelectedDescription">Groq GPT-OSS is connected through your secure Cloudflare Worker.</p>
+   <div class="row"><div><div class="terminal-label">CURRENT WORKSPACE</div><b id="aiSelectedName">Gemini workspace</b></div><span class="signal-tag" id="aiConnectionState">WORKER · NOT CONNECTED</span></div>
+   <p class="muted" id="aiSelectedDescription">Gemini workspace · provider connection status is shown below.</p>
    <label class="terminal-label" for="aiWorkbenchPrompt">MESSAGE TO CIRCUIT</label>
    <textarea id="aiWorkbenchPrompt" placeholder="Ask about trading, XAUUSD, strategy testing, coding, research or everyday work…"></textarea>
    <div class="stk-voice-bar" role="group" aria-label="Voice conversation controls">
