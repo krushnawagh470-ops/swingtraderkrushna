@@ -175,7 +175,7 @@ body.circuit-admin-mode #settings.active{display:block!important}
 
 .chart-tools{background:#071326;border-bottom:1px solid #1b3554}.native-chart{height:520px;min-height:390px;width:100%;background:#07101e;border-radius:0;overflow:hidden;touch-action:pan-y}.native-chart canvas{max-width:100%}@media(max-width:650px){.native-chart{height:430px;min-height:380px}}
 /* CIRCUIT AI core — amber orbital interface inspired by image 9002. */
-#ai .ai-agent-visual.circuit-stage{position:relative;display:block;width:100%;height:440px;min-height:360px;max-height:540px;aspect-ratio:auto;border:1px solid rgba(255,177,75,.24);border-radius:14px;background:radial-gradient(ellipse at 51% 55%,#42200d 0%,#1d1009 38%,#0b0908 76%,#070707 100%);isolation:isolate;overflow:hidden;cursor:crosshair;box-shadow:inset 0 0 75px #030201,0 12px 38px rgba(0,0,0,.28)}
+#ai .ai-agent-visual.circuit-stage{position:relative;display:block;width:100%;height:440px;min-height:360px;max-height:540px;aspect-ratio:4/3;border:1px solid rgba(255,153,52,.2);border-radius:14px;background:#100a06;isolation:isolate;overflow:hidden;cursor:crosshair;box-shadow:inset 0 0 75px #030201,0 12px 38px rgba(0,0,0,.28)}
 #ai #circuitNeuralCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
 #ai .ai-handoff-note{color:#b99a72}
 @media(max-width:720px){#ai .ai-agent-visual.circuit-stage{height:370px;min-height:340px;max-height:none;aspect-ratio:auto}}
@@ -1536,82 +1536,91 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 </script>
 
 <script>
-/* CIRCUIT amber intelligence core — procedural motion based on image 9002. */
+/* CIRCUIT visual: warm amber holographic orbital field, matching reference image 9002. */
 (function(){
  const stage=document.getElementById("aiAgentVisual"),canvas=document.getElementById("circuitNeuralCanvas");
- if(!stage||!canvas||canvas.dataset.ready)return;
- canvas.dataset.ready="1";
+ if(!stage||!canvas||canvas.dataset.ready)return;canvas.dataset.ready="1";
  const ctx=canvas.getContext("2d");if(!ctx)return;
- let w=0,h=0,dpr=1,raf=0,last=0,particles=[],pointer={x:-9999,y:-9999,active:false};
+ const TAU=Math.PI*2,colors=["#ffb13b","#ff8a20","#f68b26","#ffd078","#d85d12","#ffc04d","#a94a13"];
+ let w=0,h=0,dpr=1,last=0,raf=0,stars=[],nodes=[],pointer={x:-9999,y:-9999,active:false};
  const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
- const TAU=Math.PI*2,gold=["#ffb13f","#ff8b22","#ffd16b","#e86b16","#ffdf9a","#b94d12"];
  const rand=(a,b)=>a+Math.random()*(b-a);
  function resize(){
-  const r=stage.getBoundingClientRect();w=Math.max(300,r.width);h=Math.max(280,r.height);
-  dpr=Math.min(1.6,window.devicePixelRatio||1);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  const count=Math.max(150,Math.min(330,Math.round(w*h/950)));
-  particles=Array.from({length:count},(_,i)=>({a:rand(0,TAU),orbit:rand(.16,.73),speed:rand(.025,.15)*(Math.random()<.5?-1:1),size:rand(.45,2),phase:rand(0,TAU),alpha:rand(.22,.88),color:gold[i%gold.length]}));
+  const b=stage.getBoundingClientRect();w=Math.max(300,b.width);h=Math.max(280,b.height);
+  dpr=Math.min(1.5,window.devicePixelRatio||1);canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  stars=Array.from({length:Math.round(w*h/480)},()=>({x:rand(-.05,1.05)*w,y:rand(-.05,1.05)*h,r:rand(.35,2.5),a:rand(.12,.9),p:rand(0,TAU),s:rand(.15,.8),c:colors[Math.floor(rand(0,colors.length))]}));
+  nodes=Array.from({length:Math.round(w*h/1800)},()=>({a:rand(0,TAU),r:rand(.2,.98),speed:rand(-.025,.025),j:rand(-.05,.05),p:rand(0,TAU)}));
  }
- function glow(x,y,r,color,alpha){
-  const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,"rgba(0,0,0,0)");
-  ctx.globalAlpha=alpha;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1;
- }
+ function glow(x,y,r,c,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,c);g.addColorStop(1,"rgba(0,0,0,0)");ctx.globalAlpha=a;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1}
+ function line(x1,y1,x2,y2,a,width=1){ctx.strokeStyle="rgba(255,151,48,"+a+")";ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
  function draw(t){
   if(!stage.isConnected)return;
   const time=t/1000,dt=Math.min(2,(t-last)/16.67||1);last=t;
   ctx.clearRect(0,0,w,h);
-  const cx=w*.51,cy=h*.55,unit=Math.min(w,h),R=unit*.39,pulse=1+Math.sin(time*1.35)*.018;
-  const bg=ctx.createRadialGradient(cx,cy,2,cx,cy,Math.max(w,h)*.7);
-  bg.addColorStop(0,"#4a210b");bg.addColorStop(.24,"#251207");bg.addColorStop(.68,"#100b08");bg.addColorStop(1,"#070707");
+  const cx=w*.51,cy=h*.53,U=Math.min(w,h),R=U*.53;
+  const bg=ctx.createRadialGradient(cx,cy,4,cx,cy,Math.max(w,h)*.78);
+  bg.addColorStop(0,"#71320f");bg.addColorStop(.22,"#3b1b0b");bg.addColorStop(.56,"#1a100b");bg.addColorStop(1,"#090807");
   ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
-  ctx.save();ctx.translate(cx,cy);
-  // Fine radial beams.
-  for(let i=0;i<34;i++){
-   const a=i*TAU/34+time*.018,len=R*(.88+((i*17)%11)/100);
-   ctx.beginPath();ctx.moveTo(Math.cos(a)*R*.24,Math.sin(a)*R*.24);ctx.lineTo(Math.cos(a)*len,Math.sin(a)*len);
-   ctx.strokeStyle=i%3===0?"rgba(255,166,55,.20)":"rgba(225,111,25,.095)";ctx.lineWidth=i%4===0?1.4:.65;ctx.stroke();
-  }
-  // Layered rotating orbital rings.
-  for(let k=0;k<7;k++){
-   const rr=R*(.28+k*.105),rot=time*(k%2?-.12:.085)+k*.37;
-   ctx.save();ctx.rotate(rot);ctx.beginPath();ctx.ellipse(0,0,rr,rr*(k%2?.76:.91),0,0,TAU);
-   ctx.strokeStyle=k===3?"rgba(255,184,79,.58)":"rgba(255,146,42,"+(.12+k*.025)+")";
-   ctx.lineWidth=k===3?1.8:.8;ctx.setLineDash(k%2?[5,8]:[2,5]);ctx.stroke();ctx.setLineDash([]);
-   for(let j=0;j<7;j++){const a=j*TAU/7+time*(k%2?-.18:.14),x=Math.cos(a)*rr,y=Math.sin(a)*rr*(k%2?.76:.91);glow(x,y,k===3?8:4,"#ffad42",.58);ctx.fillStyle="#ffd58a";ctx.beginPath();ctx.arc(x,y,k===3?1.7:1,0,TAU);ctx.fill()}
+  // Deep atmospheric light, smoky amber glow and warm bokeh.
+  glow(cx,cy,R*1.15,"#b95717",.30);glow(cx-U*.37,cy-U*.05,U*.32,"#f18a26",.16);glow(cx+U*.34,cy+U*.24,U*.26,"#c05a18",.13);
+  stars.forEach(p=>{
+   const tw=.72+.28*Math.sin(time*p.s+p.p),x=p.x+Math.sin(time*.12+p.p)*3,y=p.y+Math.cos(time*.1+p.p)*4;
+   glow(x,y,p.r*5,p.c,p.a*.17*tw);ctx.globalAlpha=p.a*tw;ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(x,y,p.r,0,TAU);ctx.fill();ctx.globalAlpha=1;
+  });
+  // Huge broken orbital architecture, like the reference's layered holographic globe.
+  for(let k=0;k<13;k++){
+   const rr=R*(.26+k*.064),rot=time*(k%2?.018:-.014)+k*.21,sy=k%3===0?.68:.86;
+   ctx.save();ctx.translate(cx,cy);ctx.rotate(rot);ctx.beginPath();
+   ctx.ellipse(0,0,rr,rr*sy,0,k*.13,TAU-k*.11);
+   ctx.strokeStyle=k%3===0?"rgba(255,178,77,.42)":"rgba(255,133,37,"+(.09+(k%4)*.045)+")";
+   ctx.lineWidth=k%4===0?2:.8;ctx.setLineDash(k%3===0?[3,5,12,4]:[1,4,7,3]);ctx.stroke();ctx.setLineDash([]);
    ctx.restore();
   }
-  // Angular micro-circuit segments.
-  for(let i=0;i<18;i++){
-   const a=i*TAU/18+time*.025,inner=R*.78,outer=R*(.88+((i*17)%11)/100);
-   const x1=Math.cos(a)*inner,y1=Math.sin(a)*inner,x2=Math.cos(a)*outer,y2=Math.sin(a)*outer;
-   ctx.strokeStyle="rgba(255,174,73,.28)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineTo(x2+Math.cos(a+1.2)*7,y2+Math.sin(a+1.2)*7);ctx.stroke();
+  // Fine radial beams and angular lattice across the whole field.
+  for(let i=0;i<58;i++){
+   const a=i*TAU/58+time*.006,inner=R*rand(.15,.38),outer=R*rand(.82,1.16);
+   line(cx+Math.cos(a)*inner,cy+Math.sin(a)*inner,cx+Math.cos(a)*outer,cy+Math.sin(a)*outer,rand(.06,.23),rand(.45,1.25));
   }
-  ctx.restore();
-  // Central energy halo and rotating core.
-  glow(cx,cy,R*.95,"#e66b16",.23);glow(cx,cy,R*.46,"#ff9b2f",.22);
-  ctx.save();ctx.translate(cx,cy);ctx.rotate(time*.18);
-  for(let k=0;k<4;k++){const rr=R*(.105+k*.035);ctx.beginPath();ctx.ellipse(0,0,rr,rr*(k%2?.82:1),k*.3,0,TAU);ctx.strokeStyle=k===0?"rgba(255,224,157,.95)":"rgba(255,166,64,"+(.68-k*.1)+")";ctx.lineWidth=k===0?2.4:1.2;ctx.shadowBlur=18;ctx.shadowColor="#ff9a32";ctx.stroke();ctx.shadowBlur=0}
-  const core=ctx.createRadialGradient(-R*.025,-R*.035,1,0,0,R*.19);core.addColorStop(0,"#fff2c4");core.addColorStop(.12,"#ffd078");core.addColorStop(.36,"#ff9b31");core.addColorStop(.7,"#a9410d");core.addColorStop(1,"rgba(63,20,3,0)");
-  ctx.fillStyle=core;ctx.beginPath();ctx.arc(0,0,R*.2*pulse,0,TAU);ctx.fill();ctx.restore();
-  // Floating sparks orbit the core and react to touch.
-  particles.forEach(p=>{
-   if(!reduced)p.a+=p.speed*.006*dt;
-   const rr=R*p.orbit,px=cx+Math.cos(p.a)*rr,py=cy+Math.sin(p.a)*rr*.72+Math.sin(time*.7+p.phase)*8;let x=px,y=py;
-   if(pointer.active){const dx=x-pointer.x,dy=y-pointer.y,d=Math.hypot(dx,dy);if(d<100&&d>1){const f=(100-d)/100*.22;x+=dx/d*f*R*.12;y+=dy/d*f*R*.12}}
-   glow(x,y,p.size*5,p.color,p.alpha*.35);ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(x,y,p.size,0,TAU);ctx.fill();ctx.globalAlpha=1;
+  // Irregular connected particle web concentrated around orbital paths.
+  const pts=nodes.map((p,i)=>{
+   if(!reduced)p.a+=p.speed*dt;
+   const radius=R*(p.r*.91),angle=p.a+Math.sin(time*.19+p.p)*.035;
+   return {x:cx+Math.cos(angle)*radius,y:cy+Math.sin(angle)*radius*.78+p.j*U,color:colors[i%colors.length],p};
   });
-  // Travelling scan arc.
-  const scan=time*.52%TAU;ctx.beginPath();ctx.arc(cx,cy,R*.58,scan,scan+.68);ctx.strokeStyle="rgba(255,211,133,.72)";ctx.lineWidth=2;ctx.shadowBlur=14;ctx.shadowColor="#ff9b32";ctx.stroke();ctx.shadowBlur=0;
-  if(pointer.active)glow(pointer.x,pointer.y,90,"#ffad48",.12);
+  for(let i=0;i<pts.length;i++){
+   const near=[];
+   for(let j=i+1;j<pts.length;j++){const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);if(d<U*.105)near.push({j,d})}
+   near.sort((a,b)=>a.d-b.d).slice(0,4).forEach(v=>{const q=pts[v.j];line(pts[i].x,pts[i].y,q.x,q.y,.12*(1-v.d/(U*.105)),.65)});
+  }
+  pts.forEach((p,i)=>{if(i%2===0){glow(p.x,p.y,6,p.color,.42);ctx.fillStyle="#ffb65b";ctx.globalAlpha=.7;ctx.fillRect(p.x-.7,p.y-.7,1.4,1.4);ctx.globalAlpha=1}});
+  // Dense bright sparks and circuit traces near the core.
+  for(let i=0;i<22;i++){
+   const a=i*TAU/22+time*.025,rr=R*(.3+(i%5)*.035),x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr*.8;
+   glow(x,y,rand(5,14),"#ff9a32",.34);line(x,y,x+Math.cos(a+.8)*rand(10,34),y+Math.sin(a+.8)*rand(10,34),.35,.9);
+  }
+  // Central circular aperture: bright rim, dark warm centre, rotating segmented rings.
+  glow(cx,cy,U*.19,"#ff8b25",.36);
+  ctx.save();ctx.translate(cx,cy);
+  for(let k=0;k<6;k++){
+   const rr=U*(.035+k*.013),rot=time*(k%2?.22:-.16)+k*.5;
+   ctx.save();ctx.rotate(rot);ctx.beginPath();ctx.arc(0,0,rr,.12,TAU-.18);
+   ctx.strokeStyle=k===2?"rgba(255,218,151,.96)":"rgba(255,160,60,"+(.35+k*.08)+")";ctx.lineWidth=k===2?2.8:1.15;ctx.shadowBlur=12;ctx.shadowColor="#ff9b35";ctx.stroke();ctx.shadowBlur=0;
+   for(let n=0;n<9;n++){const a=n*TAU/9;ctx.beginPath();ctx.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);ctx.lineTo(Math.cos(a)*(rr+4),Math.sin(a)*(rr+4));ctx.strokeStyle="rgba(255,191,105,.72)";ctx.lineWidth=.9;ctx.stroke()}
+   ctx.restore();
+  }
+  const core=ctx.createRadialGradient(-2,-3,1,0,0,U*.055);core.addColorStop(0,"#ffcf82");core.addColorStop(.22,"#e87920");core.addColorStop(.66,"#5c260d");core.addColorStop(1,"rgba(18,9,5,.96)");
+  ctx.fillStyle=core;ctx.beginPath();ctx.arc(0,0,U*.055*(1+Math.sin(time*1.1)*.035),0,TAU);ctx.fill();ctx.restore();
+  // Slow moving sweep, subtle and warm rather than a clean sci-fi HUD.
+  const sweep=time*.22%TAU;ctx.beginPath();ctx.arc(cx,cy,R*.72,sweep,sweep+.34);ctx.strokeStyle="rgba(255,197,117,.55)";ctx.lineWidth=2;ctx.shadowBlur=18;ctx.shadowColor="#ff9c38";ctx.stroke();ctx.shadowBlur=0;
+  if(pointer.active){glow(pointer.x,pointer.y,100,"#ff9d3b",.12)}
   if(!reduced)raf=requestAnimationFrame(draw);
  }
- function move(e){const r=stage.getBoundingClientRect();pointer.x=e.clientX-r.left;pointer.y=e.clientY-r.top;pointer.active=true}
+ function move(e){const b=stage.getBoundingClientRect();pointer.x=e.clientX-b.left;pointer.y=e.clientY-b.top;pointer.active=true}
  stage.addEventListener("pointermove",move,{passive:true});stage.addEventListener("pointerleave",()=>pointer.active=false,{passive:true});stage.addEventListener("pointerdown",move,{passive:true});
  if("ResizeObserver"in window)new ResizeObserver(()=>{resize();if(reduced)draw(0)}).observe(stage);else window.addEventListener("resize",()=>{resize();if(reduced)draw(0)});
  resize();if(reduced)draw(0);else raf=requestAnimationFrame(draw);
  document.addEventListener("visibilitychange",()=>{if(document.hidden)cancelAnimationFrame(raf);else if(!reduced){last=0;raf=requestAnimationFrame(draw)}});
 })();
-</script>>
+</script>>>
 
 </body></html>
