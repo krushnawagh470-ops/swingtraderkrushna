@@ -1944,4 +1944,65 @@ const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisR
  document.addEventListener("click",e=>{if(e.target.closest("#refreshGlobalNewsBtn"))load()});
 })();
 </script>
+<script id="circuit-market-pulse-isolated">
+/* Independent Market Pulse renderer. Does not depend on the main terminal bundle. */
+(function(){
+ "use strict";
+ const symbols=["XAUUSD","XAGUSD","EURUSD","BTCUSD","USOIL","DXY"];
+ const gridId="nativeQuoteGrid";
+ let busy=false;
+ const el=id=>document.getElementById(id);
+ const fmt=(v,s)=>{const n=Number(v);if(!Number.isFinite(n))return "—";const d=(s==="EURUSD"?5:((s==="XAUUSD"||s==="XAGUSD"||s==="BTCUSD"||s==="USOIL")?2:3));return n.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d})};
+ function status(ok,msg){const a=el("pipelineStatus"),b=el("pipelineMeta");if(a)a.textContent=ok?"API CONNECTED":"API ISSUE";if(b)b.textContent=msg}
+ function normalise(data){
+  if(Array.isArray(data))return data;
+  if(data&&Array.isArray(data.items))return data.items;
+  if(data&&Array.isArray(data.ticks))return data.ticks;
+  if(data&&typeof data==="object")return Object.entries(data).filter(([,v])=>v&&typeof v==="object").map(([k,v])=>Object.assign({symbol:k},v));
+  return [];
+ }
+ function card(sym,q){
+  const mid=Number(q.mid??((Number(q.bid)+Number(q.ask))/2));
+  const age=Number(q.quoteAgeSeconds),stale=q.stale===true||(Number.isFinite(age)&&age>300);
+  const closed=String(q.marketState||"").toLowerCase()==="closed";
+  const change=Number(q.dayDiffPercent);
+  return '<div class="live-quote"><div class="q-label">'+sym+'</div><div class="q-price">'+fmt(mid,sym)+'</div><div class="q-meta">Bid '+fmt(q.bid,sym)+' · Ask '+fmt(q.ask,sym)+'</div><div class="q-meta">'+(Number.isFinite(change)?(change>=0?"▲ ":"▼ ")+change.toFixed(2)+"% today":"Change unavailable")+' · '+(Number.isFinite(age)?"quote age "+Math.round(age)+"s":"age unavailable")+'</div><div class="q-meta">'+String(q.source||"Biquote")+' · '+(closed?"Market closed · last quote":stale?"STALE · delayed quote":"Provider quote")+'</div></div>';
+ }
+ async function get(url,ms){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
+  try{const r=await fetch(url,{cache:"no-store",mode:"cors",signal:c.signal});if(!r.ok)throw Error("HTTP "+r.status);return await r.json()}
+  catch(e){if(e.name==="AbortError")throw Error("request timed out");throw e}
+  finally{clearTimeout(t)}
+ }
+ async function refresh(){
+  if(busy||document.visibilityState==="hidden")return;
+  const grid=el(gridId);if(!grid)return;
+  busy=true;
+  try{
+   const params=new URLSearchParams();symbols.forEach(x=>params.append("symbols",x));
+   let data,rows=[],by={};
+   try{data=await get("https://biquote.io/api/latest?"+params.toString(),9000);rows=normalise(data)}
+   catch(batchError){
+    const settled=await Promise.allSettled(symbols.map(sym=>get("https://biquote.io/api/"+encodeURIComponent(sym),7000)));
+    settled.forEach((r,i)=>{if(r.status==="fulfilled")rows.push(Object.assign({symbol:symbols[i]},r.value))});
+    if(!rows.length)throw batchError;
+   }
+   rows.forEach(q=>{const k=String(q.symbol||q.name||"").toUpperCase();if(symbols.includes(k)&&Number.isFinite(Number(q.mid??((Number(q.bid)+Number(q.ask))/2))))by[k]=q});
+   const count=symbols.filter(x=>by[x]).length;
+   grid.innerHTML=symbols.map(sym=>by[sym]?card(sym,by[sym]):'<div class="live-quote"><div class="q-label">'+sym+'</div><div class="q-price">—</div><div class="q-meta">No quote returned by provider</div></div>').join("");
+   if(count)status(true,"Biquote REST · "+count+"/6 instruments · refreshed "+new Date().toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata",hour12:true}));
+   else status(false,"Biquote responded, but returned no valid watchlist quotes. Retrying automatically.");
+  }catch(e){
+   grid.innerHTML=symbols.map(sym=>'<div class="live-quote"><div class="q-label">'+sym+'</div><div class="q-price">—</div><div class="q-meta">Quote unavailable</div><div class="q-meta">'+String(e.message||e).replace(/[<>]/g,"")+'</div></div>').join("");
+   status(false,"Biquote connection failed: "+String(e.message||e)+" · retrying");
+  }finally{busy=false}
+ }
+ window.circuitRefreshMarketPulse=refresh;
+ window.loadPriorityMarketQuotes=refresh;
+ window.loadNativeQuotes=refresh;
+ function start(){refresh();setInterval(refresh,15000)}
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
+ document.addEventListener("click",e=>{if(e.target.closest('#nativeQuoteGrid')===null&&e.target.closest('[onclick*="loadNativeQuotes"]'))refresh()});
+})();
+</script>
 </body></html>
