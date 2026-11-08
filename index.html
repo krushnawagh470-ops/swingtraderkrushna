@@ -179,7 +179,7 @@ body.circuit-admin-mode #settings.active{display:block!important}
 #ai #circuitNeuralCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y;background:transparent !important}
 #ai .ai-handoff-note{color:#8fcff0}
 @media(max-width:720px){#ai .ai-agent-visual.circuit-stage{height:370px;min-height:340px;max-height:none;aspect-ratio:auto}}
-</style><meta name="circuit-build" content="ai-thinking-brain-20261108-v4">
+</style><meta name="circuit-build" content="ai-neural-mass-20261108-v5">
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -1536,136 +1536,57 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 </script>
 
 <script>
-/* CIRCUIT AI visual: animated bilateral thinking-brain neural structure, recreated from the supplied reference video. */
+/* CIRCUIT AI visual: irregular holographic neural mass based on the supplied reference. */
 (function(){
  const stage=document.getElementById("aiAgentVisual"),canvas=document.getElementById("circuitNeuralCanvas");
  if(!stage||!canvas||canvas.dataset.ready)return;canvas.dataset.ready="1";
  const ctx=canvas.getContext("2d");if(!ctx)return;
- const TAU=Math.PI*2,rand=(a,b)=>a+Math.random()*(b-a);
- const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
- let w=0,h=0,dpr=1,last=0,raf=0,particles=[],dust=[],pointer={x:0,y:0,active:false};
- const palette=["#e5fcff","#b6f5ff","#78e8ff","#39caff","#168fff","#537dff"];
+ const TAU=Math.PI*2,rand=(a,b)=>a+Math.random()*(b-a),reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+ let w=0,h=0,dpr=1,raf=0,points=[],dust=[],pointer={x:0,y:0,active:false};
+ const palette=["#e8ffff","#b8f6ff","#7be9ff","#42ceff","#159aff","#315fff"];
  function resize(){
-  const b=stage.getBoundingClientRect();w=Math.max(300,b.width);h=Math.max(260,b.height);
-  dpr=Math.min(1.5,window.devicePixelRatio||1);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
-  const count=Math.min(1450,Math.max(850,Math.round(w*h/155)));
-  particles=[];
-  // Two interlocking cerebral hemispheres. Their folded, asymmetric surfaces create a brain silhouette rather than a smooth sphere.
-  for(let side of [-1,1]){
-   const n=Math.floor(count/2);
-   for(let i=0;i<n;i++){
-    const yy=1-2*(i+.5)/n,ring=Math.sqrt(1-yy*yy),a=i*2.3999632297+side*.17;
-    const nx=Math.cos(a)*ring, nz=Math.sin(a)*ring;
-    const lobeWave=Math.sin(a*3.2+yy*5.1)*.045+Math.sin(a*7.1-yy*8.3)*.026+Math.cos(a*11+yy*3)*.014;
-    const temporal=Math.exp(-Math.pow((yy+.42)/.3,2));
-    const upperBulge=Math.exp(-Math.pow((yy-.58)/.32,2));
-    const rx=.59, ry=.82, rz=.55;
-    let x=side*(.255+nx*rx*(1+lobeWave));
-    let y=yy*ry*(1+lobeWave*.7);
-    let z=nz*rz*(1+lobeWave);
-    // Gentle frontal/temporal asymmetry and the natural notch between the hemispheres.
-    x+=side*(.035*upperBulge-.025*temporal);
-    x+=side*.025*Math.sin(yy*8+a*2);
-    y+=.025*Math.sin(a*4+yy*7);
-    z+=.025*Math.sin(a*5-yy*6);
-    particles.push({x,y,z,phase:rand(0,TAU),size:rand(.45,1.45),tone:Math.floor(rand(0,palette.length)),side});
-   }
+  const b=stage.getBoundingClientRect();w=Math.max(300,b.width);h=Math.max(260,b.height);dpr=Math.min(1.5,devicePixelRatio||1);
+  canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);points=[];
+  const n=Math.min(1500,Math.max(950,Math.round(w*h/145)));
+  for(let i=0;i<n;i++){
+   const a=rand(0,TAU),v=rand(-1,1),b=Math.acos(v);
+   const lobes=.77+.12*Math.sin(5*a+2*Math.sin(3*b))+.08*Math.cos(9*a-4*b)+.05*Math.sin(7*b+2*a)+.035*Math.cos(13*a+5*b);
+   const rr=lobes*Math.pow(Math.random(),.38),ridge=Math.sin(a*6+b*4)*.05+Math.cos(a*11-b*7)*.025;
+   points.push({x:Math.sin(b)*Math.cos(a)*rr*1.04+Math.cos(a*4+b*3)*ridge,y:Math.cos(b)*rr*.82+Math.sin(a*5-b*2)*ridge,z:Math.sin(b)*Math.sin(a)*rr*.66+Math.cos(a*7+b)*ridge,phase:rand(0,TAU),size:rand(.35,1.4),tone:Math.floor(rand(0,palette.length))});
   }
-  dust=Array.from({length:Math.round(w*h/850)},()=>({x:rand(0,w),y:rand(0,h),r:rand(.25,1.15),a:rand(.12,.5),p:rand(0,TAU),v:rand(.12,.55)}));
+  dust=Array.from({length:Math.round(w*h/800)},()=>({x:rand(0,w),y:rand(0,h),r:rand(.25,1.1),a:rand(.1,.4),p:rand(0,TAU),v:rand(.12,.5)}));
  }
- function glow(x,y,r,color,alpha){
-  const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,"rgba(0,0,0,0)");
-  ctx.globalAlpha=alpha;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1;
- }
+ function glow(x,y,r,c,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,c);g.addColorStop(1,"rgba(0,0,0,0)");ctx.globalAlpha=a;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1}
  function draw(t){
-  if(!stage.isConnected)return;
-  const time=t/1000;last=t;ctx.clearRect(0,0,w,h);
-  const cx=w*.5,cy=h*.49,U=Math.min(w,h),R=U*.365;
-  const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*.72);
-  bg.addColorStop(0,"#061a2b");bg.addColorStop(.48,"#030d19");bg.addColorStop(1,"#01050c");
-  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
-  // Fine atmospheric particles, restrained so the brain remains the unmistakable focal point.
-  dust.forEach(p=>{
-   const tw=.55+.45*Math.sin(time*p.v+p.p),x=p.x+Math.sin(time*.13+p.p)*4,y=(p.y-time*p.v*2.5%(h+8)+h+8)%(h+8);
-   ctx.globalAlpha=p.a*tw;ctx.fillStyle="#65cfff";ctx.beginPath();ctx.arc(x,y,p.r,0,TAU);ctx.fill();ctx.globalAlpha=1;
+  if(!stage.isConnected)return;const time=t/1000,cx=w*.5,cy=h*.49,R=Math.min(w,h)*.39,rot=time*.105;
+  ctx.clearRect(0,0,w,h);const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*.7);bg.addColorStop(0,"#061522");bg.addColorStop(.5,"#030a13");bg.addColorStop(1,"#01040a");ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+  dust.forEach(p=>{ctx.globalAlpha=p.a*(.6+.4*Math.sin(time*p.v+p.p));ctx.fillStyle="#70dcff";ctx.beginPath();ctx.arc(p.x+Math.sin(time*.12+p.p)*4,(p.y-time*p.v*2%(h+8)+h+8)%(h+8),p.r,0,TAU);ctx.fill();ctx.globalAlpha=1});
+  const out=points.map(p=>{const pulse=1+Math.sin(time*1.2+p.phase)*.018,x=p.x*pulse,z=p.z*pulse,y=p.y*pulse,xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot),pers=2.7/(2.7+zr*.25);return{x:cx+xr*R*pers,y:cy+y*R*pers,z:zr,size:p.size*pers,tone:p.tone,phase:p.phase}});
+  glow(cx,cy,R*1.35,"#087dce",.08);
+  // Local 3D links form a tangled organic volume, not a clean sphere or orbit.
+  const cell=.15,grid=new Map(),key=(x,y,z)=>Math.floor(x/cell)+":"+Math.floor(y/cell)+":"+Math.floor(z/cell);
+  points.forEach((p,i)=>{const k=key(p.x,p.y,p.z);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i)});
+  points.forEach((p,i)=>{const gx=Math.floor(p.x/cell),gy=Math.floor(p.y/cell),gz=Math.floor(p.z/cell),near=[];
+   for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)(grid.get((gx+x)+":"+(gy+y)+":"+(gz+z))||[]).forEach(j=>{if(j<=i)return;const q=points[j],d=Math.hypot(p.x-q.x,p.y-q.y,p.z-q.z);if(d<cell*.95)near.push({j,d})});
+   near.sort((a,b)=>a.d-b.d).slice(0,4).forEach(({j,d})=>{const a=out[i],b=out[j];ctx.strokeStyle="rgba(65,197,255,"+((.07+(1-d/(cell*.95))*.26)*(a.z+b.z>0?1:.48))+")";ctx.lineWidth=.4+(1-d/(cell*.95))*.65;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()});
   });
-  const rot=time*.15,tilt=Math.sin(time*.27)*.075,breath=1+Math.sin(time*1.4)*.018,projected=[];
-  for(const p of particles){
-   let x=p.x*breath,z=p.z,y=p.y*breath;
-   // Slow three-quarter turn reveals volume while retaining the recognizable two-lobed brain profile.
-   const xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot);
-   const yr=y*Math.cos(tilt)-zr*Math.sin(tilt),zz=y*Math.sin(tilt)+zr*Math.cos(tilt);
-   const perspective=2.8/(2.8+zz*.24);
-   projected.push({x:cx+xr*R*perspective,y:cy+yr*R*perspective,z:zz,depth:perspective,size:p.size*perspective,tone:p.tone,phase:p.phase,side:p.side});
+  // Loose, branching luminous filaments weave through the uneven mass.
+  for(let k=0;k<30;k++){const phase=time*(k%2?.12:-.09)+k*2.4,az=k*2.4;ctx.beginPath();
+   for(let j=0;j<=120;j++){const q=j/120,rad=R*(.2+.72*Math.sin(q*Math.PI))*(.94+.06*Math.sin(q*19+phase)),a=az+q*2.8+Math.sin(q*13+phase)*.16,x=Math.cos(a)*rad,y=(q-.5)*R*1.2+Math.sin(q*17+phase)*R*.035,z=Math.sin(a)*rad*.65,xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot),pers=2.7/(2.7+zr*.25),px=cx+xr*pers,py=cy+y*pers;if(!j)ctx.moveTo(px,py);else ctx.lineTo(px,py)}
+   ctx.strokeStyle=k%5===0?"rgba(160,246,255,.4)":"rgba(43,174,255,.16)";ctx.lineWidth=k%5===0?1.1:.58;ctx.stroke();
   }
-  // A faint silhouette halo gives the irregular cerebral outline a luminous edge.
-  glow(cx,cy,R*1.42,"#087dce",.09);
-  // 3D spatial buckets keep the neural mesh efficient on mobile devices.
-  const cell=.19,grid=new Map(),key=(x,y,z)=>Math.floor(x/cell)+":"+Math.floor(y/cell)+":"+Math.floor(z/cell);
-  particles.forEach((p,i)=>{const k=key(p.x,p.y,p.z);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i)});
-  particles.forEach((p,i)=>{
-   const gx=Math.floor(p.x/cell),gy=Math.floor(p.y/cell),gz=Math.floor(p.z/cell),near=[];
-   for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++)for(let dz=-1;dz<=1;dz++){
-    (grid.get((gx+dx)+":"+(gy+dy)+":"+(gz+dz))||[]).forEach(j=>{
-     if(j<=i)return;const q=particles[j],d=Math.hypot(p.x-q.x,p.y-q.y,p.z-q.z);
-     if(d<cell*.94)near.push({j,d});
-    });
-   }
-   near.sort((a,b)=>a.d-b.d).slice(0,4).forEach(({j,d})=>{
-    const a=projected[i],b=projected[j],front=(a.z+b.z)>0?1:.52;
-    const alpha=(.08+(1-d/(cell*.94))*.24)*front;
-    ctx.strokeStyle="rgba(67,194,255,"+alpha+")";ctx.lineWidth=.45+(1-d/(cell*.94))*.65;
-    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
-   });
-  });
-  // Bright cortical folds: curved gyri-like traces travel over each hemisphere, not circular orbital rings.
-  for(let side of [-1,1])for(let k=0;k<11;k++){
-   const phase=time*(k%2?.12:-.095)+k*.77+side*.15;
-   ctx.beginPath();
-   for(let j=0;j<=150;j++){
-    const v=-1+j/150*2;
-    const wave=Math.sin(v*9+phase)*.035+Math.sin(v*17-phase*.7)*.018;
-    const y=v*.79,span=Math.sqrt(Math.max(.04,1-v*v));
-    const x=side*(.255+(.49*span+wave)*Math.cos(k*.39+v*2.5+phase*.12));
-    const z=(.48*span+wave)*Math.sin(k*.39+v*2.5+phase*.12);
-    const xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot);
-    const yr=y*Math.cos(tilt)-zr*Math.sin(tilt),zz=y*Math.sin(tilt)+zr*Math.cos(tilt);
-    const pp=2.8/(2.8+zz*.24),px=cx+xr*R*pp,py=cy+yr*R*pp;
-    if(j===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
-   }
-   ctx.strokeStyle=k%4===0?"rgba(151,239,255,.27)":"rgba(41,166,255,.13)";
-   ctx.lineWidth=k%4===0?1.05:.62;ctx.stroke();
-  }
-  // Neural points and tiny electrical sparks, depth-weighted.
-  projected.forEach(p=>{
-   const front=.3+Math.max(0,p.z)*.7,tw=.62+.38*Math.sin(time*2.1+p.phase);
-   glow(p.x,p.y,p.size*4.2,palette[p.tone],.13*front*tw);
-   ctx.globalAlpha=(.28+front*.68)*tw;ctx.fillStyle=palette[p.tone];
-   ctx.beginPath();ctx.arc(p.x,p.y,p.size*(.5+front*.62),0,TAU);ctx.fill();ctx.globalAlpha=1;
-  });
-  // Central inter-hemispheric fissure: a narrow, shifting dark cleft with bright synaptic activity along its edges.
-  const fissure=ctx.createLinearGradient(cx-R*.055,cy,cx+R*.055,cy);
-  fissure.addColorStop(0,"rgba(0,4,13,0)");fissure.addColorStop(.48,"rgba(0,3,11,.38)");fissure.addColorStop(1,"rgba(0,4,13,0)");
-  ctx.fillStyle=fissure;ctx.fillRect(cx-R*.06,cy-R*.76,R*.12,R*1.5);
-  for(let i=0;i<24;i++){
-   const yy=cy-R*.68+i/23*R*1.36,xx=cx+Math.sin(time*.8+i*1.7)*R*.012;
-   glow(xx,yy,rand(3,8),"#a8f4ff",.2+.18*Math.sin(time*2+i));
-  }
-  // Pulsing thought-energy nucleus, embedded in the brain rather than a separate sphere.
-  const pulse=1+Math.sin(time*2.2)*.07;
-  glow(cx,cy-R*.04,R*.34,"#087dff",.13);glow(cx,cy-R*.04,R*.17,"#27caff",.16);
-  for(let i=0;i<7;i++){
-   const a=time*.22+i*TAU/7,xx=cx+Math.cos(a)*R*.19,yy=cy-R*.04+Math.sin(a)*R*.27;
-   glow(xx,yy,R*.07,"#65ddff",.18);
-  }
-  if(pointer.active)glow(pointer.x,pointer.y,58,"#31bfff",.07);
-  if(!reduced)raf=requestAnimationFrame(draw);
+  // Concentrated bright thought-core, with electrical pulses radiating into the network.
+  const pulse=1+Math.sin(time*2)*.1;glow(cx,cy,R*.6,"#087dff",.14);glow(cx,cy,R*.34,"#19bfff",.2);
+  for(let k=0;k<11;k++){const a=time*.24+k*TAU/11,rr=R*(.05+.2*(.5+.5*Math.sin(k*5.3)));glow(cx+Math.cos(a)*rr,cy+Math.sin(a*1.2)*rr*.7,R*.1,"#70eaff",.22)}
+  const core=ctx.createRadialGradient(cx-R*.02,cy-R*.03,1,cx,cy,R*.25*pulse);core.addColorStop(0,"rgba(245,255,255,.98)");core.addColorStop(.18,"rgba(139,241,255,.86)");core.addColorStop(.5,"rgba(38,178,255,.42)");core.addColorStop(1,"rgba(20,105,255,0)");ctx.fillStyle=core;ctx.beginPath();ctx.arc(cx,cy,R*.27*pulse,0,TAU);ctx.fill();
+  out.forEach(p=>{const front=.3+Math.max(0,p.z)*.7,tw=.65+.35*Math.sin(time*2.4+p.phase);glow(p.x,p.y,p.size*4,palette[p.tone],.14*front*tw);ctx.globalAlpha=(.35+front*.6)*tw;ctx.fillStyle=palette[p.tone];ctx.beginPath();ctx.arc(p.x,p.y,p.size*(.5+front*.6),0,TAU);ctx.fill();ctx.globalAlpha=1});
+  if(pointer.active)glow(pointer.x,pointer.y,60,"#35cfff",.07);if(!reduced)raf=requestAnimationFrame(draw);
  }
  function move(e){const b=stage.getBoundingClientRect();pointer.x=e.clientX-b.left;pointer.y=e.clientY-b.top;pointer.active=true}
  stage.addEventListener("pointermove",move,{passive:true});stage.addEventListener("pointerleave",()=>pointer.active=false,{passive:true});
  if("ResizeObserver"in window)new ResizeObserver(()=>{resize();if(reduced)draw(0)}).observe(stage);else window.addEventListener("resize",()=>{resize();if(reduced)draw(0)});
  resize();if(reduced)draw(0);else raf=requestAnimationFrame(draw);
- document.addEventListener("visibilitychange",()=>{if(document.hidden)cancelAnimationFrame(raf);else if(!reduced){last=0;raf=requestAnimationFrame(draw)}});
+ document.addEventListener("visibilitychange",()=>{if(document.hidden)cancelAnimationFrame(raf);else if(!reduced)raf=requestAnimationFrame(draw)});
 })();</script>>>
 
 </body></html>
