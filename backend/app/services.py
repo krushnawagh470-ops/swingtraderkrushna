@@ -17,22 +17,39 @@ def _quote_is_valid(item: dict[str, Any]) -> bool:
         return bid > 0 and ask > 0
     except (TypeError, ValueError): return False
 
+async def _fetch_one_quote(client: httpx.AsyncClient, symbol: str) -> dict[str, Any] | None:
+    response = await client.get(f"{BIQUOTE_BASE}/{symbol}")
+    response.raise_for_status()
+    payload = response.json()
+    if isinstance(payload, dict):
+        if isinstance(payload.get("data"), dict): payload = payload["data"]
+        payload.setdefault("symbol", symbol)
+        return payload if _quote_is_valid(payload) else None
+    return None
+
 async def get_market_quotes(symbols: list[str]) -> list[dict[str, Any]]:
     params = [("symbols", symbol) for symbol in symbols]
     async with httpx.AsyncClient(timeout=12, headers={"Accept": "application/json"}) as client:
         response = await client.get(f"{BIQUOTE_BASE}/latest", params=params)
-        response.raise_for_status(); payload = response.json()
-    if isinstance(payload, list): rows = payload
-    elif isinstance(payload, dict) and isinstance(payload.get("items"), list): rows = payload["items"]
-    elif isinstance(payload, dict) and isinstance(payload.get("ticks"), list): rows = payload["ticks"]
-    elif isinstance(payload, dict): rows = [dict(value, symbol=key) for key, value in payload.items() if isinstance(value, dict)]
-    else: rows = []
-    wanted = set(symbols); by_symbol: dict[str, dict[str, Any]] = {}
-    for row in rows:
-        if isinstance(row, dict):
-            symbol = str(row.get("symbol", "")).upper()
-            if symbol in wanted and _quote_is_valid(row): by_symbol[symbol] = row
-    return [{"symbol": s, **by_symbol[s]} if s in by_symbol else {"symbol": s, "available": False} for s in symbols]
+        response.raise_for_status()
+        payload = response.json()
+        if isinstance(payload, list): rows = payload
+        elif isinstance(payload, dict) and isinstance(payload.get("items"), list): rows = payload["items"]
+        elif isinstance(payload, dict) and isinstance(payload.get("ticks"), list): rows = payload["ticks"]
+        elif isinstance(payload, dict): rows = [dict(value, symbol=key) for key, value in payload.items() if isinstance(value, dict)]
+        else: rows = []
+        wanted = set(symbols)
+        by_symbol: dict[str, dict[str, Any]] = {}
+        for row in rows:
+            if isinstance(row, dict):
+                symbol = str(row.get("symbol", "")).upper()
+                if symbol in wanted and _quote_is_valid(row): by_symbol[symbol] = row
+        missing = [symbol for symbol in symbols if symbol not in by_symbol]
+        if missing:
+            results = await asyncio.gather(*[_fetch_one_quote(client, symbol) for symbol in missing], return_exceptions=True)
+            for symbol, result in zip(missing, results):
+                if isinstance(result, dict): by_symbol[symbol] = result
+    return [{"symbol": symbol, **by_symbol[symbol]} if symbol in by_symbol else {"symbol": symbol, "available": False} for symbol in symbols]
 
 def _text(node: ET.Element, name: str) -> str:
     child = node.find(name)
