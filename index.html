@@ -148,6 +148,10 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 
 /* Private admin page: hide configuration controls from the everyday terminal. */
 #mobileNav button[data-page="settings"], .side [data-page="settings"], #aiAgentChoices{display:none!important}
+
+/* Hard separation: admin controls are rendered only on the explicit admin URL. */
+body:not(.circuit-admin-mode) #settings{display:none!important}
+body.circuit-admin-mode #settings.active{display:block!important}
 </style></head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -961,4 +965,12 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 })();
 </script>
 
+
+<script>
+(function(){
+ const isAdmin=new URLSearchParams(window.location.search).get("admin")==="1";
+ if(isAdmin){document.body.classList.add("circuit-admin-mode");if(typeof showPage==="function")showPage("settings");const t=document.getElementById("pageTitle");if(t)t.textContent="Private Admin";}
+ else{document.body.classList.remove("circuit-admin-mode");document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id==="overview"));const t=document.getElementById("pageTitle");if(t)t.textContent="CIRCUIT";}
+})();
+</script>
 </body></html>
