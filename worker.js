@@ -121,6 +121,7 @@ async function memoryRoute(request, env, url) {
     if (supplied.length < 1 || supplied.length > 256) return json({ error: "Enter your memory passphrase." }, 400);
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
     const ipHash = await sha256Hex(ip + ":" + env.CIRCUIT_MEMORY_JWT_SECRET);
+    await env.DB.prepare("DELETE FROM memory_login_attempts WHERE attempted_at < ?").bind(Date.now()-86400000).run();
     const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM memory_login_attempts WHERE ip_hash = ? AND attempted_at > ?").bind(ipHash, Date.now()-900000).first();
     if (Number(recent?.n || 0) >= 5) return json({ error: "Too many login attempts. Wait 15 minutes and try again." }, 429);
     if (supplied !== env.CIRCUIT_MEMORY_PASSWORD) {
