@@ -1154,12 +1154,25 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
       const learningContext=circuitLearningContext().slice(0,3500);
       const outgoing=[...terminalContext.context,{role:"user",content:prompt+requestRules+liveNewsContext+learningContext}];
       status.textContent="Sending to connected AI…";
-      const response = await fetch(url + "/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: outgoing }),
-        signal: activeRequestController.signal
-      });
+      let workerTimedOut=false;
+      const workerTimeoutId=window.setTimeout(function(){
+        workerTimedOut=true;
+        if(activeRequestController) activeRequestController.abort();
+      },30000);
+      let response;
+      try {
+        response = await fetch(url + "/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: outgoing }),
+          signal: activeRequestController.signal
+        });
+      } catch(workerError) {
+        if(workerTimedOut) throw new Error("Secure Worker did not respond within 30 seconds. Check the Worker/provider connection.");
+        throw workerError;
+      } finally {
+        window.clearTimeout(workerTimeoutId);
+      }
       const rawResponse = await response.text();
       let data = {};
       try { data = rawResponse ? JSON.parse(rawResponse) : {}; }
