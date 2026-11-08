@@ -750,9 +750,9 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     try{const response=await fetch("https://biquote.io/api"+path,{cache:"no-store",signal:controller.signal});if(!response.ok)throw Error("HTTP "+response.status);return await response.json()}
     finally{clearTimeout(timer)}
   }
-  function circuitContextMessage(label,value){
+  function circuitContextMessage(label,value,maxChars=1750){
     const content="CIRCUIT SNAPSHOT | "+label+" | "+new Date().toISOString()+"\n"+JSON.stringify(value);
-    return {role:"user",content:content.slice(0,1750)};
+    return {role:"user",content:content.slice(0,maxChars)};
   }
   async function buildTerminalContext(symbol){
     const frames=[["5m","5m"],["15m","15m"],["1H","1h"],["4H","4h"],["1D","1d"]];
@@ -788,7 +788,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     const rawNews=[];ng.forEach(g=>{if(Array.isArray(g))rawNews.push(...g);else if(Array.isArray(g?.items))rawNews.push(...g.items)});
     const seen=new Set(),news=rawNews.filter(x=>{const k=x.url||x.link||x.title;if(!k||seen.has(k))return false;seen.add(k);return true}).slice(0,7).map(x=>pick({title:x.title,source:x.publisher||x.source||x.provider,date:x.publishedDate||x.publishedAt||x.date,summary:String(x.description||x.summary||"").slice(0,100)},["title","source","date","summary"]));
     const context=[
-      circuitContextMessage("ALL WATCHLIST LIVE QUOTES · MOVERS · BREADTH",marketData),
+      circuitContextMessage("ALL WATCHLIST LIVE QUOTES · MOVERS · BREADTH",marketData,3000),
       circuitContextMessage("UPCOMING ECONOMIC CALENDAR · FOREX FACTORY",calendarData),
       circuitContextMessage("LATEST MARKET NEWS",news.length?news:{unavailable:"No headlines returned"})
     ];
