@@ -651,7 +651,7 @@ async function loadNativeNews(force=false){
    const priority=(text.match(new RegExp(GLOBAL_MAJOR_PRIORITY.source,"ig"))||[]).length;
    unique.set(url,{...x,priority});
   });
-  const rows=[...unique.values()].sort((a,b)=>b.priority-a.priority||b.date-a.date).slice(0,5);
+  const rows=[...unique.values()].sort((a,b)=>b.date-a.date).slice(0,5);
   if(!rows.length)throw Error("No major global stories matched the current topic filter");
   el.replaceChildren();
   rows.forEach((x,index)=>{
@@ -679,6 +679,8 @@ async function loadNativeNews(force=false){
  }finally{newsBusy=false}
 }
 window.loadNativeNews=loadNativeNews;
+// Hard limit: keep the News Desk DOM at five newest rendered stories, regardless of which loader updates it.
+(function(){const clamp=()=>{const list=document.getElementById("nativeNews");if(!list)return;const cards=[...list.children].filter(x=>x.matches("article,.native-news-item"));cards.sort((a,b)=>{const ta=Date.parse(a.querySelector(".news-story-source")?.lastElementChild?.textContent||a.querySelector(".q-meta")?.textContent||"");const tb=Date.parse(b.querySelector(".news-story-source")?.lastElementChild?.textContent||b.querySelector(".q-meta")?.textContent||"");return (Number.isFinite(tb)?tb:0)-(Number.isFinite(ta)?ta:0)});cards.slice(5).forEach(x=>x.remove())};const start=()=>{const list=document.getElementById("nativeNews");if(!list){setTimeout(start,250);return}new MutationObserver(clamp).observe(list,{childList:true});clamp()};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start()})();
 
 async function loadNativeMovers(){const el=document.getElementById("nativeMovers");if(!el)return;try{const [g,l]=await Promise.all([apiJSON("/market/gainers?limit=8"),apiJSON("/market/losers?limit=8")]);const gain=Array.isArray(g.items)?g.items:[],lose=Array.isArray(l.items)?l.items:[];const all=[...gain.map(x=>({...x,side:"Gainer"})),...lose.map(x=>({...x,side:"Loser"}))];el.innerHTML='<table class="native-table"><thead><tr><th>Instrument</th><th>Side</th><th>Last price</th><th>Change</th></tr></thead><tbody>'+all.map(x=>'<tr><td>'+esc(x.symbol)+'</td><td>'+esc(x.side)+'</td><td>'+esc(x.lastPrice)+'</td><td>'+esc(Number(x.changePercent).toFixed(2))+'%</td></tr>').join("")+'</tbody></table>'}catch(e){el.textContent="Market movers unavailable: "+e.message}}
 async function loadNativeSummary(){const el=document.getElementById("nativeMarketSummary");if(!el)return;try{const d=await apiJSON("/market/summary");el.textContent="Market breadth · "+JSON.stringify(d)}catch(e){el.textContent="Market breadth unavailable: "+e.message}}
@@ -1638,7 +1640,7 @@ const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisR
    let items=results.flatMap(x=>x.status==="fulfilled"?x.value:[]);
    if(spec.filter)items=items.filter(x=>spec.filter.test((x.title||"")+" "+(x.description||"")));
    const unique=new Map();items.forEach(x=>{if(x.title&&x.link&&!unique.has(x.link))unique.set(x.link,x)});
-   const rows=[...unique.values()].sort((a,b)=>b.date-a.date).slice(0,40);
+   const rows=[...unique.values()].sort((a,b)=>b.date-a.date).slice(0,5);
    if(!rows.length)throw Error("Publisher RSS feeds could not be reached");
    el.replaceChildren();
    rows.forEach(x=>{const a=document.createElement("article");a.className="native-news-item";const b=document.createElement("b");b.textContent=x.title;a.appendChild(b);if(x.description){const p=document.createElement("p");p.textContent=x.description;a.appendChild(p)}const f=document.createElement("span");f.className="q-meta";f.textContent=x.source+" · "+terminalIST(x.date);a.appendChild(f);el.appendChild(a)});
