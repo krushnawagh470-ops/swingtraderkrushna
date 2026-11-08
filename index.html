@@ -760,12 +760,12 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     const symbols=[...new Set([...Object.values(MARKET_WATCHLISTS).flat().map(item=>item[0]),"DXY"])];
     const tasks=await Promise.allSettled([
       circuitFetchJson("/latest?"+symbols.map(x=>"symbols="+encodeURIComponent(x)).join("&"),9000),
-      Promise.all([circuitFetchJson("/market/gainers?limit=8"),circuitFetchJson("/market/losers?limit=8"),circuitFetchJson("/market/summary")]),
-      Promise.all([
+      Promise.allSettled([circuitFetchJson("/market/gainers?limit=8"),circuitFetchJson("/market/losers?limit=8"),circuitFetchJson("/market/summary")]),
+      Promise.allSettled([
         fetch("./data/calendar.json?ts="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("calendar snapshot HTTP "+r.status);return r.json()}),
         fetch("./data/forex_factory_calendar.json?ts="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("Forex Factory snapshot HTTP "+r.status);return r.json()})
       ]),
-      Promise.all([
+      Promise.allSettled([
         circuitFetchJson("/news/market?language=en&country=US&maxResults=12"),
         circuitFetchJson("/news/market?symbol=EURUSD&language=en&maxResults=8"),
         circuitFetchJson("/news/market?symbol=XAUUSD&language=en&maxResults=8"),
@@ -775,19 +775,21 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     ]);
     const value=i=>tasks[i].status==="fulfilled"?tasks[i].value:{unavailable:String(tasks[i].reason?.message||"feed unavailable")};
     const quoteRaw=value(0),quoteRows=Array.isArray(quoteRaw)?quoteRaw:(quoteRaw.items||quoteRaw.ticks||Object.values(quoteRaw).filter(x=>x&&typeof x==="object"&&x.symbol));
-    const marketData={requestedInstrumentCount:symbols.length,allWatchlistQuotes:quoteRows,terminalWatchlists:MARKET_WATCHLISTS,marketMoversAndBreadth:value(1)};
-    const cal=value(2);
+    const groupData=i=>value(i).map(x=>x.status==="fulfilled"?x.value:{unavailable:String(x.reason?.message||"feed unavailable")});
+    const marketGroup=groupData(1),calendarGroup=groupData(2),newsRaw=groupData(3);
+    const marketData={requestedInstrumentCount:symbols.length,allWatchlistQuotes:quoteRows,quoteFeedStatus:tasks[0].status==="fulfilled"?"received":"unavailable: "+String(tasks[0].reason?.message||"feed unavailable"),terminalWatchlists:MARKET_WATCHLISTS,marketMoversAndBreadth:{gainers:marketGroup[0],losers:marketGroup[1],summary:marketGroup[2]}};
+    const cal=calendarGroup;
     const calendarData={
-      economicCalendar:cal&&cal[0]&&Array.isArray(cal[0].events)?cal[0].events.slice(0,35):cal&&cal[0],
-      forexFactory:cal&&cal[1]?(Array.isArray(cal[1])?cal[1]:(cal[1].events||[])).slice(0,45):cal&&cal[1]
+      economicCalendar:cal[0]&&Array.isArray(cal[0].events)?cal[0].events.slice(0,35):cal[0],
+      forexFactory:cal[1]?(Array.isArray(cal[1])?cal[1]:(cal[1].events||[])).slice(0,45):cal[1]
     };
-    const newsRaw=value(3),newsItems=[];
-    if(Array.isArray(newsRaw))newsRaw.forEach(group=>{if(Array.isArray(group))newsItems.push(...group);else if(Array.isArray(group?.items))newsItems.push(...group.items)});
+    const newsItems=[];
+    newsRaw.forEach(group=>{if(group&&Array.isArray(group.items))newsItems.push(...group.items);else if(Array.isArray(group))newsItems.push(...group)});
     const seenNews=new Set(),news= newsItems.filter(x=>{const k=x.url||x.link||x.title;if(!k||seenNews.has(k))return false;seenNews.add(k);return true}).slice(0,25).map(x=>({title:x.title,source:x.publisher||x.source||x.provider||"Source not supplied",published:x.publishedDate||x.publishedAt||x.date||null,summary:String(x.description||x.summary||"").slice(0,180),url:x.url||x.link||null}));
     const context=[
       circuitContextMessage("LIVE QUOTES · WATCHLISTS · MARKET MOVERS · MARKET BREADTH",marketData),
       circuitContextMessage("ECONOMIC CALENDAR · FOREX FACTORY EVENTS",calendarData),
-      circuitContextMessage("LIVE MARKET NEWS · GLOBAL / FX / GOLD / CRYPTO",news.length?news:{unavailable:newsRaw&&newsRaw.unavailable||"No current headlines returned",feeds:newsRaw})
+      circuitContextMessage("LIVE MARKET NEWS · GLOBAL / FX / GOLD / CRYPTO",news.length?news:{unavailable:"No current headlines returned",feeds:newsRaw})
     ];
     let candleCount=0;
     tasks.slice(4).forEach((result,i)=>{
