@@ -248,6 +248,13 @@ body.circuit-admin-mode #settings.active{display:block!important}
 @media(prefers-reduced-motion:reduce){#ai .ai-agent-visual:after{animation:none}}
 </style>
 
+
+<style id="circuit-half-earth-core">
+/* Square 3D hemisphere module; same graphite, steel-blue and cyan palette. */
+#ai .ai-agent-visual.circuit-stage{aspect-ratio:1/1;height:clamp(440px,64vh,680px);min-height:440px;max-height:680px;max-width:100%;margin-inline:auto;background:radial-gradient(ellipse at 50% 48%,#0d1b2b 0%,#08111d 48%,#050a11 100%)!important}
+#ai #circuitNeuralCanvas{opacity:1;filter:saturate(.78) contrast(1.06)}
+@media(max-width:720px){#ai .ai-agent-visual.circuit-stage{height:auto;min-height:0;max-height:none;aspect-ratio:1/1}}
+</style>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -1605,84 +1612,82 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 </script>
 
 <script>
-/* CIRCUIT 3D cerebral neural network — twin folded hemispheres with moving synaptic impulses. */
+/* CIRCUIT 3D half-earth core — rotating hemisphere with moving neutron particles. */
 (function(){
  const stage=document.getElementById("aiAgentVisual"),canvas=document.getElementById("circuitNeuralCanvas");
- if(stage&&stage.querySelector(".circuit-reference-video"))return;
  if(!stage||!canvas||canvas.dataset.ready)return;canvas.dataset.ready="1";
  const ctx=canvas.getContext("2d");if(!ctx)return;
  const TAU=Math.PI*2,rand=(a,b)=>a+Math.random()*(b-a),reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
  const palette=["#e9ffff","#c7f8ff","#8beaff","#4bd5ff","#159dff","#1763dc"];
- // Offset ellipsoidal lobes create the same asymmetrical, folded cloud silhouette.
- const lobes=[
-  // Paired cerebral hemispheres: frontal, parietal, temporal and occipital folds.
-  {x:-.205,y:-.205,z:0,rx:.265,ry:.245,rz:.245,n:.18},
-  {x:-.275,y:.005,z:.015,rx:.245,ry:.255,rz:.255,n:.18},
-  {x:-.205,y:.205,z:.015,rx:.265,ry:.205,rz:.235,n:.17},
-  {x:-.405,y:.055,z:-.015,rx:.145,ry:.205,rz:.185,n:.12},
-  {x:.205,y:-.205,z:0,rx:.265,ry:.245,rz:.245,n:.18},
-  {x:.275,y:.005,z:.015,rx:.245,ry:.255,rz:.255,n:.18},
-  {x:.205,y:.205,z:.015,rx:.265,ry:.205,rz:.235,n:.17},
-  {x:.405,y:.055,z:-.015,rx:.145,ry:.205,rz:.185,n:.12}
- ];
- let w=0,h=0,dpr=1,pts=[],dust=[],links=[],threads=[],signals=[],raf=0,visible=true;
+ let w=0,h=0,dpr=1,particles=[],dust=[],raf=0,visible=true;
  function resize(){
-  const b=stage.getBoundingClientRect();w=Math.max(280,b.width);h=Math.max(220,b.height);dpr=Math.min(1.7,devicePixelRatio||1);
+  const b=stage.getBoundingClientRect();w=Math.max(260,b.width);h=Math.max(260,b.height);dpr=Math.min(1.6,devicePixelRatio||1);
   canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
-  pts=[];links=[];threads=[];
-  const total=Math.min(2300,Math.max(1350,Math.round(w*h/95)));
-  for(let i=0;i<total;i++){
-   const L=lobes[Math.floor(Math.random()*lobes.length)],a=rand(0,TAU),v=rand(-1,1),b=Math.acos(v),rr=.72+Math.random()*.34;
-   const ripple=1+.13*Math.sin(a*5+b*4)+.09*Math.cos(a*8-b*3)+.06*Math.sin(b*11+a*2);
-   pts.push({x:L.x+Math.sin(b)*Math.cos(a)*L.rx*rr*ripple,y:L.y+Math.cos(b)*L.ry*rr*ripple,z:L.z+Math.sin(b)*Math.sin(a)*L.rz*rr*ripple,phase:rand(0,TAU),size:rand(.35,1.25),tone:Math.floor(rand(0,palette.length)),lobe:lobes.indexOf(L)});
-  }
-  // Add interior bridges so the mesh reads as a volumetric neural tangle, not a hollow ball.
-  for(let i=0;i<260;i++){const L=lobes[Math.floor(Math.random()*lobes.length)],a=rand(0,TAU),v=rand(-1,1),b=Math.acos(v),rr=Math.pow(Math.random(),.55)*.8;pts.push({x:L.x+Math.sin(b)*Math.cos(a)*L.rx*rr,y:L.y+Math.cos(b)*L.ry*rr,z:L.z+Math.sin(b)*Math.sin(a)*L.rz*rr,phase:rand(0,TAU),size:rand(.25,.8),tone:Math.floor(rand(1,5)),lobe:lobes.indexOf(L)})}
-  // Spatial buckets keep the dense local mesh efficient on mobile.
-  const cell=.105,buckets=new Map(),key=(x,y,z)=>Math.floor(x/cell)+":"+Math.floor(y/cell)+":"+Math.floor(z/cell);
-  pts.forEach((p,i)=>{const k=key(p.x,p.y,p.z);if(!buckets.has(k))buckets.set(k,[]);buckets.get(k).push(i)});
-  pts.forEach((p,i)=>{const gx=Math.floor(p.x/cell),gy=Math.floor(p.y/cell),gz=Math.floor(p.z/cell),cand=[];
-   for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)(buckets.get((gx+x)+":"+(gy+y)+":"+(gz+z))||[]).forEach(j=>{if(j<=i)return;const q=pts[j],d=Math.hypot(p.x-q.x,p.y-q.y,p.z-q.z);if(d<cell*.92)cand.push({j,d})});
-   cand.sort((a,b)=>a.d-b.d).slice(0,3).forEach(o=>links.push({a:i,b:o.j,d:o.d}));
-  });
-  // Fine branching paths weave across and between the separate lobes.
-  for(let k=0;k<58;k++){const L=lobes[k%lobes.length],a=rand(0,TAU),len=rand(.18,.65),phase=rand(0,TAU),path=[];for(let j=0;j<42;j++){const q=j/41,ang=a+q*len*5+Math.sin(q*13+phase)*.22,rad=.25+.72*Math.sin(q*Math.PI);path.push({x:L.x+Math.cos(ang)*L.rx*rad,y:L.y+(q-.5)*L.ry*1.8+Math.sin(q*18+phase)*.025,z:L.z+Math.sin(ang)*L.rz*rad})}threads.push({path,bright:k%7===0,phase})}
-  dust=Array.from({length:Math.round(w*h/360)},()=>({x:rand(0,w),y:rand(0,h),r:rand(.25,.85),p:rand(0,TAU)}));
-  signals=Array.from({length:Math.min(190,Math.max(90,Math.round(w/3)))},()=>({edge:Math.floor(Math.random()*links.length),speed:rand(.10,.24),phase:rand(0,1),size:rand(.7,1.55)}));
+  particles=Array.from({length:Math.max(90,Math.min(210,Math.round(w/3)))},(_,i)=>({a:rand(0,TAU),lat:rand(-1.35,1.35),speed:rand(.18,.62)*(i%2?1:-1),phase:rand(0,TAU),size:rand(.7,1.7),tone:Math.floor(rand(0,palette.length)),orbit:i%4}));
+  dust=Array.from({length:Math.round(w*h/500)},()=>({x:rand(0,w),y:rand(0,h),p:rand(0,TAU),r:rand(.3,.9)}));
  }
- function glow(x,y,r,color,alpha){if(r<=0)return;const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,"rgba(0,0,0,0)");ctx.globalAlpha=alpha;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1}
+ function glow(x,y,r,color,alpha){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,"rgba(0,0,0,0)");ctx.globalAlpha=alpha;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1}
  function draw(ms){
   if(!stage.isConnected||!visible)return;
-  const t=ms/1000,cx=w*.5,cy=h*.49,R=Math.min(w*.78,h*1.12);
+  const t=ms/1000,cx=w*.5,cy=h*.53,rx=Math.min(w*.39,h*.39),ry=rx*.91;
   const mode=["listening","thinking","researching","executing","reviewing"].find(n=>stage.classList.contains("state-"+n))||"idle";
-  const modeSpeed={idle:.65,listening:1.35,thinking:1.8,researching:2.15,executing:2.6,reviewing:1.05,completed:.7,error:.5}[mode];
-  const rot=t*.12*modeSpeed;
-  // Reference has a dark technical grid and deliberate glow/fade pulses.
-  const cycle=(t%19)/19,fade=cycle<.12?cycle/.12:cycle>.88?(1-cycle)/.12:1,energy=.12+.88*Math.min(1,fade);
-  ctx.clearRect(0,0,w,h);ctx.fillStyle="#02070d";ctx.fillRect(0,0,w,h);
-  ctx.strokeStyle="rgba(68,111,139,.105)";ctx.lineWidth=.55;
-  for(let x=0;x<w;x+=24){ctx.beginPath();ctx.moveTo(x,4);ctx.lineTo(x,h);ctx.stroke()}
-  for(let y=12;y<h;y+=24){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
-  // Subtle frame markings echo the source monitor without competing with the core.
-  ctx.strokeStyle="rgba(101,151,178,.32)";ctx.lineWidth=1;ctx.strokeRect(7,8,w-14,h-16);
-  ctx.fillStyle="rgba(118,164,189,.55)";ctx.font="7px monospace";ctx.fillText("NEURAL PROCESSING  /  LIVE VISUALIZATION",14,20);
-  ctx.fillText("CORE STATUS  "+(energy>.55?"ACTIVE":"LOW SIGNAL"),w-150,20);
-  dust.forEach(p=>{ctx.globalAlpha=.12+.16*(.5+.5*Math.sin(t+p.p));ctx.fillStyle="#69cfff";ctx.fillRect(p.x,p.y,1,1)});ctx.globalAlpha=1;
-  const projected=pts.map(p=>{const breath=1+.025*Math.sin(t*1.3+p.phase),x=p.x*breath,z=p.z*breath,y=p.y*breath,xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot),pers=2.8/(2.8+zr*.38);return{x:cx+xr*R*pers,y:cy+y*R*.88*pers,z:zr,size:p.size*pers,phase:p.phase,tone:p.tone}});
-  glow(cx,cy,R*.75,"#007cff",.11*energy);
-  // Connections are irregular and local; the silhouette is built from overlapping lobes.
-  links.forEach((e,i)=>{const a=projected[e.a],b=projected[e.b],depth=.45+Math.max(0,(a.z+b.z)*.5)*.7;ctx.strokeStyle="rgba(49,174,255,"+((.12+(1-e.d/.097)*.24)*energy*depth)+")";ctx.lineWidth=.35+(1-e.d/.097)*.55;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()});
-  // Bright electrical impulses travel along the 3D synapse network.
-  signals.forEach(p=>{const e=links[p.edge];if(!e)return;const a=projected[e.a],b=projected[e.b],q=(p.phase+t*p.speed)%1,x=a.x+(b.x-a.x)*q,y=a.y+(b.y-a.y)*q;glow(x,y,5.5*p.size,"#8cecff",.78*energy);ctx.fillStyle="rgba(235,255,255,"+(.92*energy)+")";ctx.beginPath();ctx.arc(x,y,1.05*p.size,0,TAU);ctx.fill()});
-  threads.forEach((th,i)=>{const ph=t*.42+th.phase;ctx.beginPath();th.path.forEach((p,j)=>{const q=j/(th.path.length-1),x=p.x+Math.sin(ph+q*15)*.012,z=p.z+Math.cos(ph+q*12)*.012,xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot),pers=2.8/(2.8+zr*.38),px=cx+xr*R*pers,py=cy+p.y*R*.88*pers;if(!j)ctx.moveTo(px,py);else ctx.lineTo(px,py)});ctx.strokeStyle=th.bright?"rgba(175,246,255,"+(.42*energy)+")":"rgba(36,155,255,"+(.18*energy)+")";ctx.lineWidth=th.bright?1.05:.55;ctx.stroke()});
-  // Dense, almost-white electrical nucleus with short radial filaments.
-  const pulse=1+({idle:.06,listening:.13,thinking:.2,researching:.23,executing:.28,reviewing:.11,completed:.08,error:.04}[mode]) * Math.sin(t*(mode==="idle"?1.4:3.2));const coreR=R*.16*pulse;
-  glow(cx,cy,coreR*3.6,"#087bff",(.25+(modeSpeed*.045))*energy);glow(cx,cy,coreR*2.1,"#39d9ff",(.38+(modeSpeed*.045))*energy);
-  for(let k=0;k<54;k++){const a=k*TAU/54+t*.09,len=coreR*(1.25+(k%5)*.22),x1=cx+Math.cos(a)*coreR*.34,y1=cy+Math.sin(a)*coreR*.34,x2=cx+Math.cos(a)*len,y2=cy+Math.sin(a)*len*.72;ctx.strokeStyle="rgba(116,230,255,"+(.22*energy)+")";ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
-  const g=ctx.createRadialGradient(cx-coreR*.2,cy-coreR*.22,1,cx,cy,coreR*1.65);g.addColorStop(0,"rgba(255,255,255,"+(.98*energy)+")");g.addColorStop(.18,"rgba(190,250,255,"+(.9*energy)+")");g.addColorStop(.48,"rgba(49,194,255,"+(.62*energy)+")");g.addColorStop(1,"rgba(0,110,255,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,coreR*1.7,0,TAU);ctx.fill();
-  projected.forEach(p=>{const tw=.55+.45*Math.sin(t*2.1+p.phase),front=.45+Math.max(0,p.z)*.55;glow(p.x,p.y,p.size*3,palette[p.tone],.17*energy*tw*front);ctx.globalAlpha=(.3+front*.65)*tw*energy;ctx.fillStyle=palette[p.tone];ctx.beginPath();ctx.arc(p.x,p.y,p.size*(.55+front*.55),0,TAU);ctx.fill();ctx.globalAlpha=1});
-  // Tiny edge sparks and intermittent electrical branches.
-  for(let k=0;k<18;k++){const a=t*.18+k*TAU/18,rr=R*(.52+.06*Math.sin(t*1.7+k));const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr*.63;glow(x,y,rand(2,4),"#39bfff",.12*energy)}
+  const activity={idle:.75,listening:1.25,thinking:1.65,researching:1.9,executing:2.2,reviewing:1.1,completed:.8,error:.55}[mode];
+  ctx.clearRect(0,0,w,h);ctx.fillStyle="#050a11";ctx.fillRect(0,0,w,h);
+  dust.forEach(p=>{ctx.globalAlpha=.12+.18*(.5+.5*Math.sin(t+p.p));ctx.fillStyle="#69cfff";ctx.fillRect(p.x,p.y,1,1)});ctx.globalAlpha=1;
+  // Technical halo behind the hemisphere.
+  glow(cx,cy,rx*1.55,"#087bff",.10);
+  ctx.strokeStyle="rgba(92,177,220,.18)";ctx.lineWidth=1;
+  [1.18,1.32,1.47].forEach(k=>{ctx.beginPath();ctx.ellipse(cx,cy,rx*k,ry*k,0,Math.PI,TAU);ctx.stroke()});
+  // Half-earth body: luminous hemisphere with a clean equatorial cut.
+  const body=ctx.createRadialGradient(cx-rx*.34,cy-ry*.58,rx*.04,cx,cy,rx*1.18);
+  body.addColorStop(0,"#174c70");body.addColorStop(.42,"#0b2945");body.addColorStop(.82,"#07182b");body.addColorStop(1,"#020811");
+  ctx.save();ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,Math.PI,TAU);ctx.closePath();ctx.fillStyle=body;ctx.fill();
+  ctx.clip();
+  // Rotating longitude meridians and curved latitude bands.
+  const spin=t*.19*activity;
+  ctx.lineWidth=1;
+  for(let j=-4;j<=4;j++){
+   const k=j/5,wide=Math.sqrt(1-k*k);
+   ctx.beginPath();ctx.ellipse(cx,cy-ry*.5,rx*wide,ry*.5*wide,0,Math.PI,TAU);
+   ctx.strokeStyle=j===0?"rgba(116,230,255,.42)":"rgba(83,184,235,.2)";ctx.stroke();
+  }
+  for(let j=0;j<9;j++){
+   const a=spin+j*Math.PI/9;
+   ctx.beginPath();ctx.ellipse(cx,cy,Math.abs(rx*Math.cos(a)),ry,0,Math.PI,TAU);
+   ctx.strokeStyle="rgba(87,190,245,.24)";ctx.stroke();
+  }
+  // Subtle surface arcs suggest topographic / data contours.
+  for(let j=0;j<7;j++){
+   const yy=cy-ry*(.12+j*.105),ww=rx*Math.sqrt(Math.max(.04,1-Math.pow((yy-cy)/ry,2)));
+   ctx.beginPath();ctx.ellipse(cx+Math.sin(t*.12+j)*rx*.025,yy,ww*.78,ry*.045,0,0,TAU);
+   ctx.strokeStyle="rgba(79,171,222,.12)";ctx.stroke();
+  }
+  // Neutrons / data particles move around the hemisphere and along orbital paths.
+  particles.forEach((p,i)=>{
+   const a=p.a+t*p.speed*activity,lat=p.lat,orbit=p.orbit;
+   let x,y;
+   if(orbit===0){x=cx+Math.cos(a)*rx*1.13;y=cy-ry*.5+Math.sin(a)*ry*.62}
+   else if(orbit===1){x=cx+Math.cos(a)*rx*.88;y=cy-ry*.48+Math.sin(a)*ry*.52}
+   else {const cl=Math.cos(lat);x=cx+Math.cos(a)*rx*cl*.94;y=cy-ry*.5+Math.sin(a)*ry*cl*.48-Math.sin(lat)*ry*.42}
+   if(y<cy+2){
+    glow(x,y,p.size*5,palette[p.tone],.28);
+    ctx.fillStyle=palette[p.tone];ctx.globalAlpha=.55+.45*Math.sin(t*3+p.phase);
+    ctx.beginPath();ctx.arc(x,y,p.size,0,TAU);ctx.fill();ctx.globalAlpha=1;
+   }
+  });
+  ctx.restore();
+  // Crisp equator / open cut edge and restrained 3D rim lighting.
+  ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,Math.PI,TAU);ctx.strokeStyle="rgba(116,225,255,.82)";ctx.lineWidth=1.5;ctx.shadowColor="#36bfff";ctx.shadowBlur=12;ctx.stroke();ctx.shadowBlur=0;
+  ctx.beginPath();ctx.ellipse(cx,cy,rx,ry*.13,0,0,Math.PI);ctx.strokeStyle="rgba(67,166,220,.48)";ctx.lineWidth=1;ctx.stroke();
+  // Central rotating energy nucleus.
+  const pulse=1+.12*Math.sin(t*(mode==="idle"?1.2:3.1)),core=rx*.095*pulse;
+  glow(cx,cy-ry*.45,core*4,"#087bff",.3);glow(cx,cy-ry*.45,core*2,"#39d9ff",.48);
+  const cg=ctx.createRadialGradient(cx-core*.2,cy-ry*.45-core*.2,1,cx,cy-ry*.45,core*1.5);
+  cg.addColorStop(0,"#ffffff");cg.addColorStop(.3,"#c7f8ff");cg.addColorStop(.72,"#159dff");cg.addColorStop(1,"rgba(0,110,255,0)");
+  ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy-ry*.45,core*1.5,0,TAU);ctx.fill();
+  // Fine particle trails around the globe.
+  for(let i=0;i<5;i++){const a=t*.28+i*TAU/5,x=cx+Math.cos(a)*rx*1.18,y=cy-ry*.5+Math.sin(a)*ry*.66;glow(x,y,5,"#8beaff",.55);ctx.fillStyle="#e9ffff";ctx.beginPath();ctx.arc(x,y,1.1,0,TAU);ctx.fill()}
+  ctx.fillStyle="rgba(173,211,235,.62)";ctx.font="9px ui-monospace,monospace";ctx.textAlign="center";ctx.fillText("CIRCUIT  /  NEURAL CORE",cx,Math.max(22,cy-ry-22));ctx.fillText("PARTICLE FIELD · 3D HEMISPHERE",cx,Math.min(h-18,cy+ry+25));
   if(!reduced)raf=requestAnimationFrame(draw);
  }
  function stop(){visible=false;cancelAnimationFrame(raf)}
