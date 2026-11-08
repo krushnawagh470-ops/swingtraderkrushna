@@ -710,8 +710,8 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
   choices.querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b));
   document.getElementById("aiSelectedName").textContent=selected+" workspace";
   document.getElementById("aiSelectedDescription").textContent=descriptions[selected];
-  document.getElementById("aiConnectionState").textContent=selected==="Gemini"?"FREE API · KEY REQUIRED":"EXTERNAL SIGN-IN";
-  document.getElementById("aiWorkbenchStatus").textContent=selected==="Gemini"?"Gemini selected · add your free-tier API key to chat.":"This provider opens externally; in-terminal execution is currently available through Gemini.";
+  document.getElementById("aiConnectionState").textContent=selected==="Gemini"?"CHECKING SECURE WORKER":"EXTERNAL SIGN-IN";
+  document.getElementById("aiWorkbenchStatus").textContent=selected==="Gemini"?"CIRCUIT AI uses the connected secure Worker. Checking connection…":"This provider opens externally; in-terminal execution is available through the secure Worker.";
   prepared="";
  });
  document.getElementById("aiPrepareTask")?.addEventListener("click",()=>{
@@ -782,36 +782,43 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   if (!button || !field || !status) return;
   const defaultWorker = window.STK_DEFAULT_WORKER_URL || "https://floral-wood-dfe4.swingtraderkrushna.workers.dev";
   if (!field.value.trim()) field.value = defaultWorker;
-  button.addEventListener("click", async function () {
-    const url = (field.value || "").trim().replace(/\/+$/, "");
+  async function testWorkerConnection() {
+    const url = (field.value || defaultWorker).trim().replace(/\/+$/, "");
     let host = "";
     try { host = new URL(url).hostname; } catch (_) {}
     if (!url.startsWith("https://") || !host.endsWith(".workers.dev")) {
-      status.textContent = "Enter a valid https://…workers.dev URL.";
-      return;
+      status.textContent = "Invalid Worker URL. Expected an https://…workers.dev address.";
+      return false;
     }
     button.disabled = true;
-    status.textContent = "Testing Worker…";
+    status.textContent = "Testing secure Worker…";
+    const state = document.getElementById("aiConnectionState");
+    if (state) state.textContent = "CHECKING SECURE WORKER";
     try {
       const response = await fetch(url + "/health", { method: "GET", mode: "cors", cache: "no-store" });
       let data;
       try { data = await response.json(); }
-      catch (_) { throw new Error("Worker did not return JSON. Check that worker.js is deployed."); }
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error || ("Worker returned HTTP " + response.status));
-      }
+      catch (_) { throw new Error("Worker did not return JSON. Check the Cloudflare deployment."); }
+      if (!response.ok || data.ok !== true) throw new Error(data.error || ("HTTP " + response.status));
       try { localStorage.setItem("stk_gemini_worker_url", url); } catch (_) {}
-      status.textContent = data.configured === false
-        ? "Worker is online, but GEMINI_API_KEY is missing. Add it as a Cloudflare Secret."
-        : "Connected · Gemini Worker is online.";
-      const state = document.getElementById("aiConnectionState");
-      if (state) state.textContent = data.configured === false ? "WORKER ONLINE · KEY MISSING" : "CONNECTED · SECURE WORKER";
+      const configured = data.configured !== false;
+      status.textContent = configured
+        ? "Connected · " + (data.provider || "AI") + " Worker is online."
+        : "Worker is online, but GROQ_API_KEY is missing in Cloudflare Worker Secrets.";
+      if (state) state.textContent = configured ? "CONNECTED · " + (data.provider || "AI").toUpperCase() + " WORKER" : "WORKER ONLINE · API KEY MISSING";
+      return configured;
     } catch (error) {
       status.textContent = "Connection failed: " + (error && error.message ? error.message : "Network or CORS error");
+      if (state) state.textContent = "WORKER NOT CONNECTED";
+      return false;
     } finally {
       button.disabled = false;
     }
-  });
+  }
+  button.addEventListener("click", testWorkerConnection);
+  /* Check automatically on page load so the AI workspace does not display a
+     stale disconnected state until the user visits Settings and clicks Save. */
+  testWorkerConnection();
 })();
 </script>
 
