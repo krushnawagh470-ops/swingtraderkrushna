@@ -355,6 +355,12 @@ body.circuit-admin-mode #settings.active{display:block!important}
    </div>
    <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><button type="button" class="btn" id="aiSendToClaude">Send message</button><button type="button" class="btn secondary" id="stkCancelTask">Cancel tasks</button><button class="btn secondary" id="aiPrepareTask">Prepare task</button><button class="btn secondary" id="aiCopyPrepared">Copy prompt</button><span id="aiWorkbenchStatus" class="q-meta" aria-live="polite">Connect your Cloudflare Worker before sending a message.</span></div>
    <div id="aiAgentConversation" class="card" style="margin-top:12px;min-height:76px;white-space:pre-wrap;overflow-wrap:anywhere" aria-live="polite">Your AI conversation will appear here after the secure Worker connects.</div>
+   <div class="card" id="circuitLearningPanel" style="margin-top:12px;border:1px solid #244565;background:linear-gradient(145deg,#0b1b2c,#071321)">
+    <div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><div class="terminal-label">CIRCUIT · ADAPTIVE MEMORY</div><b>Self-learning module</b><div class="q-meta">Save corrections, preferences and verified knowledge for future answers on this device.</div></div><span class="signal-tag" id="circuitLearningCount">0 saved</span></div>
+    <textarea id="circuitLearningInput" rows="3" placeholder="Example: When analysing XAUUSD, always separate confirmed structure from assumptions."></textarea>
+    <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitSaveLearning">Save to memory</button><button type="button" class="btn secondary" id="circuitClearLearning">Clear memory</button><span class="q-meta" id="circuitLearningStatus" aria-live="polite">Memory stays in this browser until you clear it.</span></div>
+    <div id="circuitLearningList" class="q-meta" style="margin-top:10px"></div>
+   </div>
    <div class="section-title" style="margin:16px 0 8px">CIRCUIT · LIVE TASK EXECUTION</div>
    <div class="q-meta">Follow the real handoff from your instruction to the provider response. A stage changes only when its corresponding event occurs.</div>
    <div class="ai-task-steps circuit-steps" id="aiTaskSteps">
@@ -840,7 +846,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   }
   function processCommand(value) {
     const c = String(value || "").trim().toLowerCase();
-    if (c === "commands" || c === "/help" || c === "help") { showCommand("CIRCUIT COMMANDS\\n\\nQuick replies — brief answers by default\\nDetailed replies — longer explanations\\nMute / Unmute — spoken replies off / on\\nWeb on / Web off — toggle web lookup mode\\nCancel tasks — stop the active AI request\\nCommands or /help — open this guide"); return true; }
+    if (c === "commands" || c === "/help" || c === "help") { showCommand("CIRCUIT COMMANDS\\n\\nQuick replies — brief answers by default\\nDetailed replies — longer explanations\\nMute / Unmute — spoken replies off / on\\nWeb on / Web off — toggle web lookup mode\\nCancel tasks — stop the active AI request\\nSelf-learning module — save approved memory and review it below the conversation\\nCommands or /help — open this guide"); return true; }
     if (c === "quick replies" || c === "quick replies on") { quickReplies = true; showCommand("Quick replies are ON."); return true; }
     if (c === "detailed replies" || c === "quick replies off") { quickReplies = false; showCommand("Detailed replies are ON."); return true; }
     if (c === "mute" || c === "unmute") { voiceOn = c === "unmute"; if (!voiceOn && "speechSynthesis" in window) window.speechSynthesis.cancel(); if (voiceToggle) { voiceToggle.textContent = voiceOn ? "🔊 Voice replies: ON" : "🔇 Voice replies: OFF"; voiceToggle.setAttribute("aria-pressed", String(voiceOn)); } if (voiceStatus) voiceStatus.textContent = voiceOn ? "Voice replies are on." : "Voice replies are muted."; showCommand(voiceOn ? "Voice replies enabled." : "Voice replies muted."); return true; }
@@ -858,11 +864,36 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     body.textContent = value;
     body.style.fontSize = "12px";
     wrap.append(heading, body);
-    if (role === "assistant") window.stkSpeakReply?.(value);
+    if (role === "assistant") {
+      const feedback=document.createElement("div");feedback.style.cssText="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap";
+      [["Helpful","positive"],["Needs improvement","negative"]].forEach(([label,kind])=>{const b=document.createElement("button");b.type="button";b.className="btn secondary";b.textContent=label;b.style.cssText="font-size:10px;padding:5px 8px";b.addEventListener("click",()=>{recordCircuitFeedback(kind,value);b.textContent=kind==="positive"?"Feedback saved ✓":"Correction signal saved ✓";b.disabled=true;});feedback.appendChild(b);});
+      wrap.appendChild(feedback);
+      window.stkSpeakReply?.(value);
+    }
     if (output.dataset.placeholder !== "cleared") { output.textContent = ""; output.dataset.placeholder = "cleared"; }
     output.appendChild(wrap);
     output.scrollTop = output.scrollHeight;
   }
+  const CIRCUIT_MEMORY_KEY="circuit_adaptive_memory_v1";
+  const CIRCUIT_FEEDBACK_KEY="circuit_feedback_v1";
+  function readCircuitMemory(){try{const v=JSON.parse(localStorage.getItem(CIRCUIT_MEMORY_KEY)||"[]");return Array.isArray(v)?v:[]}catch(_){return[]}}
+  function saveCircuitMemory(items){try{localStorage.setItem(CIRCUIT_MEMORY_KEY,JSON.stringify(items.slice(-100)));renderCircuitMemory();return true}catch(_){const st=document.getElementById("circuitLearningStatus");if(st)st.textContent="Browser storage is full or unavailable.";return false}}
+  function recordCircuitFeedback(kind,reply){try{const list=JSON.parse(localStorage.getItem(CIRCUIT_FEEDBACK_KEY)||"[]");list.push({kind,reply:String(reply).slice(0,1800),at:new Date().toISOString()});localStorage.setItem(CIRCUIT_FEEDBACK_KEY,JSON.stringify(list.slice(-100)));const st=document.getElementById("circuitLearningStatus");if(st)st.textContent="Feedback recorded. Add a specific correction below to teach CIRCUIT exactly what to change.";}catch(_){}}
+  function renderCircuitMemory(){
+    const list=document.getElementById("circuitLearningList"),count=document.getElementById("circuitLearningCount");if(!list)return;
+    const items=readCircuitMemory();if(count)count.textContent=items.length+" saved";
+    list.replaceChildren();
+    if(!items.length){list.textContent="No saved learning yet. Add a rule or correction above.";return;}
+    items.forEach((item,index)=>{const row=document.createElement("div");row.style.cssText="display:flex;gap:8px;align-items:flex-start;justify-content:space-between;padding:7px 0;border-top:1px solid #1c3859";
+      const text=document.createElement("span");text.textContent=item.text; text.style.cssText="white-space:pre-wrap;flex:1";
+      const remove=document.createElement("button");remove.type="button";remove.className="btn secondary";remove.textContent="Remove";remove.style.cssText="font-size:10px;padding:4px 7px";remove.addEventListener("click",()=>{const next=readCircuitMemory();next.splice(index,1);saveCircuitMemory(next);});
+      row.append(text,remove);list.appendChild(row);});
+  }
+  function circuitLearningContext(){const items=readCircuitMemory();if(!items.length)return"";return "\\n\\nUSER-APPROVED CIRCUIT LEARNING MEMORY (use only when relevant; newer explicit instructions override it):\\n"+items.slice(-20).map((x,i)=>(i+1)+". "+x.text).join("\\n");}
+  const learningInput=document.getElementById("circuitLearningInput"),learningSave=document.getElementById("circuitSaveLearning"),learningClear=document.getElementById("circuitClearLearning");
+  if(learningSave)learningSave.addEventListener("click",()=>{const value=(learningInput?.value||"").trim();if(!value)return;const items=readCircuitMemory();items.push({text:value,createdAt:new Date().toISOString()});if(saveCircuitMemory(items)){learningInput.value="";const st=document.getElementById("circuitLearningStatus");if(st)st.textContent="Saved. Relevant memory will be included in future AI requests."; }});
+  if(learningClear)learningClear.addEventListener("click",()=>{if(!window.confirm("Clear all CIRCUIT learning memory saved in this browser?"))return;saveCircuitMemory([]);const st=document.getElementById("circuitLearningStatus");if(st)st.textContent="Saved learning memory cleared. Feedback history is separate.";});
+  renderCircuitMemory();
   function detectChartSymbol(prompt) {
     const p=String(prompt||"").toUpperCase();
     if(/\b(BTCUSD|BTC|BITCOIN)\b/.test(p))return "BTCUSD";
@@ -1068,7 +1099,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
       const modeRules=quickReplies?"\\n\\nKeep the answer brief by default: 2–6 sentences or a few short bullets, unless the user asks for detail.":"\\n\\nDetailed replies are enabled; give the depth the question requires.";
       const webRules=webLookupOn?"\\n\\nWeb lookup mode is ON. Use a real search tool only if the connected backend provides one. If unavailable, say live lookup is not connected; never invent a search or source.":"\\n\\nWeb lookup mode is OFF. Clearly flag facts that need current verification.";
       const domainRules="\\n\\nIMPORTANT FORMAT OVERRIDE: For non-chart and non-trading questions, ignore all trading-only instructions in the generic response template, including BUY SETUP / SELL SETUP / WAIT labels. Answer the actual question naturally. For economy, geopolitics, institutions and conflict questions, use concise fact/analysis/scenario structure and cite only sources actually retrieved.";
-      const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisRules+closedMarketOverride+globalIntelligenceRules+modeRules+webRules+domainRules}];
+      const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisRules+closedMarketOverride+globalIntelligenceRules+modeRules+webRules+domainRules+circuitLearningContext()}];
       activeRequestController=new AbortController();
       const response = await fetch(url + "/chat", {
         method: "POST",
