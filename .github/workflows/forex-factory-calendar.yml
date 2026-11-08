@@ -6,7 +6,7 @@ on:
     paths:
       - ".github/workflows/forex-factory-calendar.yml"
   schedule:
-    - cron: "17 * * * *"
+    - cron: "*/20 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -32,6 +32,17 @@ jobs:
               events = json.load(f)
           if not isinstance(events, list) or not events:
               raise SystemExit("Forex Factory returned an empty or invalid event list")
+          # Guard against a successful HTTP response containing an old cached week.
+          from datetime import timedelta
+          now = datetime.now(timezone.utc)
+          dated = []
+          for event in events:
+              try:
+                  dated.append(datetime.fromisoformat(event["date"].replace("Z", "+00:00")))
+              except (KeyError, TypeError, ValueError):
+                  continue
+          if not dated or max(dated) < now - timedelta(days=1):
+              raise SystemExit("Forex Factory feed appears stale; refusing to overwrite calendar snapshot")
           payload = {
               "source": "Forex Factory public weekly calendar export",
               "fetchedAt": datetime.now(timezone.utc).isoformat(),
