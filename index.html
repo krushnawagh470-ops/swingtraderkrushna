@@ -147,10 +147,9 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 .ai-agent-speech,.ai-agent-speech *{display:none!important;visibility:hidden!important;}
 
 /* Private admin page: hide configuration controls from the everyday terminal. */
-#mobileNav button[data-page="settings"], .side [data-page="settings"], #aiAgentChoices{display:none!important}
+#aiAgentChoices{display:none!important}
 
 /* Hard separation: admin controls are rendered only on the explicit admin URL. */
-body:not(.circuit-admin-mode) #settings{display:none!important}
 body.circuit-admin-mode #settings.active{display:block!important}
 
 /* Desktop All AI workspace layout: use the available width and remove the empty top band. */
@@ -329,6 +328,7 @@ body.circuit-admin-mode #settings.active{display:block!important}
 <div class="desk-nav-group"><button data-page="news" data-group-toggle="newsGroup">▤ <span>News</span><b class="nav-chevron">⌄</b></button><div class="desk-nav-subnav" id="newsGroup"><button type="button" data-page="news">Economic calendar · in CIRCUIT</button><button type="button" data-page="news">Macro events · in CIRCUIT</button><button type="button" data-page="news">News & calendar workspace</button><button data-page="news">News workspace</button></div></div>
 <div class="desk-nav-group"><button data-page="tester" data-group-toggle="testerGroup">▥ <span>Strategy Tester</span><b class="nav-chevron">⌄</b></button><div class="desk-nav-subnav" id="testerGroup"><button data-page="tester">Backtest workspace</button><button data-page="journal">Performance journal</button><button data-page="playbook">Strategy notes</button></div></div>
 <div class="desk-nav-group"><button data-page="studio" data-group-toggle="studioGroup">▣ <span>Studio</span><b class="nav-chevron">⌄</b></button><div class="desk-nav-subnav" id="studioGroup"><button data-page="studio">Creative workspace</button><button data-page="learn">Learning hub</button></div></div>
+<button data-page="settings">⚙ <span>Settings</span></button>
 </nav><div class="side-note">TRADE THE PLAN.<br>MANAGE THE RISK.<br><br>Personal trading workspace</div></aside>
 <div class="desk-drawer-backdrop" id="deskDrawerBackdrop"></div><main class="main"><header class="top"><div><div class="eyebrow">PERSONAL TRADING TERMINAL</div><div class="h1" id="pageTitle">CIRCUIT</div><div class="sub" id="today"></div></div><div class="status"><span class="dot"></span>Workspace ready</div></header>
 <section class="section active" id="overview">
@@ -384,38 +384,6 @@ body.circuit-admin-mode #settings.active{display:block!important}
     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitSaveLearning">Save to memory</button><button type="button" class="btn secondary" id="circuitClearLearning">Clear memory</button><span class="q-meta" id="circuitLearningStatus" aria-live="polite">Memory stays in this browser until you clear it.</span></div>
     <div id="circuitLearningList" class="q-meta" style="margin-top:10px"></div>
    </div>
-   <div class="row" style="justify-content:flex-start;margin-top:12px">
-    <button type="button" class="btn secondary small" id="circuitCloudMemoryToggle" aria-expanded="false" aria-controls="circuitCloudMemoryPanel" onclick="toggleCircuitCloudMemoryPanel()">☁ Cloud Memory · Show</button>
-   </div>
-   <div class="card" id="circuitCloudMemoryPanel" hidden style="margin-top:12px;border:1px solid #2b5b79;background:linear-gradient(145deg,#0b2031,#071321)">
-    <div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><div class="terminal-label">CIRCUIT · PERSISTENT MEMORY</div><b>Cloud memory</b><div class="q-meta">Private, cross-device memory. Only items you explicitly save are stored.</div></div><span class="signal-tag" id="circuitCloudMemoryState">CLOUD MEMORY · LOCKED</span></div>
-    <div id="circuitMemoryLogin" style="margin-top:10px">
-     <label class="terminal-label" for="circuitMemoryPassphrase">MEMORY PASSPHRASE</label>
-     <input id="circuitMemoryPassphrase" type="password" autocomplete="current-password" placeholder="Enter your private memory passphrase">
-     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitMemoryLoginButton">Unlock cloud memory</button></div>
-     <p class="q-meta">Your passphrase is checked by the secure Worker. It is not saved in this browser or sent to the AI model.</p>
-    </div>
-    <div id="circuitMemoryManager" hidden style="margin-top:10px">
-     <label class="terminal-label" for="circuitCloudMemoryCategory">CATEGORY</label>
-     <select id="circuitCloudMemoryCategory"><option>General</option><option>Preferences</option><option>Personal planning</option><option>Finance and career</option><option>Business and content</option><option>Technology and projects</option><option>Trading and investing</option></select>
-     <label class="terminal-label" for="circuitCloudMemoryInput" style="display:block;margin-top:9px">ADD APPROVED MEMORY</label>
-     <textarea id="circuitCloudMemoryInput" rows="3" maxlength="1200" placeholder="Example: Use 12-hour time format. Keep answers concise and practical."></textarea>
-     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitCloudMemorySave">Save memory</button><button type="button" class="btn secondary" id="circuitCloudMemoryRefresh">Refresh</button><button type="button" class="btn secondary" id="circuitCloudMemoryLogout">Lock memory</button><button type="button" class="btn secondary" id="circuitCloudMemoryClear">Delete all</button><span class="signal-tag" id="circuitCloudMemoryCount">0 saved</span></div>
-     <div id="circuitCloudMemoryList" class="q-meta" style="margin-top:10px"></div>
-    </div>
-    <p class="q-meta" id="circuitCloudMemoryStatus" aria-live="polite" style="margin-top:9px">Cloud memory needs a D1 database and Worker secrets before it can be unlocked.</p>
-   </div>
-   <script>
-   function toggleCircuitCloudMemoryPanel(){
-    const panel=document.getElementById("circuitCloudMemoryPanel");
-    const button=document.getElementById("circuitCloudMemoryToggle");
-    if(!panel||!button)return;
-    const opening=panel.hidden;
-    panel.hidden=!opening;
-    button.setAttribute("aria-expanded",String(opening));
-    button.textContent=opening?"☁ Cloud Memory · Hide":"☁ Cloud Memory · Show";
-   }
-   </script>
    <div class="section-title" style="margin:16px 0 8px">CIRCUIT · LIVE TASK EXECUTION</div>
    <div class="q-meta">Follow the real handoff from your instruction to the provider response. A stage changes only when its corresponding event occurs.</div>
    <div class="ai-task-steps circuit-steps" id="aiTaskSteps">
@@ -491,7 +459,42 @@ body.circuit-admin-mode #settings.active{display:block!important}
     <label class="terminal-label" for="agentWorkerUrl">Worker URL</label><input id="agentWorkerUrl" type="url" inputmode="url" placeholder="https://your-worker.your-subdomain.workers.dev" autocomplete="url">
     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><button class="btn secondary small" id="agentSaveConnection">Save & test connection</button><span class="q-meta" id="agentConnectStatus" aria-live="polite">Worker connection controls are available in the private system page.</span></div>
     <p class="q-meta" style="margin:8px 0 0"></p>
-   </div><div class="eyebrow">WORKSPACE CONTROL</div><div class="section-title">Settings</div><p class="muted">Manage data refresh and inspect feed health.</p><div class="section-title">Data pipeline controls</div><div class="workspace-grid"><div class="card"><b>News pipeline</b><p class="muted">Biquote API and publisher RSS snapshots.</p><button class="btn secondary small" onclick="loadNativeNews(true)">Refresh news</button><div id="settingsNewsStatus" class="q-meta">Not checked yet</div></div><div class="card"><b>Market quotes</b><p class="muted">Public market-data API; prices may be delayed or unavailable when markets are closed.</p><button class="btn secondary small" onclick="loadNativeQuotes()">Refresh quotes</button></div><div class="card"><b>Economic calendar</b><p class="muted">Upcoming macro events displayed in India time.</p><button class="btn secondary small" onclick="loadNativeCalendar()">Refresh calendar</button></div><div class="card"><b>Server snapshots</b><p class="muted">GitHub Actions fetches news and calendar data every 15 minutes when enabled. Browser refresh does not manually start the server job.</p></div></div><div class="section-title">Workspace preferences</div><div class="result">Timezone: India Standard Time (IST · UTC+5:30)</div><div class="section-title">Data source transparency</div><div class="result">Market quotes: Biquote · News: Biquote + publisher RSS · Calendar: Biquote / ShowMyTrades fallback. Feeds are third-party and may be delayed or temporarily unavailable.</div><div class="section-title">Local data</div><p class="muted">Trade journal and checklist data are stored in this browser on this device. Clearing browser site data may erase them.</p></div></section></main></div><nav class="mobile-nav" id="mobileNav"><button class="active" data-page="overview">⌂<br>Home</button><button data-page="ai">✦<br>AI</button><button data-page="markets">◈<br>Markets</button><button data-page="studio">▣<br>Studio</button><button data-page="news">▤<br>News</button><button data-page="tester">▥<br>Test</button><button data-page="settings">⚙<br>Settings</button><button type="button" id="deskMoreToggle" aria-expanded="false">☰<br>Desk</button></nav><div class="desk-more-sheet" id="deskMoreSheet"><div class="desk-more-title">MORE DESK TOOLS</div><div class="desk-more-grid"><button data-page="forex">Forex pairs</button><button data-page="charts">Live charts</button><button data-page="risk">Risk calculator</button><button data-page="pips">Pip tool</button><button data-page="journal">Trade journal</button><button data-page="checklist">Checklist</button><button data-page="plan">Trading plan</button><button data-page="playbook">Strategy notes</button><button data-page="learn">Learning hub</button></div></div>
+   </div><div class="eyebrow">WORKSPACE CONTROL</div><div class="section-title">Settings</div><p class="muted">Manage data refresh and inspect feed health.</p><div class="section-title">Data pipeline controls</div><div class="workspace-grid"><div class="card"><b>News pipeline</b><p class="muted">Biquote API and publisher RSS snapshots.</p><button class="btn secondary small" onclick="loadNativeNews(true)">Refresh news</button><div id="settingsNewsStatus" class="q-meta">Not checked yet</div></div><div class="card"><b>Market quotes</b><p class="muted">Public market-data API; prices may be delayed or unavailable when markets are closed.</p><button class="btn secondary small" onclick="loadNativeQuotes()">Refresh quotes</button></div><div class="card"><b>Economic calendar</b><p class="muted">Upcoming macro events displayed in India time.</p><button class="btn secondary small" onclick="loadNativeCalendar()">Refresh calendar</button></div><div class="card"><b>Server snapshots</b><p class="muted">GitHub Actions fetches news and calendar data every 15 minutes when enabled. Browser refresh does not manually start the server job.</p></div></div><div class="section-title">Workspace preferences</div><div class="result">Timezone: India Standard Time (IST · UTC+5:30)</div><div class="section-title">Data source transparency</div><div class="result">Market quotes: Biquote · News: Biquote + publisher RSS · Calendar: Biquote / ShowMyTrades fallback. Feeds are third-party and may be delayed or temporarily unavailable.</div><div class="section-title">Local data</div><p class="muted">Trade journal and checklist data are stored in this browser on this device. Clearing browser site data may erase them.</p></div>
+<div class="section-title">Persistent Cloud Memory</div><p class="muted">Manage your approved cross-device memories here. The memory panel stays collapsed until you open it.</p>
+   <div class="row" style="justify-content:flex-start;margin-top:12px">
+    <button type="button" class="btn secondary small" id="circuitCloudMemoryToggle" aria-expanded="false" aria-controls="circuitCloudMemoryPanel" onclick="toggleCircuitCloudMemoryPanel()">☁ Cloud Memory · Show</button>
+   </div>
+   <div class="card" id="circuitCloudMemoryPanel" hidden style="margin-top:12px;border:1px solid #2b5b79;background:linear-gradient(145deg,#0b2031,#071321)">
+    <div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><div class="terminal-label">CIRCUIT · PERSISTENT MEMORY</div><b>Cloud memory</b><div class="q-meta">Private, cross-device memory. Only items you explicitly save are stored.</div></div><span class="signal-tag" id="circuitCloudMemoryState">CLOUD MEMORY · LOCKED</span></div>
+    <div id="circuitMemoryLogin" style="margin-top:10px">
+     <label class="terminal-label" for="circuitMemoryPassphrase">MEMORY PASSPHRASE</label>
+     <input id="circuitMemoryPassphrase" type="password" autocomplete="current-password" placeholder="Enter your private memory passphrase">
+     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitMemoryLoginButton">Unlock cloud memory</button></div>
+     <p class="q-meta">Your passphrase is checked by the secure Worker. It is not saved in this browser or sent to the AI model.</p>
+    </div>
+    <div id="circuitMemoryManager" hidden style="margin-top:10px">
+     <label class="terminal-label" for="circuitCloudMemoryCategory">CATEGORY</label>
+     <select id="circuitCloudMemoryCategory"><option>General</option><option>Preferences</option><option>Personal planning</option><option>Finance and career</option><option>Business and content</option><option>Technology and projects</option><option>Trading and investing</option></select>
+     <label class="terminal-label" for="circuitCloudMemoryInput" style="display:block;margin-top:9px">ADD APPROVED MEMORY</label>
+     <textarea id="circuitCloudMemoryInput" rows="3" maxlength="1200" placeholder="Example: Use 12-hour time format. Keep answers concise and practical."></textarea>
+     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitCloudMemorySave">Save memory</button><button type="button" class="btn secondary" id="circuitCloudMemoryRefresh">Refresh</button><button type="button" class="btn secondary" id="circuitCloudMemoryLogout">Lock memory</button><button type="button" class="btn secondary" id="circuitCloudMemoryClear">Delete all</button><span class="signal-tag" id="circuitCloudMemoryCount">0 saved</span></div>
+     <div id="circuitCloudMemoryList" class="q-meta" style="margin-top:10px"></div>
+    </div>
+    <p class="q-meta" id="circuitCloudMemoryStatus" aria-live="polite" style="margin-top:9px">Cloud memory needs a D1 database and Worker secrets before it can be unlocked.</p>
+   </div>
+   <script>
+   function toggleCircuitCloudMemoryPanel(){
+    const panel=document.getElementById("circuitCloudMemoryPanel");
+    const button=document.getElementById("circuitCloudMemoryToggle");
+    if(!panel||!button)return;
+    const opening=panel.hidden;
+    panel.hidden=!opening;
+    button.setAttribute("aria-expanded",String(opening));
+    button.textContent=opening?"☁ Cloud Memory · Hide":"☁ Cloud Memory · Show";
+   }
+   </script>
+
+</section></main></div><nav class="mobile-nav" id="mobileNav"><button class="active" data-page="overview">⌂<br>Home</button><button data-page="ai">✦<br>AI</button><button data-page="markets">◈<br>Markets</button><button data-page="studio">▣<br>Studio</button><button data-page="news">▤<br>News</button><button data-page="tester">▥<br>Test</button><button data-page="settings">⚙<br>Settings</button><button type="button" id="deskMoreToggle" aria-expanded="false">☰<br>Desk</button></nav><div class="desk-more-sheet" id="deskMoreSheet"><div class="desk-more-title">MORE DESK TOOLS</div><div class="desk-more-grid"><button data-page="forex">Forex pairs</button><button data-page="charts">Live charts</button><button data-page="risk">Risk calculator</button><button data-page="pips">Pip tool</button><button data-page="journal">Trade journal</button><button data-page="checklist">Checklist</button><button data-page="plan">Trading plan</button><button data-page="playbook">Strategy notes</button><button data-page="learn">Learning hub</button></div></div>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script><script>
 
 const titles={overview:"CIRCUIT",ai:"All AI",markets:"Trading terminal",charts:"Live market charts",news:"News",forex:"Forex major pairs",tester:"Strategy tester",pips:"Pip measuring tool",risk:"Risk calculator",journal:"Trade journal",checklist:"Pre-trade checklist",plan:"My trading plan",playbook:"Strategy notes",studio:"Studio",learn:"Learning hub",settings:"Settings"};
