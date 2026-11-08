@@ -215,6 +215,39 @@ body.circuit-admin-mode #settings.active{display:block!important}
 @media(prefers-reduced-motion:reduce){#ai .ai-agent-visual:after{animation:none}}
 </style>
 
+
+<style id="circuit-pro-agent-refine">
+/* CIRCUIT / PRO CONTROL ROOM — restrained, high-density neural visual */
+#ai .ai-workbench{border:1px solid #263c55;border-radius:12px;background:#070d16;box-shadow:0 18px 55px #0008}
+#ai .ai-workbench:before{display:none}
+#ai .ai-workbench-head{min-height:78px;padding:17px 21px;background:#0a111c;border-bottom:1px solid #203149}
+#ai .ai-workbench-head .eyebrow{color:#8ba9c7;font-size:9px;letter-spacing:.22em}
+#ai .ai-workbench-head b{font-size:20px!important;font-weight:650;letter-spacing:-.04em;color:#edf4fb}
+#ai .ai-workbench-head .q-meta{margin-top:4px;color:#8293a8}
+#ai .ai-workbench-head .signal-tag{border-radius:4px;background:#0c1825;border-color:#30445a;color:#9db5cc}
+#ai .ai-workbench-grid{grid-template-columns:minmax(0,1.28fr) minmax(340px,.82fr);gap:12px;padding:12px;align-items:stretch}
+#ai .ai-agent-visual{height:clamp(540px,70vh,760px);min-height:540px;border-radius:8px;border:1px solid #263b52;background:radial-gradient(ellipse at 50% 48%,#0d1b2b 0%,#08111d 48%,#050a11 100%);box-shadow:inset 0 0 45px #0008}
+#ai .ai-agent-visual:before{inset:14px;border:1px solid #8aa8c51a;border-radius:3px;background:linear-gradient(#9db6cc08 1px,transparent 1px),linear-gradient(90deg,#9db6cc08 1px,transparent 1px);background-size:48px 48px;mask-image:linear-gradient(transparent,#000 15%,#000 85%,transparent)}
+#ai .ai-agent-visual:after{display:none}
+#ai .ai-agent-visual canvas{opacity:.88;filter:saturate(.72) contrast(1.08)}
+#ai .circuit-state-label{top:25px;left:25px;border:1px solid #31465c;border-radius:3px;background:#070e17e8;color:#b5c7d8;font:600 9px/1.2 ui-monospace,monospace;letter-spacing:.18em;padding:8px 11px}
+#ai .circuit-live-dot{box-shadow:0 0 7px #48c8b5}
+#ai .ai-handoff-note{font-size:10px;color:#8193a7;line-height:1.65;letter-spacing:.025em}
+#ai .ai-workspace-panel{border-radius:8px;border:1px solid #263b52;background:#0a111b;padding:16px;box-shadow:none}
+#ai .ai-workspace-panel .terminal-label{color:#91a7bc;letter-spacing:.17em}
+#ai .ai-workspace-panel textarea{min-height:125px;background:#060c14;border-color:#2a4057;border-radius:5px}
+#ai .ai-workspace-panel .signal-tag{border-radius:3px;background:#0c1824;border-color:#30465d;color:#a6bbce}
+#ai .ai-task-step{border-radius:5px;background:#0b1521;border-color:#1f3348}
+#ai .ai-workspace-panel .card{border-radius:5px;background:#070e17;border-color:#24374b}
+#ai .ai-workspace-panel button{border-radius:5px;box-shadow:none}
+#ai .ai-workspace-panel button:hover{transform:none;box-shadow:0 0 0 1px #7194b5}
+#ai .ai-workspace-panel .btn:not(.secondary){background:#c3d2df;color:#101923}
+#ai .ai-workspace-panel .btn.secondary{background:#111e2c;border-color:#34495f;color:#c0cfdd}
+@media(max-width:900px){#ai .ai-workbench-grid{grid-template-columns:minmax(0,1fr)}#ai .ai-agent-visual{height:540px;min-height:480px}}
+@media(max-width:600px){#ai .ai-workbench-head{padding:14px;min-height:0}#ai .ai-workbench-grid{padding:8px;gap:9px}#ai .ai-agent-visual{height:430px;min-height:400px}#ai .ai-workspace-panel{padding:12px}#ai .circuit-state-label{top:19px;left:19px}}
+@media(prefers-reduced-motion:reduce){#ai .ai-agent-visual:after{animation:none}}
+</style>
+
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -248,7 +281,7 @@ body.circuit-admin-mode #settings.active{display:block!important}
 </section>
 <section class="section" id="ai">
 <div class="ai-workbench" id="aiWorkbench">
- <div class="ai-workbench-head"><div><div class="eyebrow">AI AGENT · VISUAL WORKSPACE</div><b style="font-size:16px">Your AI work desk</b><div class="q-meta">Choose an assistant, prepare a task and review the handoff plan here.</div></div><span class="signal-tag">VISUAL AGENT PREVIEW</span></div>
+ <div class="ai-workbench-head"><div><div class="eyebrow">AI AGENT · VISUAL WORKSPACE</div><b style="font-size:16px">CIRCUIT Intelligence Console</b><div class="q-meta">Neural processing interface · AI task orchestration and review.</div></div><span class="signal-tag">NEURAL CORE · VISUALIZATION</span></div>
  <div class="ai-workbench-grid">
   <div>
    <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="CIRCUIT animated neural-network virtual intelligence">
