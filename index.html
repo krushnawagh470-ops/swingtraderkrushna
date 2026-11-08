@@ -757,9 +757,9 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   }
   async function buildTerminalContext(symbol){
     const frames=[["5m","5m"],["15m","15m"],["1H","1h"],["4H","4h"],["1D","1d"]];
-    const symbols=["XAUUSD","XAGUSD","EURUSD","BTCUSD","USOIL","DXY"];
+    const symbols=[...new Set([...Object.values(MARKET_WATCHLISTS).flat().map(item=>item[0]),"DXY"])];
     const tasks=await Promise.allSettled([
-      circuitFetchJson("/latest?"+symbols.map(x=>"symbols="+encodeURIComponent(x)).join("&")),
+      circuitFetchJson("/latest?"+symbols.map(x=>"symbols="+encodeURIComponent(x)).join("&"),9000),
       Promise.all([circuitFetchJson("/market/gainers?limit=8"),circuitFetchJson("/market/losers?limit=8"),circuitFetchJson("/market/summary")]),
       Promise.all([
         fetch("./data/calendar.json?ts="+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("calendar snapshot HTTP "+r.status);return r.json()}),
@@ -775,7 +775,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     ]);
     const value=i=>tasks[i].status==="fulfilled"?tasks[i].value:{unavailable:String(tasks[i].reason?.message||"feed unavailable")};
     const quoteRaw=value(0),quoteRows=Array.isArray(quoteRaw)?quoteRaw:(quoteRaw.items||quoteRaw.ticks||Object.values(quoteRaw).filter(x=>x&&typeof x==="object"&&x.symbol));
-    const marketData={priorityQuotes:quoteRows,terminalWatchlists:typeof MARKET_WATCHLISTS!=="undefined"?MARKET_WATCHLISTS:null,marketMoversAndBreadth:value(1)};
+    const marketData={requestedInstrumentCount:symbols.length,allWatchlistQuotes:quoteRows,terminalWatchlists:MARKET_WATCHLISTS,marketMoversAndBreadth:value(1)};
     const cal=value(2);
     const calendarData={
       economicCalendar:cal&&cal[0]&&Array.isArray(cal[0].events)?cal[0].events.slice(0,35):cal&&cal[0],
