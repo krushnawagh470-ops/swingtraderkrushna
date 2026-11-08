@@ -804,7 +804,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     const bars=valid.slice(-12);
     const last=bars[bars.length-1]||null;
     const staleSeconds=last?Math.max(0,nowSeconds-last.closeT):null;
-    const structuralValid=bars.length>=20&&invalidRows===0&&futureRows===0&&duplicateRows===0&&spacingMismatches===0;
+    const structuralValid=bars.length>=12&&invalidRows===0&&futureRows===0&&duplicateRows===0&&spacingMismatches===0;
     const stale=staleSeconds!==null&&staleSeconds>intervalSeconds*3;
     const highs=[],lows=[];
     for(let i=2;i<bars.length-2;i++){
