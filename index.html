@@ -173,7 +173,23 @@ body.circuit-admin-mode #settings.active{display:block!important}
   #ai .ai-task-step { padding: 6px; }
 }
 
-.chart-tools{background:#071326;border-bottom:1px solid #1b3554}.native-chart{height:520px;min-height:390px;width:100%;background:#07101e;border-radius:0;overflow:hidden;touch-action:pan-y}.native-chart canvas{max-width:100%}@media(max-width:650px){.native-chart{height:430px;min-height:380px}}</style><meta name="circuit-build" content="chart-levels-panel-20261108-v2">
+.chart-tools{background:#071326;border-bottom:1px solid #1b3554}.native-chart{height:520px;min-height:390px;width:100%;background:#07101e;border-radius:0;overflow:hidden;touch-action:pan-y}.native-chart canvas{max-width:100%}@media(max-width:650px){.native-chart{height:430px;min-height:380px}}
+/* CIRCUIT neural intelligence visual — inspired by the supplied particle-network reference */
+#ai .ai-agent-visual.circuit-stage{min-height:390px;height:clamp(300px,43vw,520px);border:1px solid #24334e;border-radius:12px;background:#0d0e17;isolation:isolate;cursor:crosshair;box-shadow:inset 0 0 70px #03050c}
+#ai #circuitNeuralCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1}
+#ai .neural-vignette{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at center,transparent 38%,#090a13aa 100%)}
+#ai .neural-hud{position:absolute;z-index:3;top:13px;display:grid;gap:3px;font-size:8px;letter-spacing:.16em;color:#8e9ab2;pointer-events:none}
+#ai .neural-hud span{opacity:.7}
+#ai .neural-hud b{font-size:9px;color:#d8e6ff;letter-spacing:.12em}
+#ai .neural-hud-left{left:14px}#ai .neural-hud-right{right:14px;text-align:right}
+#ai .neural-hud-right b{color:#a9d5ff}
+#ai .ai-agent-visual .circuit-state-label{z-index:4;bottom:37px}
+#ai .ai-agent-visual .ai-agent-caption{z-index:4;bottom:12px;color:#9caac2;letter-spacing:.2em}
+#ai .ai-agent-visual .circuit-live-dot{box-shadow:0 0 12px #5ce0cb}
+@media(max-width:720px){#ai .ai-agent-visual.circuit-stage{min-height:300px;height:62vw;max-height:390px}#ai .neural-hud{top:10px;font-size:7px}#ai .neural-hud-left{left:10px}#ai .neural-hud-right{right:10px}}
+@media(prefers-reduced-motion:reduce){#ai #circuitNeuralCanvas{opacity:.9}}
+
+</style><meta name="circuit-build" content="chart-levels-panel-20261108-v2">
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -210,11 +226,13 @@ body.circuit-admin-mode #settings.active{display:block!important}
  <div class="ai-workbench-head"><div><div class="eyebrow">AI AGENT · VISUAL WORKSPACE</div><b style="font-size:16px">Your AI work desk</b><div class="q-meta">Choose an assistant, prepare a task and review the handoff plan here.</div></div><span class="signal-tag">VISUAL AGENT PREVIEW</span></div>
  <div class="ai-workbench-grid">
   <div>
-   <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="CIRCUIT animated virtual AI worker">
-    <div class="circuit-grid-glow"></div><div class="circuit-bot" aria-hidden="true"><div class="bot-aura"></div><div class="bot-head"><span class="bot-ear left"></span><span class="bot-ear right"></span><div class="bot-face"><i class="bot-eye"></i><i class="bot-eye"></i><span class="bot-mouth"></span></div></div><div class="bot-neck"></div><div class="bot-body"><span class="bot-core"></span><span class="bot-panel"></span></div><div class="bot-arm left"></div><div class="bot-arm right"></div></div>
-    <div class="circuit-data data-one">TASK QUEUE <b>●●●</b></div><div class="circuit-data data-two">AI CORE <b>ONLINE</b></div>
+   <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="CIRCUIT animated neural-network virtual intelligence">
+    <canvas id="circuitNeuralCanvas" aria-hidden="true"></canvas>
+    <div class="neural-vignette" aria-hidden="true"></div>
+    <div class="neural-hud neural-hud-left"><span>NEURAL FIELD</span><b>● ACTIVE</b></div>
+    <div class="neural-hud neural-hud-right"><span>INTERACTION</span><b id="neuralInteraction">AWAITING INPUT</b></div>
     <div class="circuit-state-label"><span class="circuit-live-dot"></span><b id="circuitStateText">STANDING BY</b></div>
-    <div class="ai-agent-caption">CIRCUIT · VIRTUAL AI WORKER</div>
+    <div class="ai-agent-caption">CIRCUIT · VIRTUAL INTELLIGENCE</div>
    </div>
    <div class="ai-handoff-note">CIRCUIT · GROQ AI CORE · SECURE CONNECTION</div>
 
@@ -1531,4 +1549,46 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
  },true);
 })();
 </script>
+
+<script>
+/* CIRCUIT neural field: animated particle clusters with pointer/gesture response. */
+(function(){
+ const stage=document.getElementById("aiAgentVisual"),canvas=document.getElementById("circuitNeuralCanvas");
+ if(!stage||!canvas||canvas.dataset.ready)return;canvas.dataset.ready="1";
+ const ctx=canvas.getContext("2d");if(!ctx)return;
+ const palette=["#ff5d69","#ff9b35","#f6d34d","#61c96b","#65d4c9","#66a9ff","#c18adf","#f18cae","#d5d7e4"];
+ let w=0,h=0,dpr=1,points=[],raf=0,last=0,pointer={x:-9999,y:-9999,active:false},pulse=null;
+ const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+ function resize(){
+  const r=stage.getBoundingClientRect();w=Math.max(1,r.width);h=Math.max(1,r.height);dpr=Math.min(2,window.devicePixelRatio||1);
+  canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+  const count=Math.max(90,Math.min(220,Math.round(w*h/1250)));
+  points=[];
+  const clusters=[{x:.50,y:.48,r:.24,n:.28},{x:.39,y:.58,r:.22,n:.20},{x:.63,y:.58,r:.22,n:.18},{x:.52,y:.25,r:.19,n:.14},{x:.71,y:.34,r:.15,n:.10},{x:.29,y:.35,r:.16,n:.10}];
+  clusters.forEach((c,ci)=>{const n=Math.round(count*c.n);for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,rad=Math.sqrt(Math.random())*c.r;points.push({x:(c.x+Math.cos(a)*rad)*w,y:(c.y+Math.sin(a)*rad)*h,ox:0,oy:0,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,size:.8+Math.random()*1.6,color:palette[(ci+i)%palette.length],phase:Math.random()*6.28})}});
+  while(points.length<count){const side=Math.floor(Math.random()*4),x=side<2?Math.random()*w:(side===2?Math.random()*w*.2:w*.8+Math.random()*w*.2),y=side>=2?Math.random()*h:(side===0?Math.random()*h*.22:h*.78+Math.random()*h*.22);points.push({x,y,ox:0,oy:0,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,size:.7+Math.random(),color:palette[Math.floor(Math.random()*palette.length)],phase:Math.random()*6.28})}
+ }
+ function frame(t){
+  if(!stage.isConnected)return;const dt=Math.min(2,(t-last)/16.67||1);last=t;ctx.clearRect(0,0,w,h);
+  const maxDist=Math.max(42,Math.min(82,w*.105)),max2=maxDist*maxDist;
+  points.forEach((p,i)=>{
+   p.phase+=.008*dt;p.x+=p.vx*dt+Math.sin(p.phase)*.045;p.y+=p.vy*dt+Math.cos(p.phase*.8)*.045;
+   if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;
+   if(pointer.active){const dx=p.x-pointer.x,dy=p.y-pointer.y,d=Math.sqrt(dx*dx+dy*dy);if(d<125&&d>1){const f=(1-d/125)*.22;p.x+=dx/d*f*dt;p.y+=dy/d*f*dt}}
+  });
+  for(let i=0;i<points.length;i++){const a=points[i];for(let j=i+1;j<points.length;j++){const b=points[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;if(d2<max2){const alpha=(1-Math.sqrt(d2)/maxDist)*.34;ctx.strokeStyle=a.color;ctx.globalAlpha=alpha;ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}}
+  ctx.globalAlpha=1;
+  points.forEach(p=>{const glow=2.5+Math.sin(p.phase)*.8;ctx.globalAlpha=.18;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,glow*2.8,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.92;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill()});
+  if(pointer.active){const g=ctx.createRadialGradient(pointer.x,pointer.y,0,pointer.x,pointer.y,100);g.addColorStop(0,"#9de8ff22");g.addColorStop(1,"#9de8ff00");ctx.fillStyle=g;ctx.fillRect(pointer.x-100,pointer.y-100,200,200)}
+  ctx.globalAlpha=1;if(!reduced)raf=requestAnimationFrame(frame);
+ }
+ function local(e){const r=stage.getBoundingClientRect();pointer.x=e.clientX-r.left;pointer.y=e.clientY-r.top;pointer.active=true;const el=document.getElementById("neuralInteraction");if(el)el.textContent="GESTURE DETECTED"}
+ stage.addEventListener("pointermove",local);stage.addEventListener("pointerleave",()=>{pointer.active=false;const el=document.getElementById("neuralInteraction");if(el)el.textContent="AWAITING INPUT"});
+ stage.addEventListener("pointerdown",e=>{local(e);pulse={x:pointer.x,y:pointer.y,start:performance.now()};stage.classList.add("neural-reactive");setTimeout(()=>stage.classList.remove("neural-reactive"),650)});
+ if("ResizeObserver"in window)new ResizeObserver(resize).observe(stage);else window.addEventListener("resize",resize);
+ resize();if(reduced)frame(0);else raf=requestAnimationFrame(frame);
+ document.addEventListener("visibilitychange",()=>{if(document.hidden){cancelAnimationFrame(raf)}else if(!reduced){last=0;raf=requestAnimationFrame(frame)}});
+})();
+</script>
+
 </body></html>
