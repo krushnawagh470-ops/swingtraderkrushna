@@ -1087,15 +1087,20 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
       const cleanReply = String(data.reply).replace(/<\s*br\s*</gi, "\n").replace(/<\s*br\s*\/?>/gi, "\n").replace(/<\/?(?:p|div|span|table|thead|tbody|tr|td|th|ul|ol|li|strong|b|i|em|h[1-6])\b[^>]*>/gi, "").replace(/\n{3,}/g, "\n\n").trim();
       messages.push({ role: "user", content: prompt }, { role: "assistant", content: cleanReply });
       add("assistant", cleanReply);
-      status.textContent = "Reply received · " + (data.model || data.provider || "CIRCUIT AI") + (terminalContext?" · terminal data attached · "+circuitIST(new Date()):"");
+      status.textContent = "Reply received · " + (data.model || data.provider || "CIRCUIT AI") + (chartRequest?" · terminal data attached · "+circuitIST(new Date()):"");
       const analysisStatus=document.getElementById("chartAnalysisStatus");
-      if(analysisStatus&&terminalContext)analysisStatus.textContent="Terminal sync completed · "+terminalContext.quoteCount+" quotes · "+terminalContext.candleCount+"/5 validated candle timeframes · "+(terminalContext.tradeReady?"fresh data":"stale/invalid data")+" · "+circuitIST(new Date());
+      if(analysisStatus&&chartRequest)analysisStatus.textContent="Terminal sync completed · "+terminalContext.quoteCount+" quotes · "+terminalContext.candleCount+"/5 validated candle timeframes · "+(terminalContext.tradeReady?"fresh data":"stale/invalid data")+" · "+circuitIST(new Date());
     } catch (error) {
-      add("assistant", "Request failed: " + (error.message || "Network error"));
-      status.textContent = "CIRCUIT request failed: " + (error.message || "Network or CORS error");
-      input.value = prompt;
-      const analysisStatus=document.getElementById("chartAnalysisStatus");
-      if(analysisStatus)analysisStatus.textContent="Terminal sync / AI request issue: "+(error.message||"feed unavailable");
+      if (error && error.name === "AbortError") {
+        add("assistant", "Request cancelled.");
+        status.textContent = "Request cancelled.";
+      } else {
+        add("assistant", "Request failed: " + (error.message || "Network error"));
+        status.textContent = "CIRCUIT request failed: " + (error.message || "Network or CORS error");
+        input.value = prompt;
+        const analysisStatus=document.getElementById("chartAnalysisStatus");
+        if(analysisStatus)analysisStatus.textContent="AI request issue: "+(error.message||"network unavailable");
+      }
     } finally {
       busy = false;
       cancelRequested = false;
