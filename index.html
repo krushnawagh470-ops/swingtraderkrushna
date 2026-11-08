@@ -1747,4 +1747,37 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
  }
 })();
 </script>
+
+<style id="circuit-mobile-core-render-fix">
+/* Fix the blank hemisphere canvas and give the mobile agent workspace usable width. */
+#ai .ai-workbench-grid{grid-template-columns:minmax(0,1fr)!important;gap:14px!important}
+#ai .ai-agent-visual.circuit-stage{
+ position:relative!important;display:block!important;overflow:hidden!important;
+ width:100%!important;height:auto!important;min-height:0!important;
+ aspect-ratio:1/1!important;max-height:none!important;isolation:isolate!important;
+ background:radial-gradient(ellipse at 50% 42%,#123553 0%,#07192b 58%,#030911 100%)!important
+}
+#ai #circuitNeuralCanvas{
+ display:block!important;position:absolute!important;inset:0!important;
+ width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;
+ opacity:1!important;visibility:visible!important;z-index:2!important
+}
+#ai .circuit-state-label{z-index:5!important}
+@media(min-width:900px){
+ #ai .ai-workbench-grid{grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr)!important}
+ #ai .ai-agent-visual.circuit-stage{aspect-ratio:1/1!important;max-height:680px!important}
+}
+</style>
+<script id="circuit-core-canvas-visibility-fix">
+(function(){
+ const stage=document.getElementById("aiAgentVisual"),canvas=document.getElementById("circuitNeuralCanvas");
+ if(!stage||!canvas)return;
+ stage.style.position="relative";stage.style.overflow="hidden";
+ canvas.style.cssText+=";display:block!important;position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:2!important;visibility:visible!important;opacity:1!important";
+ if(canvas.dataset.ready==="1"){
+   /* Existing renderer remains in control; force a fresh size after layout settles. */
+   requestAnimationFrame(()=>{window.dispatchEvent(new Event("resize"));});
+ }
+})();
+</script>
 </body></html>
