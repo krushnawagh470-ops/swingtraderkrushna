@@ -2223,4 +2223,95 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
    during capture: doing so races the activity tracker and can double-submit. */
 </script>
 <script src="memory.js"></script>
+
+<style id="circuit-approved-notebook-layout">
+/* Approved CIRCUIT layout: notebook structure, flush panel edges. */
+.shell{display:flex!important;align-items:stretch!important;gap:0!important;min-height:100vh!important}
+.side{
+  display:flex!important;flex:0 0 clamp(230px,25vw,310px)!important;
+  width:clamp(230px,25vw,310px)!important;max-width:none!important;
+  min-width:0!important;min-height:100vh!important;height:auto!important;
+  align-self:stretch!important;margin:0!important;padding:18px 13px!important;
+  border-right:1px solid #20364f!important;border-radius:0!important;
+  box-shadow:none!important
+}
+.side .nav{margin-top:24px!important}
+.side .circuit-live-task-panel{
+  display:block!important;width:100%!important;min-width:0!important;
+  margin:clamp(34px,24vh,230px) 0 14px!important;padding:13px!important;
+  order:2!important
+}
+.side .side-note{margin-top:0!important;order:3!important}
+.main{
+  flex:1 1 0!important;width:auto!important;max-width:none!important;
+  min-width:0!important;margin:0!important;padding:0 0 40px!important;
+  align-self:stretch!important
+}
+.main>.top{margin:0!important;padding:17px 20px!important}
+#ai.active{
+  display:block!important;width:100%!important;min-width:0!important;
+  margin:0!important;padding:0!important
+}
+#ai.active>.open-data-strip{
+  display:flex!important;width:100%!important;min-height:46px!important;
+  margin:0!important;padding:10px 18px!important;
+  border:0!important;border-top:1px solid #203149!important;
+  border-bottom:1px solid #203149!important;border-radius:0!important;
+  gap:8px!important
+}
+#ai.active>#aiWorkbench{
+  display:flex!important;flex-direction:column!important;
+  width:100%!important;min-width:0!important;gap:0!important;
+  margin:0!important;padding:0!important;border:0!important;
+  border-radius:0!important;box-shadow:none!important
+}
+#ai .ai-workbench-head{
+  display:block!important;width:100%!important;min-width:0!important;
+  margin:0!important;padding:15px 20px!important;
+  border:0!important;border-bottom:1px solid #203149!important;
+  border-radius:0!important;background:linear-gradient(110deg,#0c1c34,#071122)!important
+}
+#ai .ai-workbench-grid{
+  display:flex!important;flex-direction:column!important;
+  width:100%!important;min-width:0!important;gap:0!important;
+  margin:0!important;padding:0!important
+}
+#ai .ai-workbench-grid>div:first-child{
+  display:block!important;order:1!important;width:100%!important;
+  min-width:0!important;margin:0!important;padding:0!important
+}
+#ai .ai-agent-visual.circuit-stage{
+  display:block!important;position:relative!important;overflow:hidden!important;
+  width:100%!important;max-width:none!important;height:clamp(300px,43vh,520px)!important;
+  min-height:300px!important;max-height:none!important;aspect-ratio:auto!important;
+  margin:0!important;border:0!important;border-bottom:1px solid #203149!important;
+  border-radius:0!important
+}
+#ai .ai-workspace-panel{
+  display:block!important;order:2!important;grid-column:auto!important;
+  grid-row:auto!important;width:100%!important;max-width:none!important;
+  min-width:0!important;min-height:0!important;height:auto!important;
+  margin:0!important;padding:18px 20px!important;
+  border:0!important;border-radius:0!important
+}
+#ai .circuit-live-task-panel{display:none!important}
+@media(max-width:650px){
+  .shell{display:flex!important;flex-direction:column!important;min-height:100vh!important}
+  .side{
+    display:flex!important;flex:0 0 auto!important;width:100%!important;
+    min-height:0!important;height:auto!important;padding:12px!important;
+    border-right:0!important;border-bottom:1px solid #20364f!important
+  }
+  .side .nav{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;margin:12px 0 0!important}
+  .side .circuit-live-task-panel{margin:16px 0 8px!important}
+  .side .side-note{display:none!important}
+  .main{width:100%!important;max-width:none!important;padding:0 0 70px!important}
+  .main>.top{padding:13px 14px!important}
+  #ai .ai-workbench-head{padding:13px 14px!important}
+  #ai .ai-agent-visual.circuit-stage{height:clamp(260px,42vh,380px)!important;min-height:260px!important}
+  #ai .ai-workspace-panel{padding:14px!important}
+  #ai.active>.open-data-strip{padding:9px 12px!important;flex-wrap:wrap!important}
+}
+</style>
+
 </body></html>
