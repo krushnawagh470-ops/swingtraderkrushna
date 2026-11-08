@@ -750,7 +750,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     try{const response=await fetch("https://biquote.io/api"+path,{cache:"no-store",signal:controller.signal});if(!response.ok)throw Error("HTTP "+response.status);return await response.json()}
     finally{clearTimeout(timer)}
   }
-  function circuitContextMessage(label,value,maxChars=1750){
+  function circuitContextMessage(label,value,maxChars=700){
     const content="CIRCUIT SNAPSHOT | "+label+" | "+new Date().toISOString()+"\n"+JSON.stringify(value);
     return {role:"user",content:content.slice(0,maxChars)};
   }
@@ -788,16 +788,16 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     const rawNews=[];ng.forEach(g=>{if(Array.isArray(g))rawNews.push(...g);else if(Array.isArray(g?.items))rawNews.push(...g.items)});
     const seen=new Set(),news=rawNews.filter(x=>{const k=x.url||x.link||x.title;if(!k||seen.has(k))return false;seen.add(k);return true}).slice(0,7).map(x=>pick({title:x.title,source:x.publisher||x.source||x.provider,date:x.publishedDate||x.publishedAt||x.date,summary:String(x.description||x.summary||"").slice(0,100)},["title","source","date","summary"]));
     const context=[
-      circuitContextMessage("ALL WATCHLIST LIVE QUOTES · MOVERS · BREADTH",marketData,3000),
-      circuitContextMessage("UPCOMING ECONOMIC CALENDAR · FOREX FACTORY",calendarData),
-      circuitContextMessage("LATEST MARKET NEWS",news.length?news:{unavailable:"No headlines returned"})
+      circuitContextMessage("ALL WATCHLIST LIVE QUOTES · MOVERS · BREADTH",marketData,1300),
+      circuitContextMessage("UPCOMING ECONOMIC CALENDAR · FOREX FACTORY",calendarData,650),
+      circuitContextMessage("LATEST MARKET NEWS",news.length?news:{unavailable:"No headlines returned"},650)
     ];
     let candleCount=0;
     tasks.slice(4).forEach((result,i)=>{
       const label=frames[i][0];
       if(result.status!=="fulfilled"){context.push({role:"user",content:symbol+" "+label+" OHLC unavailable"});return}
       const data=result.value,bars=(data.bars||[]).filter(b=>b&&!b.isOpen&&[b.open,b.high,b.low,b.close].every(v=>Number.isFinite(Number(v)))&&Number.isFinite(new Date(b.openTime).getTime()))
-        .sort((a,b)=>new Date(a.openTime)-new Date(b.openTime)).slice(-12)
+        .sort((a,b)=>new Date(a.openTime)-new Date(b.openTime)).slice(-8)
         .map(b=>[Math.floor(new Date(b.openTime).getTime()/1000),Number(b.open),Number(b.high),Number(b.low),Number(b.close)]);
       if(bars.length)candleCount++;
       context.push(circuitContextMessage(symbol+" "+label+" CLOSED OHLC [Unix UTC,O,H,L,C]",bars.length?bars:{unavailable:"No closed candles returned"}));
