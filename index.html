@@ -1981,30 +1981,7 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
 })();
 </script>
 <script id="circuit-send-button-fallback">
-/* Capture the send tap independently of the AI workspace's own script. */
-(function () {
-  document.addEventListener("click", function (event) {
-    const target = event.target;
-    const button = target && target.closest ? target.closest("#aiSendToClaude") : null;
-    if (!button) return;
-    const input = document.getElementById("aiWorkbenchPrompt");
-    const status = document.getElementById("aiWorkbenchStatus");
-    if (!input || !status) return;
-    status.textContent = "Button tap detected · checking CIRCUIT send engine…";
-    if (typeof window.stkGeminiSend !== "function") {
-      status.textContent = "AI button loaded, but the send engine did not initialize. Refresh the page and retry.";
-      return;
-    }
-    if (button.dataset.circuitFallbackActive === "true") return;
-    button.dataset.circuitFallbackActive = "true";
-    try {
-      window.stkGeminiSend();
-    } catch (error) {
-      status.textContent = "AI send error: " + (error && error.message ? error.message : "Unknown error");
-    } finally {
-      window.setTimeout(function () { button.dataset.circuitFallbackActive = "false"; }, 0);
-    }
-  }, true);
-})();
+/* The primary sendMessage handler already owns the button. Do not invoke it again
+   during capture: doing so races the activity tracker and can double-submit. */
 </script>
 </body></html>
