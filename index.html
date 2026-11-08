@@ -1011,4 +1011,144 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
  else{document.body.classList.remove("circuit-admin-mode");document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id==="overview"));const t=document.getElementById("pageTitle");if(t)t.textContent="CIRCUIT";}
 })();
 </script>
+<style>
+/* CIRCUIT open-data layer */
+.open-data-strip{margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(110deg,#121a24,#10141c);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.open-data-strip .ods-label{font-size:9px;letter-spacing:1.5px;color:var(--gold);font-weight:800}
+.open-data-strip .ods-chip{font-size:11px;color:var(--text);background:#1a2230;border:1px solid #293446;border-radius:6px;padding:4px 7px}
+.open-data-strip .ods-meta{font-size:10px;color:var(--muted);margin-left:auto}
+.open-source-card{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px;min-width:0}
+.open-source-card .q-label{font-size:10px;color:var(--muted);letter-spacing:.7px}
+.open-source-card .q-price{font-size:19px;font-weight:750;margin:4px 0}
+.open-source-card .q-meta{font-size:10px;color:var(--muted)}
+</style>
+<script>
+/* CIRCUIT OPEN-SOURCE DATA BRIDGE
+   Binance public market streams: crypto only.
+   Frankfurter: daily reference rates, never labelled as intraday/live.
+   Calendar/news: repository snapshot and publisher RSS feeds.
+*/
+(function(){
+ "use strict";
+ const BINANCE_STREAM="wss://data-stream.binance.vision/stream?streams=btcusdt@ticker/ethusdt@ticker/solusdt@ticker/bnbusdt@ticker";
+ const BINANCE_REST="https://data-api.binance.vision/api/v3";
+ const FRANKFURTER="https://api.frankfurter.dev/v2";
+ const cryptoPairs={BTCUSDT:"BTC · USDT",ETHUSDT:"ETH · USDT",SOLUSDT:"SOL · USDT",BNBUSDT:"BNB · USDT"};
+ const referencePairs=[["XAU","USD","XAUUSD","Gold / USD"],["EUR","USD","EURUSD","EUR / USD"],["GBP","USD","GBPUSD","GBP / USD"],["USD","JPY","USDJPY","USD / JPY"],["USD","CHF","USDCHF","USD / CHF"],["USD","CAD","USDCAD","USD / CAD"],["AUD","USD","AUDUSD","AUD / USD"],["NZD","USD","NZDUSD","NZD / USD"]];
+ const quoteStore={};let socket=null,wsRetry=0,lastCryptoAt=0,lastReferenceAt=0,cryptoTimer=null;
+ const fmt=(v,d=5)=>Number(v).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+ const digits=s=>/JPY/.test(s)?3:(/XAU|BTC|ETH|SOL|BNB/.test(s)?2:5);
+ const nowIST=()=>new Date().toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+ function card(symbol,label,price,detail,kind,change){
+  const changeHtml=Number.isFinite(Number(change))?'<div class="q-meta">'+(Number(change)>=0?"▲ ":"▼ ")+Number(change).toFixed(2)+'% · 24h</div>':"";
+  return '<div class="open-source-card"><div class="q-label">'+label+'</div><div class="q-price">'+(Number.isFinite(Number(price))?fmt(price,digits(symbol)):"—")+'</div>'+changeHtml+'<div class="q-meta">'+detail+'</div><div class="q-meta">'+kind+'</div></div>';
+ }
+ function paint(){
+  const grid=document.getElementById("nativeQuoteGrid");if(!grid)return;
+  const rows=[];
+  ["XAUUSD","EURUSD","GBPUSD","USDJPY","USDCHF","USDCAD","AUDUSD","NZDUSD","BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT"].forEach(sym=>{
+   const q=quoteStore[sym];if(q)rows.push(card(sym,q.label,q.price,q.detail,q.kind,q.change));
+  });
+  ["XAUUSD","EURUSD","GBPUSD","USDJPY","USDCHF","USDCAD","AUDUSD","NZDUSD"].forEach(sym=>{if(!quoteStore[sym])rows.push(card(sym,sym,"—","No reference rate returned","Daily reference unavailable"))});
+  grid.innerHTML=rows.join("");
+  const status=document.getElementById("pipelineMeta");
+  if(status)status.textContent="Open data only · Binance public crypto stream + Frankfurter daily FX/metals · refreshed "+nowIST()+" IST";
+  const st=document.getElementById("pipelineStatus");if(st)st.textContent=socket&&socket.readyState===1?"OPEN DATA CONNECTED":"OPEN DATA / REST";
+  updateSectionStrips();
+ }
+ function updateSectionStrips(){
+  const summary=["XAUUSD","EURUSD","BTCUSDT"].map(k=>{const q=quoteStore[k];return q?k+" "+fmt(q.price,digits(k))+(k==="BTCUSDT"?" · live":" · daily ref"):k+" unavailable"});
+  document.querySelectorAll(".open-data-strip").forEach(el=>{
+   const chips=el.querySelector(".ods-chips");if(chips)chips.innerHTML=summary.map(x=>'<span class="ods-chip">'+x+'</span>').join("");
+   const meta=el.querySelector(".ods-meta");if(meta)meta.textContent="Updated "+nowIST()+" IST";
+  });
+ }
+ async function loadCryptoRest(){
+  try{
+   const r=await fetch(BINANCE_REST+"/ticker/24hr?symbols="+encodeURIComponent(JSON.stringify(Object.keys(cryptoPairs))),{cache:"no-store"});
+   if(!r.ok)throw Error("Binance HTTP "+r.status);
+   const rows=await r.json();
+   rows.forEach(x=>{const sym=x.symbol;quoteStore[sym]={label:cryptoPairs[sym],price:Number(x.lastPrice),change:Number(x.priceChangePercent),detail:"24h ticker · "+nowIST()+" IST",kind:"Binance public market data · REST fallback"}});
+   lastCryptoAt=Date.now();paint();
+  }catch(e){const st=document.getElementById("pipelineMeta");if(st)st.textContent="Binance REST fallback unavailable: "+e.message}
+ }
+ function connectCrypto(){
+  try{
+   socket=new WebSocket(BINANCE_STREAM);
+   socket.onopen=()=>{wsRetry=0;const st=document.getElementById("pipelineMeta");if(st)st.textContent="Binance public WebSocket connected · crypto stream live · "+nowIST()+" IST";};
+   socket.onmessage=ev=>{
+    try{const wrap=JSON.parse(ev.data),x=wrap.data;if(!x||!x.s)return;quoteStore[x.s]={label:cryptoPairs[x.s]||x.s,price:Number(x.c),change:Number(x.P),detail:"Last trade "+new Date(Number(x.C||x.E||Date.now())).toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata"})+" IST",kind:"LIVE · Binance public WebSocket"};lastCryptoAt=Date.now();paint()}catch(_){}
+   };
+   socket.onerror=()=>{const st=document.getElementById("pipelineMeta");if(st)st.textContent="Binance WebSocket unavailable · REST fallback active"};
+   socket.onclose=()=>{if(wsRetry<8){const delay=Math.min(30000,2000*Math.pow(2,wsRetry++));setTimeout(connectCrypto,delay)}};
+  }catch(e){loadCryptoRest()}
+ }
+ async function loadDailyReferences(){
+  const jobs=referencePairs.map(async ([base,quote,symbol,label])=>{
+   const r=await fetch(FRANKFURTER+"/rate/"+base.toLowerCase()+"/"+quote.toLowerCase(),{cache:"no-store"});
+   if(!r.ok)throw Error(symbol+" HTTP "+r.status);
+   const d=await r.json();quoteStore[symbol]={label,price:Number(d.rate),detail:"Observation date "+d.date,kind:"DAILY REFERENCE · Frankfurter · not intraday"};
+  });
+  const results=await Promise.allSettled(jobs);lastReferenceAt=Date.now();paint();
+  const failed=results.filter(x=>x.status==="rejected").length;
+  const st=document.getElementById("pipelineMeta");if(st&&failed)st.textContent+=" · "+failed+" daily reference pair(s) unavailable";
+ }
+ async function loadNativeQuotes(){await Promise.allSettled([loadCryptoRest(),loadDailyReferences()]);connectCrypto();paint()}
+ async function loadNativeMovers(){
+  const el=document.getElementById("nativeMovers");if(!el)return;
+  try{const r=await fetch(BINANCE_REST+"/ticker/24hr?symbols="+encodeURIComponent(JSON.stringify(Object.keys(cryptoPairs))),{cache:"no-store"});if(!r.ok)throw Error("Binance HTTP "+r.status);const rows=await r.json();el.innerHTML='<div class="q-meta">Crypto only · Binance public market data · 24h change</div><table class="native-table"><thead><tr><th>Asset</th><th>Last</th><th>24h change</th></tr></thead><tbody>'+rows.sort((a,b)=>Number(b.priceChangePercent)-Number(a.priceChangePercent)).map(x=>'<tr><td>'+x.symbol+'</td><td>'+fmt(x.lastPrice,2)+'</td><td>'+Number(x.priceChangePercent).toFixed(2)+'%</td></tr>').join("")+'</tbody></table>'}catch(e){el.textContent="Open-source crypto movers unavailable: "+e.message}
+ }
+ async function loadNativeSummary(){
+  const el=document.getElementById("nativeMarketSummary");if(!el)return;
+  el.textContent="Open-source data status · Binance crypto "+(lastCryptoAt?"updated "+Math.round((Date.now()-lastCryptoAt)/1000)+"s ago":"connecting")+" · Frankfurter daily references "+(lastReferenceAt?"observed "+new Date(lastReferenceAt).toLocaleDateString("en-IN"):"connecting")+" · no broker execution or account data";
+ }
+ async function loadNativeCalendar(){
+  const el=document.getElementById("nativeCalendar");if(!el)return;
+  try{
+   const r=await fetch("./data/calendar.json?ts="+Math.floor(Date.now()/60000),{cache:"no-store"});
+   if(!r.ok)throw Error("No repository calendar snapshot");
+   const j=await r.json(),events=Array.isArray(j.events)?j.events:[];
+   if(!events.length)throw Error("Calendar snapshot is empty");
+   const filter=document.getElementById("calendarImpact")?.value||"all";
+   const rows=events.filter(e=>filter==="all"||(filter==="medium"?["medium","high"].includes(String(e.importance||e.impact).toLowerCase()):String(e.importance||e.impact).toLowerCase()==="high"));
+   el.innerHTML='<div class="q-meta">Source: repository GitHub Actions snapshot · schedule may change · times in IST</div><table class="native-table"><thead><tr><th>Release · IST</th><th>Currency</th><th>Event</th><th>Impact</th><th>Actual</th><th>Forecast</th><th>Previous</th></tr></thead><tbody>'+rows.map(e=>'<tr><td>'+esc(terminalIST(e.time||e.scheduledAt||e.timestamp))+'</td><td>'+esc(e.currency||e.countryCode||"—")+'</td><td>'+esc(e.name||e.title||e.eventName||"—")+'</td><td>'+esc(e.importance||e.impact||"—")+'</td><td>'+esc(e.actual??"—")+'</td><td>'+esc(e.forecast??"—")+'</td><td>'+esc(e.previous??"—")+'</td></tr>').join("")+'</tbody></table>';
+  }catch(e){el.textContent="Economic calendar unavailable: "+e.message+" · no sample events are shown."}
+ }
+ async function loadNativeNews(force=false){
+  const el=document.getElementById("nativeNews");if(!el||window.__circuitOpenNewsBusy)return;
+  window.__circuitOpenNewsBusy=true;
+  try{
+   const cat=activeNewsCategory||"global",spec=NEWS_FEEDS[cat]||NEWS_FEEDS.global;
+   const results=await Promise.allSettled(spec.feeds.map(f=>readNewsRSS(f[0],f[1])));
+   let items=results.flatMap(x=>x.status==="fulfilled"?x.value:[]);
+   if(spec.filter)items=items.filter(x=>spec.filter.test((x.title||"")+" "+(x.description||"")));
+   const unique=new Map();items.forEach(x=>{if(x.title&&x.link&&!unique.has(x.link))unique.set(x.link,x)});
+   const rows=[...unique.values()].sort((a,b)=>b.date-a.date).slice(0,40);
+   if(!rows.length)throw Error("Publisher RSS feeds could not be reached");
+   el.replaceChildren();
+   rows.forEach(x=>{const a=document.createElement("article");a.className="native-news-item";const b=document.createElement("b"),link=document.createElement("a");link.href=x.link;link.target="_blank";link.rel="noopener noreferrer";link.textContent=x.title;link.style.color="inherit";b.appendChild(link);a.appendChild(b);if(x.description){const p=document.createElement("p");p.textContent=x.description;a.appendChild(p)}const f=document.createElement("span");f.className="q-meta";f.textContent=x.source+" · "+terminalIST(x.date);a.appendChild(f);el.appendChild(a)});
+   const meta=document.getElementById("newsPipelineMeta");if(meta)meta.textContent="Publisher RSS · "+rows.length+" headlines · refreshed "+nowIST()+" IST";
+  }catch(e){el.textContent="Publisher RSS unavailable: "+e.message+" · no synthetic headlines are shown";const meta=document.getElementById("newsPipelineMeta");if(meta)meta.textContent="RSS feed error · "+e.message}
+  finally{window.__circuitOpenNewsBusy=false}
+ }
+ function addSectionStrips(){
+  document.querySelectorAll(".section").forEach(section=>{
+   if(section.querySelector(".open-data-strip"))return;
+   const strip=document.createElement("div");strip.className="open-data-strip";
+   strip.innerHTML='<span class="ods-label">OPEN DATA CONTEXT</span><div class="ods-chips"><span class="ods-chip">XAUUSD loading</span><span class="ods-chip">EURUSD loading</span><span class="ods-chip">BTCUSDT loading</span></div><span class="ods-meta">Connecting feeds…</span>';
+   section.insertBefore(strip,section.firstChild);
+  });
+  updateSectionStrips();
+ }
+ window.loadNativeQuotes=loadNativeQuotes;window.loadNativeMovers=loadNativeMovers;window.loadNativeSummary=loadNativeSummary;window.loadNativeCalendar=loadNativeCalendar;window.loadNativeNews=loadNativeNews;
+ addSectionStrips();
+ loadNativeQuotes();loadNativeMovers();loadNativeSummary();loadNativeCalendar();loadNativeNews(true);
+ setInterval(()=>{if(!socket||socket.readyState>1)loadCryptoRest()},30000);
+ setInterval(loadDailyReferences,30*60*1000);
+ setInterval(loadNativeMovers,60000);
+ setInterval(loadNativeSummary,15000);
+ setInterval(()=>{if(document.getElementById("news")?.classList.contains("active"))loadNativeNews(true)},10*60*1000);
+ setInterval(()=>{if(document.getElementById("settings")?.classList.contains("active"))loadNativeCalendar()},5*60*1000);
+})();
+</script>
 </body></html>
