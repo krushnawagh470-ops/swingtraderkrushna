@@ -339,7 +339,7 @@ async function loadForexFactoryCalendar(force=false){
  const cacheKey="circuit_ff_calendar_weekly_v1",ttl=60*60*1000;
  try{
   let cached=null;try{cached=JSON.parse(localStorage.getItem(cacheKey)||"null")}catch{}
-  if(!force&&cached&&Array.isArray(cached.events)&&Date.now()-cached.fetchedAt<ttl){ffCalendarEvents=cached.events;ffCalendarLastFetch=cached.fetchedAt;renderForexFactoryCalendar();if(status)status.textContent+=" · cached "+new Date(cached.fetchedAt).toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata"});return;}
+  if(cached&&Array.isArray(cached.events)&&Date.now()-cached.fetchedAt<ttl){ffCalendarEvents=cached.events;ffCalendarLastFetch=cached.fetchedAt;renderForexFactoryCalendar();if(status)status.textContent+=" · cached "+new Date(cached.fetchedAt).toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata"});return;}
   if(box)box.textContent="Fetching the official weekly calendar export…";
   const response=await fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json",{cache:"no-store"});
   if(!response.ok)throw Error("Forex Factory feed returned HTTP "+response.status);
