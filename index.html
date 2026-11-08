@@ -314,6 +314,13 @@ body.circuit-admin-mode #settings.active{display:block!important}
 #ai .ai-agent-visual video.circuit-agent-video{position:absolute!important;inset:0!important;display:block!important;visibility:visible!important;opacity:1!important;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;object-fit:cover!important;object-position:center!important;z-index:10!important}
 #ai #circuitNeuralCanvas{display:none!important;visibility:hidden!important;opacity:0!important}
 </style>
+<style id="circuit-agent-speech-sync">
+#ai #aiAgentVisual.is-speaking video.circuit-agent-video{animation:circuitVoicePulse 1.15s ease-in-out infinite alternate;filter:brightness(1.12) saturate(1.16)}
+#ai #aiAgentVisual.is-speaking:after{content:"";position:absolute;inset:0;z-index:11;pointer-events:none;border:1px solid rgba(106,190,255,.48);box-shadow:inset 0 0 34px rgba(42,145,255,.18);animation:circuitVoiceGlow .8s ease-in-out infinite alternate}
+@keyframes circuitVoicePulse{from{transform:scale(1)}to{transform:scale(1.035)}}
+@keyframes circuitVoiceGlow{from{opacity:.25}to{opacity:.85}}
+@media(prefers-reduced-motion:reduce){#ai #aiAgentVisual.is-speaking video.circuit-agent-video,#ai #aiAgentVisual.is-speaking:after{animation:none}}
+</style>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -1247,6 +1254,14 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
   const stopVoice = document.getElementById("stkVoiceStop");
   const voiceInput = document.getElementById("aiWorkbenchPrompt");
   const voiceLanguage = document.getElementById("stkVoiceLanguage");
+  const agentVisual = document.getElementById("aiAgentVisual");
+  const agentVideo = agentVisual && agentVisual.querySelector(".circuit-agent-video");
+  function setAgentSpeaking(active) {
+    if (agentVisual) agentVisual.classList.toggle("is-speaking", !!active);
+    if (!agentVideo) return;
+    if (active) { const playback = agentVideo.play(); if (playback && playback.catch) playback.catch(function(){}); }
+    else { agentVideo.pause(); try { agentVideo.currentTime = 0; } catch (e) {} }
+  }
   const selectedVoiceLanguage = () => "en-US";
   let recognition = null;
   let listening = false;
@@ -1318,12 +1333,15 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
         utterance.pitch = 1;
         utterance.volume = 1;
         utterance.onstart = function () {
+          setAgentSpeaking(true);
           if (voiceStatus) voiceStatus.textContent = "Speaking reply aloud…";
         };
         utterance.onend = function () {
+          if (run === stkSpeechRun) setAgentSpeaking(false);
           if (run === stkSpeechRun && voiceStatus) voiceStatus.textContent = "Finished speaking. Tap Talk to AI to continue.";
         };
         utterance.onerror = function (event) {
+          if (run === stkSpeechRun) setAgentSpeaking(false);
           if (run !== stkSpeechRun || event.error === "canceled" || event.error === "interrupted") return;
           if (voiceStatus) voiceStatus.textContent = "Phone speech error: " + (event.error || "unknown") + ". Check Android text-to-speech settings.";
         };
@@ -1352,11 +1370,11 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
     voiceOn = !voiceOn;
     voiceToggle.textContent = voiceOn ? "🔊 Voice replies: ON" : "🔇 Voice replies: OFF";
     voiceToggle.setAttribute("aria-pressed", String(voiceOn));
-    if (!voiceOn && "speechSynthesis" in window) { stkSpeechRun++; window.speechSynthesis.cancel(); }
+    if (!voiceOn && "speechSynthesis" in window) { stkSpeechRun++; window.speechSynthesis.cancel(); setAgentSpeaking(false); }
     if (voiceStatus) voiceStatus.textContent = voiceOn ? "AI replies will be spoken aloud." : "Voice replies are muted; text replies remain on.";
   });
   if (stopVoice) stopVoice.addEventListener("click", function () {
-    if ("speechSynthesis" in window) { stkSpeechRun++; window.speechSynthesis.cancel(); }
+    if ("speechSynthesis" in window) { stkSpeechRun++; window.speechSynthesis.cancel(); setAgentSpeaking(false); }
     if (recognition && listening) recognition.stop();
     if (voiceStatus) voiceStatus.textContent = "Voice playback stopped.";
   });
