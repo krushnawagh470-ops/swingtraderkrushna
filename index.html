@@ -1353,11 +1353,13 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
           if (voiceStatus) voiceStatus.textContent = "Speaking reply aloud…";
         };
         utterance.onboundary = function (event) {
-          if (run !== stkSpeechRun || event.name && event.name !== "word") return;
-          const start = Math.max(0, event.charIndex || 0);
-          const end = event.charLength ? start + event.charLength : speechText.indexOf(" ", start);
-          const spokenWord = speechText.slice(start, end > start ? end : start + 12).split(/\\s+/)[0];
-          pulseAgentForWord(spokenWord);
+          if (run !== stkSpeechRun) return;
+          if (event.name && event.name !== "word") return;
+          const start = Math.max(0, Number(event.charIndex) || 0);
+          const remainder = speechText.slice(start);
+          const match = remainder.match(/^\\S+/);
+          const spokenWord = match ? match[0] : "";
+          if (spokenWord) pulseAgentForWord(spokenWord);
         };
         utterance.onend = function () {
           if (run === stkSpeechRun) setAgentSpeaking(false);
