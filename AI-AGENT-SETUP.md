@@ -7,7 +7,7 @@ CIRCUIT now has a provider-independent AI core in `worker.js`. Groq remains the 
 - A central CIRCUIT identity and operating prompt now lives in the Worker, rather than being tied to one model provider.
 - The Worker uses a provider adapter. Groq is active by default.
 - OpenAI can be selected later by changing one Worker variable and adding an API key secret. The website chat interface does not need to be rebuilt.
-- The browser's existing learning memory remains user-controlled and local to that browser for now. It is not yet cross-device cloud memory; that requires a secure user identity and persistent database.
+- The original adaptive-learning notes remain local to the browser. The new optional Cloud memory panel uses authenticated Cloudflare D1 storage for cross-device persistence after its one-time setup below.
 
 ## Deploy the updated CIRCUIT brain
 
@@ -90,7 +90,7 @@ Optional model overrides:
 
 - This is CIRCUIT's central reasoning/assistant layer, not a direct connection to the ChatGPT Free app.
 - It does not automatically gain access to ChatGPT, Claude, Gemini, broker accounts, GitHub actions, or other apps. Those require separate, explicitly connected tools.
-- Learning memory is currently saved in browser local storage. Clearing browser data or changing devices may make that memory unavailable.
+- Original browser-only learning notes remain in local storage. Cloud memory is separate and persists in D1 across devices once configured.
 - Market data/news context is only available when the website successfully retrieves and attaches it. The AI must not invent missing live data.
 - The Worker accepts chat messages only; no broker execution or financial transactions are implemented.
 - Groq and OpenAI API availability, quotas, and charges are controlled by their respective providers. Check current terms and limits before relying on a free tier or enabling paid API use.
