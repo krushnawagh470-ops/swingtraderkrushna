@@ -1962,6 +1962,7 @@ const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisR
     const input = document.getElementById("aiWorkbenchPrompt");
     const status = document.getElementById("aiWorkbenchStatus");
     if (!input || !status) return;
+    status.textContent = "Button tap detected · checking CIRCUIT send engine…";
     if (typeof window.stkGeminiSend !== "function") {
       status.textContent = "AI button loaded, but the send engine did not initialize. Refresh the page and retry.";
       return;
