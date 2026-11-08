@@ -272,6 +272,26 @@ body.circuit-admin-mode #settings.active{display:block!important}
 #ai .circuit-state-label{font-size:11px!important;letter-spacing:.16em!important}
 @media(max-width:720px){#ai .ai-agent-visual.circuit-stage{aspect-ratio:16/9!important;max-height:none!important;min-height:190px!important}}
 </style>
+
+<style id="circuit-final-two-panel-desktop">
+/* Clean two-panel desktop composition: AI Agent and Gemini workspace side by side. */
+@media(min-width:901px){
+ #ai .ai-workbench-grid{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:stretch!important;gap:14px!important;padding:16px!important}
+ #ai .ai-workbench-grid>div:first-child{display:block!important;min-width:0!important;width:100%!important}
+ #ai .ai-workspace-panel{display:block!important;min-width:0!important;width:100%!important}
+ #ai .ai-agent-visual.circuit-stage{width:100%!important;min-height:440px!important;height:100%!important;max-height:none!important;aspect-ratio:auto!important}
+}
+@media(max-width:900px){
+ #ai .ai-workbench-grid{grid-template-columns:minmax(0,1fr)!important}
+ #ai .ai-agent-visual.circuit-stage{min-height:230px!important;max-height:none!important;aspect-ratio:16/9!important}
+}
+/* Remove the decorative inner frame/grid that obscures the agent visual. */
+#ai .ai-agent-visual.circuit-stage:before,#ai .ai-agent-visual.circuit-stage:after{content:none!important;display:none!important}
+#ai .ai-agent-visual.circuit-stage{background:radial-gradient(ellipse at 50% 48%,#092b50 0%,#041326 56%,#02070d 100%)!important}
+#ai #circuitNeuralCanvas{z-index:1!important}
+#ai .circuit-state-label{top:auto!important;left:14px!important;bottom:14px!important;z-index:4!important}
+#ai .ai-handoff-note{display:none!important}
+</style>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -312,9 +332,7 @@ body.circuit-admin-mode #settings.active{display:block!important}
 <canvas id="circuitNeuralCanvas" aria-hidden="true"></canvas>
     <div class="circuit-state-label"><span class="circuit-live-dot"></span><span id="circuitStateText">CIRCUIT AI AGENT</span></div>
    </div>
-   <div class="ai-handoff-note">CIRCUIT · GROQ AI CORE · SECURE CONNECTION</div>
 
-   <div class="ai-handoff-note">Drag the globe to rotate its longitude field. On mobile, swipe across the hemisphere to interact; the particle field stays live while CIRCUIT is idle.</div>
   </div>
   <div class="ai-workspace-panel">
    <div class="row"><div><div class="terminal-label">CURRENT WORKSPACE</div><b id="aiSelectedName">Gemini workspace</b></div><span class="signal-tag" id="aiConnectionState">WORKER · NOT CONNECTED</span></div>
