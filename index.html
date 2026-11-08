@@ -320,6 +320,49 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 @keyframes circuitVoiceGlow{from{opacity:.25}to{opacity:.85}}
 @media(prefers-reduced-motion:reduce){#ai #aiAgentVisual.is-speaking video.circuit-agent-video,#ai #aiAgentVisual.is-speaking:after{animation:none}}
 </style>
+<style id="circuit-desktop-terminal-layout">
+/* Desktop composition based on the user's terminal wireframe. */
+.circuit-live-task{display:none}
+@media(min-width:1100px){
+ #ai.active{display:grid!important;grid-template-columns:minmax(235px, .31fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:14px;align-items:start}
+ #ai.active>.open-data-strip{grid-column:2;grid-row:1;margin:0}
+ #ai.active>.circuit-live-task{display:block;grid-column:1;grid-row:1 / span 2;position:sticky;top:18px;min-height:100%;padding:18px;background:linear-gradient(160deg,#0c1c33,#071121);border-color:#21466f}
+ #ai.active>#aiWorkbench{grid-column:2;grid-row:2;margin:0;min-width:0}
+ #ai .ai-workbench-grid{grid-template-columns:minmax(0,1fr) minmax(340px,.92fr)!important;align-items:start}
+ #ai .ai-agent-visual.circuit-stage{aspect-ratio:1.08/1!important;max-height:640px!important}
+ #ai .ai-workspace-panel{min-height:100%}
+}
+.circuit-task-title{font-size:19px;font-weight:800;letter-spacing:-.03em;margin:8px 0 14px}
+.circuit-task-state{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid #244a73;border-radius:8px;background:#091a2e;color:#a9d7ff;font-size:9px;font-weight:800;letter-spacing:.08em}
+.circuit-task-state i{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#29d9bb;box-shadow:0 0 10px #29d9bb}
+.circuit-task-track{display:grid;gap:0;margin-top:18px}
+.circuit-task-step{display:flex;gap:11px;align-items:flex-start;position:relative;padding:0 0 20px;color:#8ba3c1}
+.circuit-task-step:not(:last-child):after{content:"";position:absolute;left:13px;top:29px;bottom:0;width:1px;background:#25466a}
+.circuit-task-step>b{display:grid;place-items:center;width:27px;height:27px;flex:0 0 27px;border:1px solid #294c72;border-radius:50%;background:#0a1a2d;color:#8bb9e6;font-size:9px}
+.circuit-task-step strong{display:block;color:#dcecff;font-size:11px;margin:2px 0 3px}
+.circuit-task-step small{display:block;color:#8299b8;font-size:10px;line-height:1.45}
+.circuit-task-step.is-active>b{background:#12365a;border-color:#59baff;color:#fff;box-shadow:0 0 15px #4caaff33}
+.circuit-task-step.is-done>b{background:#10382f;border-color:#29d9bb;color:#7df0d7}
+.circuit-task-foot{margin-top:8px;padding-top:12px;border-top:1px solid #1b3554;color:#8299b8;font-size:10px;line-height:1.55}
+@media(max-width:1099px){.circuit-live-task{display:none!important}}
+</style>
+<script id="circuit-live-task-mirror">
+(function(){
+ const source=document.getElementById("aiWorkbenchStatus"),target=document.getElementById("circuitTaskMirror");
+ const steps=document.querySelectorAll("#circuitLiveTask .circuit-task-step");
+ if(!source||!target)return;
+ function sync(){
+  const value=(source.textContent||"").trim();
+  const busy=/sending|thinking|processing|preparing|syncing|connecting/i.test(value);
+  const done=/reply received|completed|saved/i.test(value);
+  target.textContent=value?value.toUpperCase():"SYSTEM READY · AWAITING TASK";
+  steps.forEach((step,i)=>{step.classList.toggle("is-active",busy&&i===1);step.classList.toggle("is-done",done&&i<3);});
+  if(!busy&&!done)steps.forEach((step,i)=>{step.classList.toggle("is-ready",i===0)});
+ }
+ new MutationObserver(sync).observe(source,{childList:true,subtree:true,characterData:true});
+ sync();
+})();
+</script>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -353,6 +396,17 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 
 </section>
 <section class="section" id="ai">
+<aside class="circuit-live-task card" id="circuitLiveTask">
+ <div class="terminal-label">CIRCUIT / OPERATIONS</div>
+ <div class="circuit-task-title">Live Task Execution</div>
+ <div class="circuit-task-state"><i></i><span id="circuitTaskMirror">SYSTEM READY · AWAITING TASK</span></div>
+ <div class="circuit-task-track">
+  <div class="circuit-task-step is-ready"><b>01</b><span><strong>Input received</strong><small>Task prompt and context</small></span></div>
+  <div class="circuit-task-step"><b>02</b><span><strong>Processing</strong><small>AI workspace execution</small></span></div>
+  <div class="circuit-task-step"><b>03</b><span><strong>Review output</strong><small>Response and next actions</small></span></div>
+ </div>
+ <div class="circuit-task-foot">Execution is started from the Current Workspace panel.</div>
+</aside>
 <div class="ai-workbench" id="aiWorkbench">
  <div class="ai-workbench-head"><div><div class="eyebrow">CIRCUIT · AI WORKSPACE</div><b style="font-size:16px">CIRCUIT Intelligence Console</b><div class="q-meta">Neural processing interface · AI task orchestration and review.</div></div></div>
  <div class="ai-workbench-grid">
