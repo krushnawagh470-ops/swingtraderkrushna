@@ -1148,7 +1148,11 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
         liveNewsContext="\n\nLIVE WEB SEARCH STATUS: General web search or page retrieval failed ("+String(newsError?.message||"unknown error").slice(0,180)+"). Do not claim that live research succeeded; answer stable knowledge and disclose that current verification was unavailable.";
         liveNewsCount=0;
       }
-const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisRules+closedMarketOverride+universalWorkspaceRules+globalIntelligenceRules+modeRules+webRules+domainRules+liveNewsContext+circuitLearningContext()}];
+const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|federal reserve|\bfed\b|imf|world bank|global economy|macroeconom|election|military|diplomac|opec|wto|united nations|nato)\b/i.test(prompt);
+      const compactWorkspaceRules="\n\nYou are CIRCUIT, the user's practical multidisciplinary assistant. Handle the actual task, not only trading. Be accurate, concise and actionable. Use relevant context only. Never invent facts, sources, tests or completed actions. Protect credentials. State uncertainty when needed.";
+      const requestRules=(chartRequest?analysisRules+closedMarketOverride:"")+compactWorkspaceRules+(globalIntelRequest?globalIntelligenceRules:"")+modeRules+(needsLiveWebSearch?webRules:"")+(chartRequest?"":domainRules);
+      const learningContext=circuitLearningContext().slice(0,3500);
+      const outgoing=[...terminalContext.context,{role:"user",content:prompt+requestRules+liveNewsContext+learningContext}];
       const response = await fetch(url + "/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
