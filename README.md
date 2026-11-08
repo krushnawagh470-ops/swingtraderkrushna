@@ -1,32 +1,32 @@
-# SwingTraderKrushna Trading Terminal
+# SwingTraderKrushna — CIRCUIT
 
-A mobile-friendly, static trading workspace.
+CIRCUIT is a mobile-friendly AI workspace with a static web frontend and a separate Python API backend.
 
-## Included
-- Overview dashboard and watchlist for XAUUSD, EURUSD and BTCUSD
-- TradingView embedded interactive charts
-- Cash-risk calculator (not broker-specific lot sizing)
-- Local trade journal with CSV export
-- SMC concept playbook
+## Architecture
 
-## Deploy free with GitHub Pages
-1. Open this repository on GitHub.
-2. Go to **Settings → Pages**.
-3. Under **Build and deployment**, choose **Deploy from a branch**.
-4. Select branch **main** and folder **/(root)**, then Save.
-5. Wait for GitHub Pages to publish. Your site URL will be shown on that page.
+- **Frontend:** `index.html`, CSS and browser JavaScript, hosted with GitHub Pages.
+- **Backend:** FastAPI in `backend/`, deployable as a Docker service on a Python-compatible host.
+- **Market data:** read-only Biquote REST adapter.
+- **News:** publisher RSS aggregation, newest-first sorting, URL deduplication and short in-memory caching.
+- **AI gateway:** Gemini server-side proxy. The Gemini key belongs in the backend host's environment variables, never in the frontend or Git.
 
-Journal entries are stored in the browser's local storage on the device used. Export CSV backups regularly. Charts are provided by TradingView. This app does not execute trades or connect to a broker.
+## Backend quick start
 
-## AI Agent (free-tier mode)
+See [backend setup](backend/README.md).
 
-The AI Workbench uses the Gemini 2.5 Flash API through Google AI Studio. To use it:
-1. Create a Gemini API key at https://aistudio.google.com/app/apikey.
-2. Keep the project on Google's Free tier; do not link billing if you want to avoid API charges.
-3. Open the terminal, select **Desk → AI Agent**, paste the key into the Gemini API key field, and send a message.
-4. The key is held in page memory only and is not saved to local storage or the repository. It is sent directly from the browser to Google's API. For a public or multi-user deployment, replace this with a server-side proxy and secret storage before use.
+```bash
+cd backend
+python -m venv .venv
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
 
-Free-tier model access and request limits can change. Check your active limits in Google AI Studio. This assistant does not have automatic live-market data or broker execution unless separately integrated.
+API documentation: `http://127.0.0.1:8000/docs`
 
-## Disclaimer
-For education and trade planning only. Not financial advice. Verify all prices, contract specifications, tick values, spreads and execution details with your broker before trading.
+## Deployment notes
+
+GitHub Pages does not execute Python. Keep the frontend on GitHub Pages and deploy the `backend/` service separately. After deployment, point the frontend API client at the backend's HTTPS URL and restrict CORS to the exact frontend origin. Backend deployment and frontend-to-backend integration are separate steps; this repository currently contains the backend source, not a live backend URL.
+
+## Scope and safety
+
+The backend provides read-only market data and AI/news services. It does not place trades, access broker credentials, or guarantee live quote availability. Verify market data and broker contract specifications independently before making trading decisions.
