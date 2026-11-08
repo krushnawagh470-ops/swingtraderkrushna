@@ -155,18 +155,22 @@ body.circuit-admin-mode #settings.active{display:block!important}
 
 /* Desktop All AI workspace layout: use the available width and remove the empty top band. */
 @media (min-width: 901px) {
-  .main { padding-top: 10px; }
-  .top { margin-bottom: 8px; }
+  .main { padding-top: 4px; }
+  .top { margin-bottom: 4px; }
   #ai { padding-top: 0; }
   #ai .ai-workbench { margin-top: 0; }
+  #ai .ai-workbench-head { padding: 8px 12px; }
   #ai .ai-workbench-grid {
-    grid-template-columns: minmax(210px, .58fr) minmax(0, 1.42fr);
+    grid-template-columns: minmax(170px, .42fr) minmax(0, 1.58fr);
     align-items: start;
-    gap: 10px;
-    padding: 10px;
+    gap: 8px;
+    padding: 8px;
   }
-  #ai .ai-agent-visual { min-height: 220px; }
-  #ai .ai-workspace-panel { min-width: 0; padding: 10px; }
+  #ai .ai-agent-visual { min-height: 150px; }
+  #ai .ai-workspace-panel { min-width: 0; padding: 8px; }
+  #ai .ai-workspace-panel textarea { min-height: 72px; }
+  #ai .ai-task-steps { gap: 5px; margin-top: 7px; }
+  #ai .ai-task-step { padding: 6px; }
 }
 </style></head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
