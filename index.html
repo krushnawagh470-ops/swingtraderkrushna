@@ -253,8 +253,8 @@ body.circuit-admin-mode #settings.active{display:block!important}
 <div class="section-title" style="margin-top:4px">Forex Factory Economic Calendar</div>
 <p class="muted">Weekly Forex Factory event feed rendered natively inside CIRCUIT. High-impact releases are selected by default. Times are converted to India Standard Time (IST).</p>
 <div class="row" style="justify-content:flex-start;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0">
-<select id="ffImpactFilter" aria-label="Filter event impact"><option value="High" selected>🔴 High impact only</option><option value="all">All impact levels</option></select>
-<select id="ffCurrencyFilter" aria-label="Filter event currency"><option value="all">All currencies</option><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option><option>CHF</option><option>CAD</option><option>AUD</option><option>NZD</option><option>CNY</option></select>
+<select id="ffImpactFilter" aria-label="Filter event impact" onchange="renderForexFactoryCalendar()"><option value="High" selected>🔴 High impact only</option><option value="all">All impact levels</option></select>
+<select id="ffCurrencyFilter" aria-label="Filter event currency" onchange="renderForexFactoryCalendar()"><option value="all">All currencies</option><option>USD</option><option>EUR</option><option>GBP</option><option>JPY</option><option>CHF</option><option>CAD</option><option>AUD</option><option>NZD</option><option>CNY</option></select>
 <button class="btn secondary small" type="button" onclick="loadForexFactoryCalendar(true)">↻ Refresh calendar</button>
 </div>
 <div class="q-meta" id="ffCalendarStatus" aria-live="polite">Loading Forex Factory weekly events…</div>
@@ -336,7 +336,6 @@ function renderForexFactoryCalendar(){
 }
 async function loadForexFactoryCalendar(force=false){
  const box=document.getElementById("ffCalendarTable"),status=document.getElementById("ffCalendarStatus");if(!box)return;
- document.getElementById("ffImpactFilter")?.addEventListener("change",renderForexFactoryCalendar,{once:true});document.getElementById("ffCurrencyFilter")?.addEventListener("change",renderForexFactoryCalendar,{once:true});
  const cacheKey="circuit_ff_calendar_weekly_v1",ttl=60*60*1000;
  try{
   let cached=null;try{cached=JSON.parse(localStorage.getItem(cacheKey)||"null")}catch{}
