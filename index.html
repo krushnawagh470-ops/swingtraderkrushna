@@ -255,6 +255,13 @@ body.circuit-admin-mode #settings.active{display:block!important}
 #ai #circuitNeuralCanvas{opacity:1;filter:saturate(.78) contrast(1.06)}
 @media(max-width:720px){#ai .ai-agent-visual.circuit-stage{height:auto;min-height:0;max-height:none;aspect-ratio:1/1}}
 </style>
+
+/* CIRCUIT AI workspace: keep the main agent panel visible; remove only the neural visual box. */
+<style id="circuit-ai-panel-layout-fix">
+.ai-workbench-grid{grid-template-columns:minmax(0,1fr)!important}
+.ai-workbench-grid>div:first-child{display:none!important}
+.ai-workbench-grid>.ai-workspace-panel{display:block!important;width:100%;min-width:0}
+</style>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
