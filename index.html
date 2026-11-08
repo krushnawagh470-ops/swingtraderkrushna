@@ -1881,4 +1881,67 @@ const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisR
  }
 })();
 </script>
+<script>
+/* Isolated News Desk fallback: independent of the main terminal script. */
+(function(){
+ const feeds=[
+  ["BBC World","https://feeds.bbci.co.uk/news/world/rss.xml"],
+  ["BBC Business","https://feeds.bbci.co.uk/news/business/rss.xml"],
+  ["Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml"],
+  ["The Guardian","https://www.theguardian.com/world/rss"],
+  ["DW","https://rss.dw.com/xml/rss-en-all"],
+  ["WSJ","https://feeds.a.dj.com/rss/RSSWorldNews.xml"]
+ ];
+ const topics=/war|conflict|attack|missile|ceasefire|invasion|sanction|tariff|trade|central bank|interest rate|inflation|CPI|GDP|recession|bond|yield|oil|energy|OPEC|gold|market|econom|election|government|summit|shipping|debt|banking|geopolitic|diplomac/i;
+ const dateText=d=>{const x=new Date(d);return isNaN(x)?"Time unavailable":x.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",hour:"numeric",minute:"2-digit",hour12:true})};
+ let busy=false;
+ async function load(){
+  const list=document.getElementById("nativeNews"),meta=document.getElementById("newsPipelineMeta");
+  if(!list||busy)return;busy=true;
+  list.textContent="Connecting to global news publishers…";
+  if(meta)meta.textContent="Fetching latest publisher headlines…";
+  try{
+   const jobs=feeds.map(async ([source,url])=>{
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),8000);
+    try{
+     const r=await fetch("https://proxy.cors.dev/"+url,{signal:ctl.signal,cache:"no-store"});
+     if(!r.ok)throw Error(source+" HTTP "+r.status);
+     const xml=new DOMParser().parseFromString(await r.text(),"text/xml");
+     if(xml.querySelector("parsererror"))throw Error("Invalid RSS from "+source);
+     return [...xml.querySelectorAll("item")].map(n=>{
+      const title=n.querySelector("title")?.textContent?.trim()||"";
+      const link=n.querySelector("link")?.textContent?.trim()||"";
+      const raw=n.querySelector("pubDate")?.textContent||n.querySelector("published")?.textContent||"";
+      const description=(n.querySelector("description")?.textContent||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();
+      return {source,title,link,date:new Date(raw),description};
+     }).filter(x=>x.title&&/^https?:\/\//i.test(x.link)&&!isNaN(x.date));
+    }finally{clearTimeout(timer)}
+   });
+   const batches=await Promise.race([Promise.allSettled(jobs),new Promise((_,reject)=>setTimeout(()=>reject(Error("Publisher feeds timed out. Try Refresh news.")),10000))]);
+   const all=batches.flatMap(x=>x.status==="fulfilled"?x.value:[]);
+   const unique=new Map();
+   all.forEach(x=>{if(topics.test(x.title+" "+x.description)&&!unique.has(x.link))unique.set(x.link,x)});
+   const rows=[...unique.values()].sort((a,b)=>b.date-a.date).slice(0,5);
+   if(!rows.length)throw Error("No publisher headlines received. Check network access and retry.");
+   list.replaceChildren();
+   rows.forEach((x,i)=>{
+    const a=document.createElement("article");a.className="native-news-item";
+    const h=document.createElement("h3");h.className="news-story-title";
+    const link=document.createElement("a");link.href=x.link;link.target="_blank";link.rel="noopener noreferrer";link.textContent=x.title;h.appendChild(link);a.appendChild(h);
+    const p=document.createElement("p");p.className="news-story-summary";p.textContent=x.description||"Open the publisher report for details.";a.appendChild(p);
+    const f=document.createElement("div");f.className="news-story-source";f.textContent=x.source+" · "+dateText(x.date);a.appendChild(f);
+    list.appendChild(a);
+   });
+   if(meta)meta.textContent="Verified publisher RSS · "+rows.length+" latest stories · "+dateText(new Date());
+  }catch(e){
+   list.textContent="News feed unavailable: "+e.message;
+   if(meta)meta.textContent="News connection issue · tap Refresh news to retry.";
+  }finally{busy=false}
+ }
+ window.loadNativeNews=load;
+ const start=()=>{if(document.getElementById("nativeNews"))load();else setTimeout(start,200)};
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
+ document.addEventListener("click",e=>{if(e.target.closest("#refreshGlobalNewsBtn"))load()});
+})();
+</script>
 </body></html>
