@@ -188,7 +188,7 @@ body.circuit-admin-mode #settings.active{display:block!important}
 #ai .circuit-stage.state-completed .circuit-live-dot{background:#29d9bb;box-shadow:0 0 12px #29d9bb}
 #ai .circuit-stage.state-error .circuit-live-dot{background:#ff6689;box-shadow:0 0 12px #ff6689}
 @keyframes circuitBrainBeat{to{transform:scale(1.8);opacity:.55}}
-</style><meta name="circuit-build" content="ai-3d-neuron-brain-20261108-v8">
+</style><meta name="circuit-build" content="ai-3d-hemisphere-interactive-20261108-v9">
 
 <style id="circuit-neural-command-ui">
 /* CIRCUIT // Neural command interface — responsive visual layer */
@@ -1283,10 +1283,10 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
  const count=document.getElementById("circuitActivityCount");
  if(!root||!stateText||!input||!send||!status||!log)return;
  let events=0,lastStatus="";
- const labels={idle:"STANDING BY",listening:"LISTENING",thinking:"THINKING",researching:"PREPARING CONTEXT",executing:"SENDING TO AI",reviewing:"REVIEWING RESPONSE",completed:"TASK RESPONSE RECEIVED",error:"REQUEST ERROR"};
+ const labels={idle:"NEURAL CORE ONLINE",listening:"TASK READY",thinking:"THINKING",researching:"PREPARING CONTEXT",executing:"SENDING TO AI",reviewing:"REVIEWING RESPONSE",completed:"TASK RESPONSE RECEIVED",error:"REQUEST ERROR"};
  function setState(name,message){
   root.className="ai-agent-visual circuit-stage state-"+name;
-  stateText.textContent=labels[name]||"STANDING BY";
+  stateText.textContent=labels[name]||"NEURAL CORE ONLINE";
  }
  function activity(message){
   const empty=log.querySelector(".circuit-empty");if(empty)empty.remove();
@@ -1310,8 +1310,8 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
  }
  input.addEventListener("input",function(){
   if(input.value.trim()){
-   if(!steps[0].classList.contains("done")){step(1,"active","Instruction received","●");setState("thinking","I’m understanding your task.");}
-  }else if(!window.__circuitBusy){setState("idle","STANDING BY");}
+   if(!steps[0].classList.contains("done")){step(1,"active","Instruction received","●");setState("listening","TASK READY");}
+  }else if(!window.__circuitBusy){setState("idle","NEURAL CORE ONLINE");}
  });
  send.addEventListener("click",function(){
   const prompt=input.value.trim();
