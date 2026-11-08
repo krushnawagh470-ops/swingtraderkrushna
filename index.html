@@ -637,48 +637,50 @@ async function loadNativeNews(force=false){
  newsBusy=true;
  const meta=document.getElementById("newsPipelineMeta"),label=document.getElementById("newsFeedLabel"),spec=NEWS_FEEDS.global;
  if(label)label.textContent=spec.label+" · WORLDWIDE";
- if(meta)meta.textContent="Loading global reports from publisher feeds…";
- el.textContent="Collecting major world developments…";
+ if(meta)meta.textContent="Connecting to global publisher feeds…";
+ el.textContent="Fetching the latest global headlines…";
  try{
-  const results=await Promise.allSettled(spec.feeds.map(f=>readNewsRSS(f[0],f[1])));
-  let items=results.flatMap(x=>x.status==="fulfilled"?x.value:[]);
-  if(!items.length)throw Error("Global publisher feeds are currently unreachable");
+  const jobs=spec.feeds.map(async f=>{
+   try{return await Promise.race([readNewsRSS(f[0],f[1]),new Promise((_,reject)=>setTimeout(()=>reject(Error(f[0]+" timed out")),9000))])}
+   catch(e){return []}
+  });
+  const batches=await Promise.race([Promise.all(jobs),new Promise((_,reject)=>setTimeout(()=>reject(Error("News feeds timed out. Tap refresh to retry.")),11000))]);
+  const items=batches.flat();
+  if(!items.length)throw Error("Publisher feeds could not be reached. Check connection and retry.");
   const unique=new Map();
   items.forEach(x=>{
-   const text=(x.title||"")+" "+(x.description||"");
-   const url=x.link;
-   if(!GLOBAL_MAJOR_TOPICS.test(text)||!url||!/^https?:\/\//i.test(url)||unique.has(url))return;
-   const priority=(text.match(new RegExp(GLOBAL_MAJOR_PRIORITY.source,"ig"))||[]).length;
-   unique.set(url,{...x,priority});
+   const story=(x.title||"")+" "+(x.description||"");
+   if(!GLOBAL_MAJOR_TOPICS.test(story)||!x.link||!/^https?:\/\//i.test(x.link)||unique.has(x.link))return;
+   unique.set(x.link,x);
   });
   const rows=[...unique.values()].sort((a,b)=>b.date-a.date).slice(0,5);
-  if(!rows.length)throw Error("No major global stories matched the current topic filter");
+  if(!rows.length)throw Error("No matching global stories were returned by publishers.");
   el.replaceChildren();
   rows.forEach((x,index)=>{
    const article=document.createElement("article");article.className="native-news-item";
    const top=document.createElement("div");top.className="news-story-top";
    const tag=document.createElement("span");tag.className="news-story-tag";tag.textContent="GLOBAL AFFAIRS";top.appendChild(tag);
-   const number=document.createElement("span");number.className="news-story-number";number.textContent="REPORT "+String(index+1).padStart(2,"0");top.appendChild(number);article.appendChild(top);
+   const number=document.createElement("span");number.className="news-story-number";number.textContent="LATEST "+String(index+1).padStart(2,"0");top.appendChild(number);article.appendChild(top);
    const heading=document.createElement("h3");heading.className="news-story-title";
    const link=document.createElement("a");link.href=x.link;link.target="_blank";link.rel="noopener noreferrer";link.textContent=x.title;heading.appendChild(link);article.appendChild(heading);
-   const summary=document.createElement("p");summary.className="news-story-summary";
-   summary.textContent=x.description||"The publisher has not provided a summary for this report. Open the original article for full details.";
-   article.appendChild(summary);
+   const summary=document.createElement("p");summary.className="news-story-summary";summary.textContent=x.description||"Publisher summary unavailable. Open the original report for details.";article.appendChild(summary);
    const foot=document.createElement("div");foot.className="news-story-source";
    const publisher=document.createElement("strong");publisher.textContent=x.source;foot.appendChild(publisher);
    const time=document.createElement("span");time.textContent=terminalIST(x.date);foot.appendChild(time);
    article.appendChild(foot);el.appendChild(article);
   });
   newsLastLoaded=Date.now();
-  if(meta)meta.textContent="Global publisher RSS · Top "+rows.length+" stories · updated "+new Date().toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata",hour:"2-digit",minute:"2-digit",hour12:true});
-  const st=document.getElementById("settingsNewsStatus");if(st)st.textContent=meta.textContent;
+  const status="Global publisher RSS · "+rows.length+" latest stories · updated "+new Date().toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata",hour:"2-digit",minute:"2-digit",hour12:true});
+  if(meta)meta.textContent=status;
+  const st=document.getElementById("settingsNewsStatus");if(st)st.textContent=status;
  }catch(e){
-  if(meta)meta.textContent="GLOBAL NEWS FEED · "+e.message;
-  el.textContent="Global news unavailable: "+e.message;
+  if(meta)meta.textContent="NEWS FEED ERROR · "+e.message;
+  el.textContent="News unavailable: "+e.message;
   const st=document.getElementById("settingsNewsStatus");if(st)st.textContent=meta?meta.textContent:e.message;
  }finally{newsBusy=false}
 }
 window.loadNativeNews=loadNativeNews;
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(()=>loadNativeNews(true),500),{once:true});else setTimeout(()=>loadNativeNews(true),500);
 // Hard limit: keep the News Desk DOM at five newest rendered stories, regardless of which loader updates it.
 (function(){const clamp=()=>{const list=document.getElementById("nativeNews");if(!list)return;const cards=[...list.children].filter(x=>x.matches("article,.native-news-item"));cards.sort((a,b)=>{const ta=Date.parse(a.querySelector(".news-story-source")?.lastElementChild?.textContent||a.querySelector(".q-meta")?.textContent||"");const tb=Date.parse(b.querySelector(".news-story-source")?.lastElementChild?.textContent||b.querySelector(".q-meta")?.textContent||"");return (Number.isFinite(tb)?tb:0)-(Number.isFinite(ta)?ta:0)});cards.slice(5).forEach(x=>x.remove())};const start=()=>{const list=document.getElementById("nativeNews");if(!list){setTimeout(start,250);return}new MutationObserver(clamp).observe(list,{childList:true});clamp()};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start()})();
 
