@@ -343,7 +343,62 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
  #ai .ai-workspace-panel{width:100%;order:3}
  #ai .ai-workbench-grid>div:first-child{order:1}
 }
-</style></head><body><div class="shell">
+</style>
+<style id="swingtrader-touch-layout">
+/* SwingTrader shell: flush two-column frame, with execution beneath the left desk. */
+@media (min-width: 651px) {
+  .shell{display:flex!important;align-items:stretch!important;gap:0!important;min-height:100vh!important}
+  .side{
+    display:flex!important;flex:0 0 clamp(280px,29vw,360px)!important;
+    width:clamp(280px,29vw,360px)!important;max-width:none!important;
+    min-height:100vh!important;height:auto!important;align-self:stretch!important;
+    margin:0!important;padding:22px 16px!important;
+    border-right:1px solid #20364f!important;border-radius:0!important;
+  }
+  .main{flex:1 1 0!important;width:auto!important;max-width:none!important;
+    min-width:0!important;margin:0!important;padding:0 0 40px!important;
+    align-self:stretch!important}
+  .main>.top{margin:0!important;padding:18px 22px!important;border-radius:0!important}
+  #ai{padding:0!important;margin:0!important}
+  #ai .ai-workbench{margin:0!important;border-radius:0!important;border-left:0!important;border-right:0!important}
+  #ai .ai-workbench-head{padding:16px 22px!important}
+  #ai .ai-workbench-grid{
+    display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:auto auto!important;gap:0!important;padding:0!important;
+    align-items:stretch!important
+  }
+  #ai .ai-workbench-grid>div:first-child{grid-column:1!important;width:100%!important;margin:0!important}
+  #ai .ai-agent-visual.circuit-stage{
+    width:100%!important;max-width:none!important;min-height:0!important;
+    height:auto!important;max-height:300px!important;aspect-ratio:16/5!important;
+    margin:0!important;border-radius:0!important;border-left:0!important;border-right:0!important
+  }
+  #ai .ai-workspace-panel{
+    grid-column:1!important;grid-row:2!important;width:100%!important;
+    min-height:0!important;margin:0!important;padding:20px 22px!important;
+    border-radius:0!important;border-left:0!important;border-right:0!important;
+    border-bottom:0!important
+  }
+  .side #circuitLiveTask{
+    display:block!important;width:100%!important;min-width:0!important;
+    margin:22px 0 0!important;padding:14px!important;
+    border:1px solid #244565!important;border-radius:10px!important;
+    background:linear-gradient(145deg,#0b1b2c,#071321)!important;
+    box-shadow:none!important
+  }
+  .side #circuitLiveTask .ai-task-step{gap:7px;padding:8px}
+  .side #circuitLiveTask .ai-task-step b{font-size:10px}
+  .side #circuitLiveTask .ai-task-step small{font-size:9px}
+  .side #circuitLiveTask .circuit-activity{margin-top:10px}
+}
+@media (max-width:650px) {
+  .side #circuitLiveTask{display:none!important}
+  #ai .ai-workbench-grid{display:flex!important;flex-direction:column!important;gap:10px!important;padding:8px!important}
+  #ai .ai-workspace-panel{width:100%!important}
+}
+</style>
+
+</head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
 <div class="desk-nav-group"><button data-page="ai" data-group-toggle="aiGroup">✦ <span>CIRCUIT</span><b class="nav-chevron">⌄</b></button><div class="desk-nav-subnav" id="aiGroup"><button data-agent="Claude" onclick="showPage('ai')">Claude AI</button><button data-agent="ChatGPT" onclick="showPage('ai')">ChatGPT</button><button data-agent="Gemini" onclick="showPage('ai')">Gemini</button><button data-agent="Perplexity" onclick="showPage('ai')">Perplexity</button><button data-agent="Grok" onclick="showPage('ai')">Grok</button><button data-agent="GitHub" onclick="showPage('ai')">GitHub</button><button data-agent="Higgsfield" onclick="showPage('ai')">Higgsfield</button><button data-agent="ElevenLabs" onclick="showPage('ai')">ElevenLabs</button></div></div>
@@ -353,6 +408,16 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 <div class="desk-nav-group"><button data-page="studio" data-group-toggle="studioGroup">▣ <span>Studio</span><b class="nav-chevron">⌄</b></button><div class="desk-nav-subnav" id="studioGroup"><button data-page="studio">Creative workspace</button><button data-page="learn">Learning hub</button></div></div>
 <button data-page="settings">⚙ <span>Settings</span></button>
 </nav>
+<div class="circuit-live-task-panel card" id="circuitLiveTask"><div class="section-title" style="margin:0 0 8px">CIRCUIT · LIVE TASK EXECUTION</div>
+   <div class="q-meta">Follow the real handoff from your instruction to the provider response. A stage changes only when its corresponding event occurs.</div>
+   <div class="ai-task-steps circuit-steps" id="aiTaskSteps">
+    <div class="ai-task-step" data-step="1"><i>1</i><div><b>Understand the task</b><small id="circuitStep1">Waiting for your instructions</small></div><span class="step-mark">—</span></div>
+    <div class="ai-task-step" data-step="2"><i>2</i><div><b>Prepare context and tools</b><small id="circuitStep2">Not started</small></div><span class="step-mark">—</span></div>
+    <div class="ai-task-step" data-step="3"><i>3</i><div><b>Send to selected AI</b><small id="circuitStep3">Waiting for a send action</small></div><span class="step-mark">—</span></div>
+    <div class="ai-task-step" data-step="4"><i>4</i><div><b>Review result and next actions</b><small id="circuitStep4">Waiting for provider response</small></div><span class="step-mark">—</span></div>
+   </div>
+   <div class="circuit-activity"><div class="row"><b>LIVE ACTIVITY</b><span class="q-meta" id="circuitActivityCount">0 events</span></div><div id="circuitActivityLog" aria-live="polite"><p class="circuit-empty">CIRCUIT activity will appear here when you send a task.</p></div></div></div>
+
 <div class="side-note">TRADE THE PLAN.<br>MANAGE THE RISK.<br><br>Personal trading workspace</div></aside>
 <div class="desk-drawer-backdrop" id="deskDrawerBackdrop"></div><main class="main"><header class="top"><div><div class="eyebrow">PERSONAL TRADING TERMINAL</div><div class="h1" id="pageTitle">CIRCUIT</div><div class="sub" id="today"></div></div><div class="status"><span class="dot"></span>Workspace ready</div></header>
 <section class="section active" id="overview">
@@ -389,15 +454,6 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
    </div>
 
   </div>
-  <div class="circuit-live-task-panel card" id="circuitLiveTask"><div class="section-title" style="margin:0 0 8px">CIRCUIT · LIVE TASK EXECUTION</div>
-   <div class="q-meta">Follow the real handoff from your instruction to the provider response. A stage changes only when its corresponding event occurs.</div>
-   <div class="ai-task-steps circuit-steps" id="aiTaskSteps">
-    <div class="ai-task-step" data-step="1"><i>1</i><div><b>Understand the task</b><small id="circuitStep1">Waiting for your instructions</small></div><span class="step-mark">—</span></div>
-    <div class="ai-task-step" data-step="2"><i>2</i><div><b>Prepare context and tools</b><small id="circuitStep2">Not started</small></div><span class="step-mark">—</span></div>
-    <div class="ai-task-step" data-step="3"><i>3</i><div><b>Send to selected AI</b><small id="circuitStep3">Waiting for a send action</small></div><span class="step-mark">—</span></div>
-    <div class="ai-task-step" data-step="4"><i>4</i><div><b>Review result and next actions</b><small id="circuitStep4">Waiting for provider response</small></div><span class="step-mark">—</span></div>
-   </div>
-   <div class="circuit-activity"><div class="row"><b>LIVE ACTIVITY</b><span class="q-meta" id="circuitActivityCount">0 events</span></div><div id="circuitActivityLog" aria-live="polite"><p class="circuit-empty">CIRCUIT activity will appear here when you send a task.</p></div></div></div>
   <div class="ai-workspace-panel">
    <div class="row"><div><div class="terminal-label">CURRENT WORKSPACE</div><b id="aiSelectedName">Gemini workspace</b></div><span class="signal-tag" id="aiConnectionState">WORKER · NOT CONNECTED</span></div>
    <p class="muted" id="aiSelectedDescription">Gemini workspace · provider connection status is shown below.</p>
