@@ -152,6 +152,22 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 /* Hard separation: admin controls are rendered only on the explicit admin URL. */
 body:not(.circuit-admin-mode) #settings{display:none!important}
 body.circuit-admin-mode #settings.active{display:block!important}
+
+/* Desktop All AI workspace layout: use the available width and remove the empty top band. */
+@media (min-width: 901px) {
+  .main { padding-top: 12px; }
+  .top { margin-bottom: 12px; }
+  #ai { padding-top: 0; }
+  #ai .ai-workbench { margin-top: 0; }
+  #ai .ai-workbench-grid {
+    grid-template-columns: minmax(260px, .78fr) minmax(0, 1.22fr);
+    align-items: start;
+    gap: 16px;
+    padding: 16px;
+  }
+  #ai .ai-agent-visual { min-height: 360px; }
+  #ai .ai-workspace-panel { min-width: 0; }
+}
 </style></head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
