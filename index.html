@@ -792,10 +792,15 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
       valid.push({t:Math.floor(openSeconds),closeT:Math.floor(closeSeconds),o,h,l,c});
     });
     valid.sort((a,b)=>a.t-b.t);
+    let shortestGap=Infinity;
     for(let i=1;i<valid.length;i++){
       const diff=valid[i].t-valid[i-1].t;
-      if(diff<=0||Math.abs(diff/intervalSeconds-Math.round(diff/intervalSeconds))*intervalSeconds>3)spacingMismatches++;
+      if(diff<=0){spacingMismatches++;continue}
+      shortestGap=Math.min(shortestGap,diff);
+      const dailyDST=intervalSeconds===86400&&diff>=23*3600&&diff<=25*3600;
+      if(!dailyDST&&Math.abs(diff/intervalSeconds-Math.round(diff/intervalSeconds))*intervalSeconds>3)spacingMismatches++;
     }
+    if(Number.isFinite(shortestGap)&&shortestGap>intervalSeconds*1.5&&!(intervalSeconds===86400&&shortestGap>=23*3600&&shortestGap<=25*3600))spacingMismatches++;
     const bars=valid.slice(-40);
     const last=bars[bars.length-1]||null;
     const staleSeconds=last?Math.max(0,nowSeconds-last.closeT):null;
