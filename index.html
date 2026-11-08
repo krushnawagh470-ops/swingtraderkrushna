@@ -1159,7 +1159,7 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
         workerTimedOut=true;
         if(activeRequestController) activeRequestController.abort();
       },30000);
-      let response;
+      let response, rawResponse;
       try {
         response = await fetch(url + "/chat", {
           method: "POST",
@@ -1167,13 +1167,14 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
           body: JSON.stringify({ messages: outgoing }),
           signal: activeRequestController.signal
         });
+        /* Keep the timeout active until the complete response body has arrived. */
+        rawResponse = await response.text();
       } catch(workerError) {
-        if(workerTimedOut) throw new Error("Secure Worker did not respond within 30 seconds. Check the Worker/provider connection.");
+        if(workerTimedOut) throw new Error("Secure Worker did not complete its response within 30 seconds. Check the Worker/provider connection.");
         throw workerError;
       } finally {
         window.clearTimeout(workerTimeoutId);
       }
-      const rawResponse = await response.text();
       let data = {};
       try { data = rawResponse ? JSON.parse(rawResponse) : {}; }
       catch (_) {
@@ -1331,9 +1332,13 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
   });
   if (mic) {
     if (!SpeechRecognition) {
-      mic.disabled = true;
-      mic.textContent = "🎙️ Mic unavailable";
-      if (voiceStatus) voiceStatus.textContent = "Voice input is not supported in this browser. Try the latest Chrome on Android.";
+      /* Keep the control available and explain the actual browser limitation. */
+      mic.disabled = false;
+      mic.textContent = "🎙️ Voice input unavailable";
+      mic.title = "This browser does not expose speech recognition.";
+      mic.addEventListener("click", function () {
+        if (voiceStatus) voiceStatus.textContent = "This in-app browser does not support voice transcription. Open CIRCUIT in Google Chrome and allow Microphone permission, or use the microphone on your Android keyboard.";
+      });
     } else {
       recognition = new SpeechRecognition();
       recognition.lang = selectedVoiceLanguage();
