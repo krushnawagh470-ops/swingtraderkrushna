@@ -321,7 +321,7 @@ const MARKET_WATCHLISTS={
  crypto:[["BTCUSD","Bitcoin / US Dollar"],["ETHUSD","Ethereum / US Dollar"],["BNBUSD","BNB / US Dollar"],["SOLUSD","Solana / US Dollar"],["XRPUSD","XRP / US Dollar"],["ADAUSD","Cardano / US Dollar"],["DOGEUSD","Dogecoin / US Dollar"],["TRXUSD","TRON / US Dollar"],["AVAXUSD","Avalanche / US Dollar"],["LINKUSD","Chainlink / US Dollar"]],
  indices:[["US30","Dow Jones Industrial Average"],["US500","S&P 500"],["NAS100","Nasdaq 100"],["US2000","Russell 2000"],["UK100","FTSE 100"],["GER40","DAX 40"],["FRA40","CAC 40"],["JP225","Nikkei 225"],["AUS200","ASX 200"],["HK50","Hang Seng 50"]]
 };
-let marketClass="all";
+let marketClass="all",apiActiveSymbols=[];
 function classifyMarketSymbol(n){const x=String(n||"").toUpperCase();if(/BTC|ETH|SOL|XRP|ADA|DOGE|BNB|LTC|DOT|AVAX|LINK|TRX/.test(x))return "crypto";if(/XAU|XAG|GOLD|SILVER|WTI|BRENT|OIL|NATGAS|COPPER|PLATINUM|PALLADIUM|WHEAT|CORN/.test(x))return "commodity";if(/DXY|US30|US500|US2000|NAS100|NAS|SPX|SP500|DJ30|GER40|UK100|FRA40|JP225|HK50|AUS200|EU50|VIX/.test(x))return "indices";if(/^[A-Z]{6}$/.test(x))return "forex";return "other"}
 function filterMarketClass(c){marketClass=c;document.getElementById("marketClassTitle").textContent=({all:"All major instruments · 4 markets",forex:"Forex · Major pairs and liquid crosses",commodity:"Commodities · Metals, energy and agriculture",crypto:"Crypto · Top market-capitalisation assets",indices:"Indices · Major global benchmarks"})[c]||"Markets";renderMarketCatalogue()}
 function filterMarketSearch(q){renderMarketCatalogue(q)}
@@ -475,7 +475,7 @@ function clearPlan(){if(confirm("Clear your saved plan?")){localStorage.removeIt
 const BIQUOTE_API="https://biquote.io/api";
 const PRIORITY_SYMBOLS=["XAUUSD","XAGUSD","EURUSD","BTCUSD","USOIL","DXY"];
 const API_REFRESH={quotes:10000,calendar:300000,news:180000,movers:60000,summary:60000};
-let apiActiveSymbols=[],apiLastGood={},liveHubConnection=null,tickStreamStarted=false;
+let apiLastGood={},liveHubConnection=null,tickStreamStarted=false;
 function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
 function terminalIST(v){if(!v)return "Time not supplied";const d=new Date(v);return Number.isNaN(d.getTime())?"Time not supplied":d.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"})}
 function fmtQuote(n,sym){const x=Number(n);if(!Number.isFinite(x))return "—";return x.toLocaleString("en-US",{minimumFractionDigits:sym.includes("JPY")?3:(sym==="XAUUSD"||sym==="XAGUSD"||sym==="BTCUSD"||sym==="ETHUSD"||sym==="USOIL")?2:5,maximumFractionDigits:sym.includes("JPY")?3:(sym==="XAUUSD"||sym==="XAGUSD"||sym==="BTCUSD"||sym==="ETHUSD"||sym==="USOIL")?2:5})}
