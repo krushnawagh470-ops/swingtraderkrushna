@@ -321,58 +321,29 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 @media(prefers-reduced-motion:reduce){#ai #aiAgentVisual.is-speaking video.circuit-agent-video,#ai #aiAgentVisual.is-speaking:after{animation:none}}
 </style>
 
+
+
 <style id="circuit-reference-layout">
-/* Reference-matched desktop terminal: left rail + stacked main console. */
-.circuit-live-task{display:none}
+/* Layout follows the user's hand-drawn reference: full-width console above a two-column lower row. */
 @media(min-width:901px){
- .side{width:260px;min-height:100vh;position:sticky;top:0;height:100vh;overflow-y:auto;padding:24px 16px}
- .circuit-live-task{display:block;margin-top:auto;padding:15px 13px;background:linear-gradient(160deg,#0c1c33,#071121);border:1px solid #21466f;border-radius:11px}
- .side-note{margin-top:14px}
  .main{max-width:none;margin:0;min-width:0;padding:22px clamp(20px,2.5vw,42px) 50px}
  #ai.active{display:block!important}
  #ai.active>.open-data-strip{margin:12px 0 18px}
  #ai.active>#aiWorkbench{display:flex;flex-direction:column;gap:14px;margin:0;min-width:0}
  #ai .ai-workbench-head{padding:15px 18px;border:1px solid #244a76;border-radius:11px;background:linear-gradient(110deg,#0c1c34,#071122)}
- #ai .ai-workbench-grid{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:14px!important}
- #ai .ai-workbench-grid>div:first-child{width:100%;display:flex;justify-content:center}
- #ai .ai-agent-visual.circuit-stage{width:min(100%,760px)!important;aspect-ratio:16/6!important;max-height:340px!important;margin:0 auto}
- #ai .ai-workspace-panel{width:100%;min-height:0}
+ #ai .ai-workbench-grid{display:grid!important;grid-template-columns:minmax(260px,.78fr) minmax(0,1.22fr)!important;grid-template-rows:auto auto;align-items:start!important;gap:14px!important}
+ #ai .ai-workbench-grid>div:first-child{grid-column:1/-1;width:100%;display:flex;justify-content:center}
+ #ai .ai-agent-visual.circuit-stage{width:min(100%,760px)!important;aspect-ratio:16/6!important;max-height:300px!important;margin:0 auto}
+ #ai .circuit-live-task-panel{grid-column:1;grid-row:2;min-width:0;padding:16px}
+ #ai .ai-workspace-panel{grid-column:2;grid-row:2;width:100%;min-width:0;min-height:0}
 }
-@media(min-width:901px) and (max-height:800px){
- .side{position:relative;height:auto;min-height:100vh}
- .circuit-live-task{margin-top:28px}
+@media(max-width:900px){
+ #ai .ai-workbench-grid{display:flex!important;flex-direction:column!important;gap:14px!important}
+ #ai .circuit-live-task-panel{width:100%;order:2}
+ #ai .ai-workspace-panel{width:100%;order:3}
+ #ai .ai-workbench-grid>div:first-child{order:1}
 }
-.circuit-task-title{font-size:17px;font-weight:800;letter-spacing:-.03em;margin:7px 0 12px}
-.circuit-task-state{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid #244a73;border-radius:8px;background:#091a2e;color:#a9d7ff;font-size:9px;font-weight:800;letter-spacing:.06em;overflow-wrap:anywhere}
-.circuit-task-state i{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#29d9bb;box-shadow:0 0 10px #29d9bb}
-.circuit-task-track{display:grid;gap:0;margin-top:14px}
-.circuit-task-step{display:flex;gap:9px;align-items:flex-start;position:relative;padding:0 0 14px;color:#8ba3c1}
-.circuit-task-step:not(:last-child):after{content:"";position:absolute;left:12px;top:26px;bottom:0;width:1px;background:#25466a}
-.circuit-task-step>b{display:grid;place-items:center;width:25px;height:25px;flex:0 0 25px;border:1px solid #294c72;border-radius:50%;background:#0a1a2d;color:#8bb9e6;font-size:9px}
-.circuit-task-step strong{display:block;color:#dcecff;font-size:10px;margin:2px 0}
-.circuit-task-step small{display:block;color:#8299b8;font-size:9px;line-height:1.4}
-.circuit-task-step.is-active>b{background:#12365a;border-color:#59baff;color:#fff;box-shadow:0 0 15px #4caaff33}
-.circuit-task-step.is-done>b{background:#10382f;border-color:#29d9bb;color:#7df0d7}
-.circuit-task-foot{margin-top:5px;padding-top:10px;border-top:1px solid #1b3554;color:#8299b8;font-size:9px;line-height:1.5}
-@media(max-width:900px){.circuit-live-task{display:none!important}}
-</style>
-<script id="circuit-live-task-mirror">
-(function(){
- const source=document.getElementById("aiWorkbenchStatus"),target=document.getElementById("circuitTaskMirror");
- const steps=document.querySelectorAll("#circuitLiveTask .circuit-task-step");
- if(!source||!target)return;
- function sync(){
-  const value=(source.textContent||"").trim();
-  const busy=/sending|thinking|processing|preparing|syncing|connecting/i.test(value);
-  const done=/reply received|completed|saved/i.test(value);
-  target.textContent=value?value.toUpperCase():"SYSTEM READY · AWAITING TASK";
-  steps.forEach((step,i)=>{step.classList.toggle("is-active",busy&&i===1);step.classList.toggle("is-done",done&&i<3);});
-  if(!busy&&!done)steps.forEach((step,i)=>step.classList.toggle("is-ready",i===0));
- }
- new MutationObserver(sync).observe(source,{childList:true,subtree:true,characterData:true});sync();
-})();
-</script>
-</head><body><div class="shell">
+</style></head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
 <div class="desk-nav-group"><button data-page="ai" data-group-toggle="aiGroup">✦ <span>CIRCUIT</span><b class="nav-chevron">⌄</b></button><div class="desk-nav-subnav" id="aiGroup"><button data-agent="Claude" onclick="showPage('ai')">Claude AI</button><button data-agent="ChatGPT" onclick="showPage('ai')">ChatGPT</button><button data-agent="Gemini" onclick="showPage('ai')">Gemini</button><button data-agent="Perplexity" onclick="showPage('ai')">Perplexity</button><button data-agent="Grok" onclick="showPage('ai')">Grok</button><button data-agent="GitHub" onclick="showPage('ai')">GitHub</button><button data-agent="Higgsfield" onclick="showPage('ai')">Higgsfield</button><button data-agent="ElevenLabs" onclick="showPage('ai')">ElevenLabs</button></div></div>
@@ -381,17 +352,7 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 <div class="desk-nav-group"><button data-page="tester" data-group-toggle="testerGroup">▥ <span>Strategy Tester</span><b class="nav-chevron">⌄</b></button><div class="desk-nav-subnav" id="testerGroup"><button data-page="tester">Backtest workspace</button><button data-page="journal">Performance journal</button><button data-page="playbook">Strategy notes</button></div></div>
 <div class="desk-nav-group"><button data-page="studio" data-group-toggle="studioGroup">▣ <span>Studio</span><b class="nav-chevron">⌄</b></button><div class="desk-nav-subnav" id="studioGroup"><button data-page="studio">Creative workspace</button><button data-page="learn">Learning hub</button></div></div>
 <button data-page="settings">⚙ <span>Settings</span></button>
-</nav><aside class="circuit-live-task card" id="circuitLiveTask">
- <div class="terminal-label">CIRCUIT / OPERATIONS</div>
- <div class="circuit-task-title">Live Task Execution</div>
- <div class="circuit-task-state"><i></i><span id="circuitTaskMirror">SYSTEM READY · AWAITING TASK</span></div>
- <div class="circuit-task-track">
-  <div class="circuit-task-step is-ready"><b>01</b><span><strong>Input received</strong><small>Task prompt and context</small></span></div>
-  <div class="circuit-task-step"><b>02</b><span><strong>Processing</strong><small>AI workspace execution</small></span></div>
-  <div class="circuit-task-step"><b>03</b><span><strong>Review output</strong><small>Response and next actions</small></span></div>
- </div>
- <div class="circuit-task-foot">Execution is started from the Current Workspace panel.</div>
-</aside>
+</nav>
 <div class="side-note">TRADE THE PLAN.<br>MANAGE THE RISK.<br><br>Personal trading workspace</div></aside>
 <div class="desk-drawer-backdrop" id="deskDrawerBackdrop"></div><main class="main"><header class="top"><div><div class="eyebrow">PERSONAL TRADING TERMINAL</div><div class="h1" id="pageTitle">CIRCUIT</div><div class="sub" id="today"></div></div><div class="status"><span class="dot"></span>Workspace ready</div></header>
 <section class="section active" id="overview">
@@ -428,6 +389,15 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
    </div>
 
   </div>
+  <div class="circuit-live-task-panel card" id="circuitLiveTask"><div class="section-title" style="margin:0 0 8px">CIRCUIT · LIVE TASK EXECUTION</div>
+   <div class="q-meta">Follow the real handoff from your instruction to the provider response. A stage changes only when its corresponding event occurs.</div>
+   <div class="ai-task-steps circuit-steps" id="aiTaskSteps">
+    <div class="ai-task-step" data-step="1"><i>1</i><div><b>Understand the task</b><small id="circuitStep1">Waiting for your instructions</small></div><span class="step-mark">—</span></div>
+    <div class="ai-task-step" data-step="2"><i>2</i><div><b>Prepare context and tools</b><small id="circuitStep2">Not started</small></div><span class="step-mark">—</span></div>
+    <div class="ai-task-step" data-step="3"><i>3</i><div><b>Send to selected AI</b><small id="circuitStep3">Waiting for a send action</small></div><span class="step-mark">—</span></div>
+    <div class="ai-task-step" data-step="4"><i>4</i><div><b>Review result and next actions</b><small id="circuitStep4">Waiting for provider response</small></div><span class="step-mark">—</span></div>
+   </div>
+   <div class="circuit-activity"><div class="row"><b>LIVE ACTIVITY</b><span class="q-meta" id="circuitActivityCount">0 events</span></div><div id="circuitActivityLog" aria-live="polite"><p class="circuit-empty">CIRCUIT activity will appear here when you send a task.</p></div></div></div>
   <div class="ai-workspace-panel">
    <div class="row"><div><div class="terminal-label">CURRENT WORKSPACE</div><b id="aiSelectedName">Gemini workspace</b></div><span class="signal-tag" id="aiConnectionState">WORKER · NOT CONNECTED</span></div>
    <p class="muted" id="aiSelectedDescription">Gemini workspace · provider connection status is shown below.</p>
@@ -448,15 +418,7 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitSaveLearning">Save to memory</button><button type="button" class="btn secondary" id="circuitClearLearning">Clear memory</button><span class="q-meta" id="circuitLearningStatus" aria-live="polite">Memory stays in this browser until you clear it.</span></div>
     <div id="circuitLearningList" class="q-meta" style="margin-top:10px"></div>
    </div>
-   <div class="section-title" style="margin:16px 0 8px">CIRCUIT · LIVE TASK EXECUTION</div>
-   <div class="q-meta">Follow the real handoff from your instruction to the provider response. A stage changes only when its corresponding event occurs.</div>
-   <div class="ai-task-steps circuit-steps" id="aiTaskSteps">
-    <div class="ai-task-step" data-step="1"><i>1</i><div><b>Understand the task</b><small id="circuitStep1">Waiting for your instructions</small></div><span class="step-mark">—</span></div>
-    <div class="ai-task-step" data-step="2"><i>2</i><div><b>Prepare context and tools</b><small id="circuitStep2">Not started</small></div><span class="step-mark">—</span></div>
-    <div class="ai-task-step" data-step="3"><i>3</i><div><b>Send to selected AI</b><small id="circuitStep3">Waiting for a send action</small></div><span class="step-mark">—</span></div>
-    <div class="ai-task-step" data-step="4"><i>4</i><div><b>Review result and next actions</b><small id="circuitStep4">Waiting for provider response</small></div><span class="step-mark">—</span></div>
-   </div>
-   <div class="circuit-activity"><div class="row"><b>LIVE ACTIVITY</b><span class="q-meta" id="circuitActivityCount">0 events</span></div><div id="circuitActivityLog" aria-live="polite"><p class="circuit-empty">CIRCUIT activity will appear here when you send a task.</p></div></div>
+   
   </div>
  </div>
 </div>
