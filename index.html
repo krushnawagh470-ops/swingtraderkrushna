@@ -1551,44 +1551,68 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 </script>
 
 <script>
-/* CIRCUIT neural field: animated particle clusters with pointer/gesture response. */
+/* CIRCUIT neural field — dense, multi-cluster particle mesh matching the supplied gesture reference. */
 (function(){
  const stage=document.getElementById("aiAgentVisual"),canvas=document.getElementById("circuitNeuralCanvas");
  if(!stage||!canvas||canvas.dataset.ready)return;canvas.dataset.ready="1";
  const ctx=canvas.getContext("2d");if(!ctx)return;
- const palette=["#ff5d69","#ff9b35","#f6d34d","#61c96b","#65d4c9","#66a9ff","#c18adf","#f18cae","#d5d7e4"];
- let w=0,h=0,dpr=1,points=[],raf=0,last=0,pointer={x:-9999,y:-9999,active:false},pulse=null;
+ const palette=["#ff5968","#ff9638","#f4d34e","#68c96c","#65d4c9","#64a9ff","#bd8cda","#ee8caf","#d5d6df"];
+ let w=0,h=0,dpr=1,points=[],raf=0,last=0,pointer={x:-9999,y:-9999,active:false};
  const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
  function resize(){
-  const r=stage.getBoundingClientRect();w=Math.max(1,r.width);h=Math.max(1,r.height);dpr=Math.min(2,window.devicePixelRatio||1);
-  canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
-  const count=Math.max(90,Math.min(220,Math.round(w*h/1250)));
-  points=[];
-  const clusters=[{x:.50,y:.48,r:.24,n:.28},{x:.39,y:.58,r:.22,n:.20},{x:.63,y:.58,r:.22,n:.18},{x:.52,y:.25,r:.19,n:.14},{x:.71,y:.34,r:.15,n:.10},{x:.29,y:.35,r:.16,n:.10}];
-  clusters.forEach((c,ci)=>{const n=Math.round(count*c.n);for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,rad=Math.sqrt(Math.random())*c.r;points.push({x:(c.x+Math.cos(a)*rad)*w,y:(c.y+Math.sin(a)*rad)*h,ox:0,oy:0,vx:(Math.random()-.5)*.22,vy:(Math.random()-.5)*.22,size:.8+Math.random()*1.6,color:palette[(ci+i)%palette.length],phase:Math.random()*6.28})}});
-  while(points.length<count){const side=Math.floor(Math.random()*4),x=side<2?Math.random()*w:(side===2?Math.random()*w*.2:w*.8+Math.random()*w*.2),y=side>=2?Math.random()*h:(side===0?Math.random()*h*.22:h*.78+Math.random()*h*.22);points.push({x,y,ox:0,oy:0,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,size:.7+Math.random(),color:palette[Math.floor(Math.random()*palette.length)],phase:Math.random()*6.28})}
- }
- function frame(t){
-  if(!stage.isConnected)return;const dt=Math.min(2,(t-last)/16.67||1);last=t;ctx.clearRect(0,0,w,h);
-  const maxDist=Math.max(42,Math.min(82,w*.105)),max2=maxDist*maxDist;
-  points.forEach((p,i)=>{
-   p.phase+=.008*dt;p.x+=p.vx*dt+Math.sin(p.phase)*.045;p.y+=p.vy*dt+Math.cos(p.phase*.8)*.045;
-   if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;
-   if(pointer.active){const dx=p.x-pointer.x,dy=p.y-pointer.y,d=Math.sqrt(dx*dx+dy*dy);if(d<125&&d>1){const f=(1-d/125)*.22;p.x+=dx/d*f*dt;p.y+=dy/d*f*dt}}
+  const r=stage.getBoundingClientRect();w=Math.max(1,r.width);h=Math.max(1,r.height);dpr=Math.min(1.6,window.devicePixelRatio||1);
+  canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);points=[];
+  const scale=Math.min(w/900,h/675),count=Math.max(230,Math.min(470,Math.round(w*h/420)));
+  const clusters=[
+   [.51,.47,.24,.27,0], [.39,.57,.19,.17,1], [.63,.57,.20,.17,2],
+   [.51,.22,.17,.13,3], [.73,.35,.13,.10,4], [.30,.34,.15,.10,5],
+   [.48,.72,.15,.06,6]
+  ];
+  clusters.forEach(([cx,cy,rx,ry,color],ci)=>{
+   const n=Math.round(count*clusters[ci][3]); 
+   for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2,rad=Math.sqrt(Math.random());
+    const x=cx+Math.cos(a)*rx*rad,y=cy+Math.sin(a)*ry*rad;
+    points.push({x:x*w,y:y*h,vx:(Math.random()-.5)*.13,vy:(Math.random()-.5)*.13,
+     size:.85+Math.random()*1.25,color:palette[(color+Math.floor(Math.random()*2))%palette.length],
+     phase:Math.random()*6.28,homeX:x*w,homeY:y*h,drift:1.5+Math.random()*4});
+   }
   });
-  for(let i=0;i<points.length;i++){const a=points[i];for(let j=i+1;j<points.length;j++){const b=points[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;if(d2<max2){const alpha=(1-Math.sqrt(d2)/maxDist)*.34;ctx.strokeStyle=a.color;ctx.globalAlpha=alpha;ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}}
+  /* Fine tendrils and small satellite clusters around the main neural mass. */
+  const satellites=[[.08,.49,.035,.12,3],[.20,.17,.025,.09,3],[.84,.17,.045,.07,2],[.86,.63,.06,.11,6],[.72,.90,.05,.045,4],[.94,.39,.02,.05,7],[.10,.82,.025,.05,3]];
+  satellites.forEach(([cx,cy,rx,ry,c])=>{for(let i=0;i<Math.round(count*.018);i++){const a=Math.random()*Math.PI*2,rad=Math.sqrt(Math.random());const x=(cx+Math.cos(a)*rx*rad)*w,y=(cy+Math.sin(a)*ry*rad)*h;points.push({x,y,homeX:x,homeY:y,vx:(Math.random()-.5)*.1,vy:(Math.random()-.5)*.1,size:.8+Math.random(),color:palette[c],phase:Math.random()*6.28,drift:2+Math.random()*3})}});
+ }
+ function draw(t){
+  if(!stage.isConnected)return;const dt=Math.min(2,(t-last)/16.67||1);last=t;ctx.clearRect(0,0,w,h);
+  const cell=48,grid=new Map();
+  points.forEach((p,i)=>{
+   p.phase+=.006*dt;p.x+=(p.homeX-p.x)*.0012*dt+p.vx*dt+Math.sin(p.phase)*.025;
+   p.y+=(p.homeY-p.y)*.0012*dt+p.vy*dt+Math.cos(p.phase*.83)*.025;
+   if(pointer.active){const dx=p.x-pointer.x,dy=p.y-pointer.y,d=Math.hypot(dx,dy);if(d<115&&d>0){const force=(1-d/115)*.42;p.x+=dx/d*force*dt;p.y+=dy/d*force*dt}}
+   const gx=Math.floor(p.x/cell),gy=Math.floor(p.y/cell),key=gx+","+gy;
+   if(!grid.has(key))grid.set(key,[]);grid.get(key).push(i);
+  });
+  const max=58,max2=max*max;
+  ctx.lineWidth=.55;
+  points.forEach((p,i)=>{
+   const gx=Math.floor(p.x/cell),gy=Math.floor(p.y/cell);
+   for(let ox=-1;ox<=1;ox++)for(let oy=-1;oy<=1;oy++){
+    const near=grid.get((gx+ox)+","+(gy+oy));if(!near)continue;
+    near.forEach(j=>{if(j<=i)return;const q=points[j],dx=p.x-q.x,dy=p.y-q.y,d2=dx*dx+dy*dy;if(d2<max2){ctx.globalAlpha=(1-Math.sqrt(d2)/max)*.48;ctx.strokeStyle=p.color;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()}});
+   }
+  });
+  points.forEach(p=>{ctx.globalAlpha=.13;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,4.8,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.95;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill()});
   ctx.globalAlpha=1;
-  points.forEach(p=>{const glow=2.5+Math.sin(p.phase)*.8;ctx.globalAlpha=.18;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,glow*2.8,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.92;ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fillStyle=p.color;ctx.fill()});
-  if(pointer.active){const g=ctx.createRadialGradient(pointer.x,pointer.y,0,pointer.x,pointer.y,100);g.addColorStop(0,"#9de8ff22");g.addColorStop(1,"#9de8ff00");ctx.fillStyle=g;ctx.fillRect(pointer.x-100,pointer.y-100,200,200)}
-  ctx.globalAlpha=1;if(!reduced)raf=requestAnimationFrame(frame);
+  if(pointer.active){const g=ctx.createRadialGradient(pointer.x,pointer.y,0,pointer.x,pointer.y,90);g.addColorStop(0,"#a9dfff20");g.addColorStop(1,"#a9dfff00");ctx.fillStyle=g;ctx.fillRect(pointer.x-90,pointer.y-90,180,180)}
+  if(!reduced)raf=requestAnimationFrame(draw);
  }
  function local(e){const r=stage.getBoundingClientRect();pointer.x=e.clientX-r.left;pointer.y=e.clientY-r.top;pointer.active=true;const el=document.getElementById("neuralInteraction");if(el)el.textContent="GESTURE DETECTED"}
- stage.addEventListener("pointermove",local);stage.addEventListener("pointerleave",()=>{pointer.active=false;const el=document.getElementById("neuralInteraction");if(el)el.textContent="AWAITING INPUT"});
- stage.addEventListener("pointerdown",e=>{local(e);pulse={x:pointer.x,y:pointer.y,start:performance.now()};stage.classList.add("neural-reactive");setTimeout(()=>stage.classList.remove("neural-reactive"),650)});
+ stage.addEventListener("pointermove",local,{passive:true});
+ stage.addEventListener("pointerleave",()=>{pointer.active=false;const el=document.getElementById("neuralInteraction");if(el)el.textContent="AWAITING INPUT"});
+ stage.addEventListener("pointerdown",local,{passive:true});
  if("ResizeObserver"in window)new ResizeObserver(resize).observe(stage);else window.addEventListener("resize",resize);
- resize();if(reduced)frame(0);else raf=requestAnimationFrame(frame);
- document.addEventListener("visibilitychange",()=>{if(document.hidden){cancelAnimationFrame(raf)}else if(!reduced){last=0;raf=requestAnimationFrame(frame)}});
-})();
-</script>
+ resize();if(reduced)draw(0);else raf=requestAnimationFrame(draw);
+ document.addEventListener("visibilitychange",()=>{if(document.hidden)cancelAnimationFrame(raf);else if(!reduced){last=0;raf=requestAnimationFrame(draw)}});
+})();</script>
 
 </body></html>
