@@ -1952,4 +1952,30 @@ const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisR
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
 })();
 </script>
+<script id="circuit-send-button-fallback">
+/* Capture the send tap independently of the AI workspace's own script. */
+(function () {
+  document.addEventListener("click", function (event) {
+    const target = event.target;
+    const button = target && target.closest ? target.closest("#aiSendToClaude") : null;
+    if (!button) return;
+    const input = document.getElementById("aiWorkbenchPrompt");
+    const status = document.getElementById("aiWorkbenchStatus");
+    if (!input || !status) return;
+    if (typeof window.stkGeminiSend !== "function") {
+      status.textContent = "AI button loaded, but the send engine did not initialize. Refresh the page and retry.";
+      return;
+    }
+    if (button.dataset.circuitFallbackActive === "true") return;
+    button.dataset.circuitFallbackActive = "true";
+    try {
+      window.stkGeminiSend();
+    } catch (error) {
+      status.textContent = "AI send error: " + (error && error.message ? error.message : "Unknown error");
+    } finally {
+      window.setTimeout(function () { button.dataset.circuitFallbackActive = "false"; }, 0);
+    }
+  }, true);
+})();
+</script>
 </body></html>
