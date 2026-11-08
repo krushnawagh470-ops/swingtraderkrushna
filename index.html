@@ -175,11 +175,12 @@ body.circuit-admin-mode #settings.active{display:block!important}
 
 .chart-tools{background:#071326;border-bottom:1px solid #1b3554}.native-chart{height:520px;min-height:390px;width:100%;background:#07101e;border-radius:0;overflow:hidden;touch-action:pan-y}.native-chart canvas{max-width:100%}@media(max-width:650px){.native-chart{height:430px;min-height:380px}}
 /* CIRCUIT AI core — dark holographic thinking brain matching the supplied reference. */
-#ai .ai-agent-visual.circuit-stage{position:relative;display:block;width:100%;height:440px;min-height:360px;max-height:540px;aspect-ratio:4/3;border:1px solid rgba(78,196,255,.5);border-radius:14px;background:radial-gradient(ellipse at 50% 46%,#0c3761 0%,#061a32 42%,#020711 82%) !important;isolation:isolate;overflow:hidden;cursor:crosshair;box-shadow:inset 0 0 75px #001326,0 12px 38px rgba(0,0,0,.35)}
+#ai .ai-agent-visual.circuit-stage{position:relative;display:block;width:100%;height:auto;min-height:300px;max-height:520px;aspect-ratio:16/9;border:1px solid rgba(91,145,174,.38);border-radius:5px;background:#02070d !important;isolation:isolate;overflow:hidden;cursor:crosshair;box-shadow:inset 0 0 70px #000b,0 12px 38px rgba(0,0,0,.35)}
+#ai .ai-agent-visual.circuit-stage:before{content:"";position:absolute;z-index:2;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#ff8a16,#ffc15b 42%,#ff8a16);box-shadow:0 0 9px #ff941b88;pointer-events:none}
 #ai #circuitNeuralCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y;background:transparent !important}
 #ai .ai-handoff-note{color:#8fcff0}
-@media(max-width:720px){#ai .ai-agent-visual.circuit-stage{height:370px;min-height:340px;max-height:none;aspect-ratio:auto}}
-</style><meta name="circuit-build" content="ai-neural-mass-20261108-v5">
+@media(max-width:720px){#ai .ai-agent-visual.circuit-stage{height:auto;min-height:260px;max-height:none;aspect-ratio:16/10}}
+</style><meta name="circuit-build" content="ai-ultron-neural-20261108-v6">
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -1536,57 +1537,83 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 </script>
 
 <script>
-/* CIRCUIT AI visual: irregular holographic neural mass based on the supplied reference. */
+/* CIRCUIT holographic neural mass — built against the uploaded 60-second reference. */
 (function(){
  const stage=document.getElementById("aiAgentVisual"),canvas=document.getElementById("circuitNeuralCanvas");
  if(!stage||!canvas||canvas.dataset.ready)return;canvas.dataset.ready="1";
  const ctx=canvas.getContext("2d");if(!ctx)return;
  const TAU=Math.PI*2,rand=(a,b)=>a+Math.random()*(b-a),reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
- let w=0,h=0,dpr=1,raf=0,points=[],dust=[],pointer={x:0,y:0,active:false};
- const palette=["#e8ffff","#b8f6ff","#7be9ff","#42ceff","#159aff","#315fff"];
+ const palette=["#e9ffff","#c7f8ff","#8beaff","#4bd5ff","#159dff","#1763dc"];
+ // Offset ellipsoidal lobes create the same asymmetrical, folded cloud silhouette.
+ const lobes=[
+  {x:-.34,y:-.03,z:0,rx:.29,ry:.31,rz:.27,n:.18},
+  {x:-.15,y:-.22,z:.03,rx:.31,ry:.26,rz:.25,n:.16},
+  {x:.16,y:-.20,z:-.02,rx:.30,ry:.29,rz:.28,n:.18},
+  {x:.34,y:.03,z:.02,rx:.25,ry:.30,rz:.25,n:.16},
+  {x:.17,y:.25,z:.02,rx:.32,ry:.23,rz:.25,n:.16},
+  {x:-.17,y:.24,z:-.03,rx:.29,ry:.22,rz:.24,n:.16},
+  {x:-.48,y:.15,z:.03,rx:.17,ry:.19,rz:.16,n:.10},
+  {x:.48,y:-.16,z:-.02,rx:.17,ry:.18,rz:.16,n:.10}
+ ];
+ let w=0,h=0,dpr=1,pts=[],dust=[],links=[],threads=[],raf=0,visible=true;
  function resize(){
-  const b=stage.getBoundingClientRect();w=Math.max(300,b.width);h=Math.max(260,b.height);dpr=Math.min(1.5,devicePixelRatio||1);
-  canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);points=[];
-  const n=Math.min(1500,Math.max(950,Math.round(w*h/145)));
-  for(let i=0;i<n;i++){
-   const a=rand(0,TAU),v=rand(-1,1),b=Math.acos(v);
-   const lobes=.77+.12*Math.sin(5*a+2*Math.sin(3*b))+.08*Math.cos(9*a-4*b)+.05*Math.sin(7*b+2*a)+.035*Math.cos(13*a+5*b);
-   const rr=lobes*Math.pow(Math.random(),.38),ridge=Math.sin(a*6+b*4)*.05+Math.cos(a*11-b*7)*.025;
-   points.push({x:Math.sin(b)*Math.cos(a)*rr*1.04+Math.cos(a*4+b*3)*ridge,y:Math.cos(b)*rr*.82+Math.sin(a*5-b*2)*ridge,z:Math.sin(b)*Math.sin(a)*rr*.66+Math.cos(a*7+b)*ridge,phase:rand(0,TAU),size:rand(.35,1.4),tone:Math.floor(rand(0,palette.length))});
+  const b=stage.getBoundingClientRect();w=Math.max(280,b.width);h=Math.max(220,b.height);dpr=Math.min(1.7,devicePixelRatio||1);
+  canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
+  pts=[];links=[];threads=[];
+  const total=Math.min(2300,Math.max(1350,Math.round(w*h/95)));
+  for(let i=0;i<total;i++){
+   const L=lobes[Math.floor(Math.random()*lobes.length)],a=rand(0,TAU),v=rand(-1,1),b=Math.acos(v),rr=.72+Math.random()*.34;
+   const ripple=1+.13*Math.sin(a*5+b*4)+.09*Math.cos(a*8-b*3)+.06*Math.sin(b*11+a*2);
+   pts.push({x:L.x+Math.sin(b)*Math.cos(a)*L.rx*rr*ripple,y:L.y+Math.cos(b)*L.ry*rr*ripple,z:L.z+Math.sin(b)*Math.sin(a)*L.rz*rr*ripple,phase:rand(0,TAU),size:rand(.35,1.25),tone:Math.floor(rand(0,palette.length)),lobe:lobes.indexOf(L)});
   }
-  dust=Array.from({length:Math.round(w*h/800)},()=>({x:rand(0,w),y:rand(0,h),r:rand(.25,1.1),a:rand(.1,.4),p:rand(0,TAU),v:rand(.12,.5)}));
- }
- function glow(x,y,r,c,a){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,c);g.addColorStop(1,"rgba(0,0,0,0)");ctx.globalAlpha=a;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1}
- function draw(t){
-  if(!stage.isConnected)return;const time=t/1000,cx=w*.5,cy=h*.49,R=Math.min(w,h)*.39,rot=time*.105;
-  ctx.clearRect(0,0,w,h);const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(w,h)*.7);bg.addColorStop(0,"#061522");bg.addColorStop(.5,"#030a13");bg.addColorStop(1,"#01040a");ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
-  dust.forEach(p=>{ctx.globalAlpha=p.a*(.6+.4*Math.sin(time*p.v+p.p));ctx.fillStyle="#70dcff";ctx.beginPath();ctx.arc(p.x+Math.sin(time*.12+p.p)*4,(p.y-time*p.v*2%(h+8)+h+8)%(h+8),p.r,0,TAU);ctx.fill();ctx.globalAlpha=1});
-  const out=points.map(p=>{const pulse=1+Math.sin(time*1.2+p.phase)*.018,x=p.x*pulse,z=p.z*pulse,y=p.y*pulse,xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot),pers=2.7/(2.7+zr*.25);return{x:cx+xr*R*pers,y:cy+y*R*pers,z:zr,size:p.size*pers,tone:p.tone,phase:p.phase}});
-  glow(cx,cy,R*1.35,"#087dce",.08);
-  // Local 3D links form a tangled organic volume, not a clean sphere or orbit.
-  const cell=.15,grid=new Map(),key=(x,y,z)=>Math.floor(x/cell)+":"+Math.floor(y/cell)+":"+Math.floor(z/cell);
-  points.forEach((p,i)=>{const k=key(p.x,p.y,p.z);if(!grid.has(k))grid.set(k,[]);grid.get(k).push(i)});
-  points.forEach((p,i)=>{const gx=Math.floor(p.x/cell),gy=Math.floor(p.y/cell),gz=Math.floor(p.z/cell),near=[];
-   for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)(grid.get((gx+x)+":"+(gy+y)+":"+(gz+z))||[]).forEach(j=>{if(j<=i)return;const q=points[j],d=Math.hypot(p.x-q.x,p.y-q.y,p.z-q.z);if(d<cell*.95)near.push({j,d})});
-   near.sort((a,b)=>a.d-b.d).slice(0,4).forEach(({j,d})=>{const a=out[i],b=out[j];ctx.strokeStyle="rgba(65,197,255,"+((.07+(1-d/(cell*.95))*.26)*(a.z+b.z>0?1:.48))+")";ctx.lineWidth=.4+(1-d/(cell*.95))*.65;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()});
+  // Add interior bridges so the mesh reads as a volumetric neural tangle, not a hollow ball.
+  for(let i=0;i<260;i++){const L=lobes[Math.floor(Math.random()*lobes.length)],a=rand(0,TAU),v=rand(-1,1),b=Math.acos(v),rr=Math.pow(Math.random(),.55)*.8;pts.push({x:L.x+Math.sin(b)*Math.cos(a)*L.rx*rr,y:L.y+Math.cos(b)*L.ry*rr,z:L.z+Math.sin(b)*Math.sin(a)*L.rz*rr,phase:rand(0,TAU),size:rand(.25,.8),tone:Math.floor(rand(1,5)),lobe:lobes.indexOf(L)})}
+  // Spatial buckets keep the dense local mesh efficient on mobile.
+  const cell=.105,buckets=new Map(),key=(x,y,z)=>Math.floor(x/cell)+":"+Math.floor(y/cell)+":"+Math.floor(z/cell);
+  pts.forEach((p,i)=>{const k=key(p.x,p.y,p.z);if(!buckets.has(k))buckets.set(k,[]);buckets.get(k).push(i)});
+  pts.forEach((p,i)=>{const gx=Math.floor(p.x/cell),gy=Math.floor(p.y/cell),gz=Math.floor(p.z/cell),cand=[];
+   for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)(buckets.get((gx+x)+":"+(gy+y)+":"+(gz+z))||[]).forEach(j=>{if(j<=i)return;const q=pts[j],d=Math.hypot(p.x-q.x,p.y-q.y,p.z-q.z);if(d<cell*.92)cand.push({j,d})});
+   cand.sort((a,b)=>a.d-b.d).slice(0,3).forEach(o=>links.push({a:i,b:o.j,d:o.d}));
   });
-  // Loose, branching luminous filaments weave through the uneven mass.
-  for(let k=0;k<30;k++){const phase=time*(k%2?.12:-.09)+k*2.4,az=k*2.4;ctx.beginPath();
-   for(let j=0;j<=120;j++){const q=j/120,rad=R*(.2+.72*Math.sin(q*Math.PI))*(.94+.06*Math.sin(q*19+phase)),a=az+q*2.8+Math.sin(q*13+phase)*.16,x=Math.cos(a)*rad,y=(q-.5)*R*1.2+Math.sin(q*17+phase)*R*.035,z=Math.sin(a)*rad*.65,xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot),pers=2.7/(2.7+zr*.25),px=cx+xr*pers,py=cy+y*pers;if(!j)ctx.moveTo(px,py);else ctx.lineTo(px,py)}
-   ctx.strokeStyle=k%5===0?"rgba(160,246,255,.4)":"rgba(43,174,255,.16)";ctx.lineWidth=k%5===0?1.1:.58;ctx.stroke();
-  }
-  // Concentrated bright thought-core, with electrical pulses radiating into the network.
-  const pulse=1+Math.sin(time*2)*.1;glow(cx,cy,R*.6,"#087dff",.14);glow(cx,cy,R*.34,"#19bfff",.2);
-  for(let k=0;k<11;k++){const a=time*.24+k*TAU/11,rr=R*(.05+.2*(.5+.5*Math.sin(k*5.3)));glow(cx+Math.cos(a)*rr,cy+Math.sin(a*1.2)*rr*.7,R*.1,"#70eaff",.22)}
-  const core=ctx.createRadialGradient(cx-R*.02,cy-R*.03,1,cx,cy,R*.25*pulse);core.addColorStop(0,"rgba(245,255,255,.98)");core.addColorStop(.18,"rgba(139,241,255,.86)");core.addColorStop(.5,"rgba(38,178,255,.42)");core.addColorStop(1,"rgba(20,105,255,0)");ctx.fillStyle=core;ctx.beginPath();ctx.arc(cx,cy,R*.27*pulse,0,TAU);ctx.fill();
-  out.forEach(p=>{const front=.3+Math.max(0,p.z)*.7,tw=.65+.35*Math.sin(time*2.4+p.phase);glow(p.x,p.y,p.size*4,palette[p.tone],.14*front*tw);ctx.globalAlpha=(.35+front*.6)*tw;ctx.fillStyle=palette[p.tone];ctx.beginPath();ctx.arc(p.x,p.y,p.size*(.5+front*.6),0,TAU);ctx.fill();ctx.globalAlpha=1});
-  if(pointer.active)glow(pointer.x,pointer.y,60,"#35cfff",.07);if(!reduced)raf=requestAnimationFrame(draw);
+  // Fine branching paths weave across and between the separate lobes.
+  for(let k=0;k<58;k++){const L=lobes[k%lobes.length],a=rand(0,TAU),len=rand(.18,.65),phase=rand(0,TAU),path=[];for(let j=0;j<42;j++){const q=j/41,ang=a+q*len*5+Math.sin(q*13+phase)*.22,rad=.25+.72*Math.sin(q*Math.PI);path.push({x:L.x+Math.cos(ang)*L.rx*rad,y:L.y+(q-.5)*L.ry*1.8+Math.sin(q*18+phase)*.025,z:L.z+Math.sin(ang)*L.rz*rad})}threads.push({path,bright:k%7===0,phase})}
+  dust=Array.from({length:Math.round(w*h/360)},()=>({x:rand(0,w),y:rand(0,h),r:rand(.25,.85),p:rand(0,TAU)}));
  }
- function move(e){const b=stage.getBoundingClientRect();pointer.x=e.clientX-b.left;pointer.y=e.clientY-b.top;pointer.active=true}
- stage.addEventListener("pointermove",move,{passive:true});stage.addEventListener("pointerleave",()=>pointer.active=false,{passive:true});
+ function glow(x,y,r,color,alpha){if(r<=0)return;const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,"rgba(0,0,0,0)");ctx.globalAlpha=alpha;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1}
+ function draw(ms){
+  if(!stage.isConnected||!visible)return;
+  const t=ms/1000,cx=w*.5,cy=h*.51,R=Math.min(w*.78,h*1.12),rot=t*.12;
+  // Reference has a dark technical grid and deliberate glow/fade pulses.
+  const cycle=(t%19)/19,fade=cycle<.12?cycle/.12:cycle>.88?(1-cycle)/.12:1,energy=.12+.88*Math.min(1,fade);
+  ctx.clearRect(0,0,w,h);ctx.fillStyle="#02070d";ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle="rgba(68,111,139,.105)";ctx.lineWidth=.55;
+  for(let x=0;x<w;x+=24){ctx.beginPath();ctx.moveTo(x,4);ctx.lineTo(x,h);ctx.stroke()}
+  for(let y=12;y<h;y+=24){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+  // Subtle frame markings echo the source monitor without competing with the core.
+  ctx.strokeStyle="rgba(101,151,178,.32)";ctx.lineWidth=1;ctx.strokeRect(7,8,w-14,h-16);
+  ctx.fillStyle="rgba(118,164,189,.55)";ctx.font="7px monospace";ctx.fillText("NEURAL PROCESSING  /  LIVE VISUALIZATION",14,20);
+  ctx.fillText("CORE STATUS  "+(energy>.55?"ACTIVE":"LOW SIGNAL"),w-150,20);
+  dust.forEach(p=>{ctx.globalAlpha=.12+.16*(.5+.5*Math.sin(t+p.p));ctx.fillStyle="#69cfff";ctx.fillRect(p.x,p.y,1,1)});ctx.globalAlpha=1;
+  const projected=pts.map(p=>{const breath=1+.025*Math.sin(t*1.3+p.phase),x=p.x*breath,z=p.z*breath,y=p.y*breath,xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot),pers=2.8/(2.8+zr*.38);return{x:cx+xr*R*pers,y:cy+y*R*.88*pers,z:zr,size:p.size*pers,phase:p.phase,tone:p.tone}});
+  glow(cx,cy,R*.75,"#007cff",.11*energy);
+  // Connections are irregular and local; the silhouette is built from overlapping lobes.
+  links.forEach((e,i)=>{const a=projected[e.a],b=projected[e.b],depth=.45+Math.max(0,(a.z+b.z)*.5)*.7;ctx.strokeStyle="rgba(49,174,255,"+((.12+(1-e.d/.097)*.24)*energy*depth)+")";ctx.lineWidth=.35+(1-e.d/.097)*.55;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()});
+  threads.forEach((th,i)=>{const ph=t*.42+th.phase;ctx.beginPath();th.path.forEach((p,j)=>{const q=j/(th.path.length-1),x=p.x+Math.sin(ph+q*15)*.012,z=p.z+Math.cos(ph+q*12)*.012,xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot),pers=2.8/(2.8+zr*.38),px=cx+xr*R*pers,py=cy+p.y*R*.88*pers;if(!j)ctx.moveTo(px,py);else ctx.lineTo(px,py)});ctx.strokeStyle=th.bright?"rgba(175,246,255,"+(.42*energy)+")":"rgba(36,155,255,"+(.18*energy)+")";ctx.lineWidth=th.bright?1.05:.55;ctx.stroke()});
+  // Dense, almost-white electrical nucleus with short radial filaments.
+  const pulse=1+.12*Math.sin(t*2.5),coreR=R*.16*pulse;
+  glow(cx,cy,coreR*3.6,"#087bff",.35*energy);glow(cx,cy,coreR*2.1,"#39d9ff",.48*energy);
+  for(let k=0;k<54;k++){const a=k*TAU/54+t*.09,len=coreR*(1.25+(k%5)*.22),x1=cx+Math.cos(a)*coreR*.34,y1=cy+Math.sin(a)*coreR*.34,x2=cx+Math.cos(a)*len,y2=cy+Math.sin(a)*len*.72;ctx.strokeStyle="rgba(116,230,255,"+(.22*energy)+")";ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
+  const g=ctx.createRadialGradient(cx-coreR*.2,cy-coreR*.22,1,cx,cy,coreR*1.65);g.addColorStop(0,"rgba(255,255,255,"+(.98*energy)+")");g.addColorStop(.18,"rgba(190,250,255,"+(.9*energy)+")");g.addColorStop(.48,"rgba(49,194,255,"+(.62*energy)+")");g.addColorStop(1,"rgba(0,110,255,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,coreR*1.7,0,TAU);ctx.fill();
+  projected.forEach(p=>{const tw=.55+.45*Math.sin(t*2.1+p.phase),front=.45+Math.max(0,p.z)*.55;glow(p.x,p.y,p.size*3,palette[p.tone],.17*energy*tw*front);ctx.globalAlpha=(.3+front*.65)*tw*energy;ctx.fillStyle=palette[p.tone];ctx.beginPath();ctx.arc(p.x,p.y,p.size*(.55+front*.55),0,TAU);ctx.fill();ctx.globalAlpha=1});
+  // Tiny edge sparks and intermittent electrical branches.
+  for(let k=0;k<18;k++){const a=t*.18+k*TAU/18,rr=R*(.52+.06*Math.sin(t*1.7+k));const x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr*.63;glow(x,y,rand(2,4),"#39bfff",.12*energy)}
+  if(!reduced)raf=requestAnimationFrame(draw);
+ }
+ function stop(){visible=false;cancelAnimationFrame(raf)}
+ function start(){if(visible)return;visible=true;if(!reduced)raf=requestAnimationFrame(draw);else draw(0)}
  if("ResizeObserver"in window)new ResizeObserver(()=>{resize();if(reduced)draw(0)}).observe(stage);else window.addEventListener("resize",()=>{resize();if(reduced)draw(0)});
+ document.addEventListener("visibilitychange",()=>{if(document.hidden)stop();else start()});
  resize();if(reduced)draw(0);else raf=requestAnimationFrame(draw);
- document.addEventListener("visibilitychange",()=>{if(document.hidden)cancelAnimationFrame(raf);else if(!reduced)raf=requestAnimationFrame(draw)});
 })();</script>>>
 
 </body></html>
