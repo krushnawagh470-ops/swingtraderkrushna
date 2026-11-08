@@ -478,7 +478,7 @@ const PRIORITY_SYMBOLS=["XAUUSD","XAGUSD","EURUSD","BTCUSD","USOIL","DXY"];
 const API_REFRESH={quotes:10000,calendar:300000,news:180000,movers:60000,summary:60000};
 let apiLastGood={},liveHubConnection=null,tickStreamStarted=false;
 function esc(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
-function terminalIST(v){if(!v)return "Time not supplied";const d=new Date(v);return Number.isNaN(d.getTime())?"Time not supplied":d.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short"})}
+function terminalIST(v){if(!v)return "Time not supplied";const d=new Date(v);return Number.isNaN(d.getTime())?"Time not supplied":d.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"short",hour12:true})}
 function fmtQuote(n,sym){const x=Number(n);if(!Number.isFinite(x))return "—";return x.toLocaleString("en-US",{minimumFractionDigits:sym.includes("JPY")?3:(sym==="XAUUSD"||sym==="XAGUSD"||sym==="BTCUSD"||sym==="ETHUSD"||sym==="USOIL")?2:5,maximumFractionDigits:sym.includes("JPY")?3:(sym==="XAUUSD"||sym==="XAGUSD"||sym==="BTCUSD"||sym==="ETHUSD"||sym==="USOIL")?2:5})}
 async function apiJSON(path,timeoutMs=7000){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),timeoutMs);try{const r=await fetch(BIQUOTE_API+path,{cache:"no-store",signal:controller.signal});if(!r.ok)throw Error("HTTP "+r.status+" at "+path);return await r.json()}catch(e){if(e.name==="AbortError")throw Error("Market data request timed out after "+Math.round(timeoutMs/1000)+"s");throw e}finally{clearTimeout(timer)}}
 function setPipeline(ok,msg){const el=document.getElementById("pipelineStatus"),meta=document.getElementById("pipelineMeta");if(el)el.textContent=ok?"API CONNECTED":"API ISSUE";if(meta)meta.textContent=msg}
@@ -555,7 +555,7 @@ async function loadNativeNews(force=false){
    const foot=document.createElement("span");foot.className="q-meta";foot.textContent=x.publisher+" · "+terminalIST(x.date);article.appendChild(foot);el.appendChild(article);
   });
   newsLastLoaded=Date.now();
-  if(meta)meta.textContent=provider+" · "+rows.length+" headlines · updated "+new Date().toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata"})+" IST";
+  if(meta)meta.textContent=provider+" · "+rows.length+" headlines · updated "+new Date().toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata",hour:"2-digit",minute:"2-digit",hour12:true})+" IST";
   const st=document.getElementById("settingsNewsStatus");if(st)st.textContent=meta.textContent;
  }catch(e){
   if(meta)meta.textContent="NEWS PIPELINE ERROR · "+e.message;
