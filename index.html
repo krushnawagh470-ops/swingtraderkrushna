@@ -1120,16 +1120,8 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   return '<div class="open-source-card"><div class="q-label">'+label+'</div><div class="q-price">'+(Number.isFinite(Number(price))?fmt(price,digits(symbol)):"—")+'</div>'+changeHtml+'<div class="q-meta">'+detail+'</div><div class="q-meta">'+kind+'</div></div>';
  }
  function paint(){
-  const grid=document.getElementById("nativeQuoteGrid");if(!grid)return;
-  const rows=[];
-  ["XAUUSD","EURUSD","GBPUSD","USDJPY","USDCHF","USDCAD","AUDUSD","NZDUSD","BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT"].forEach(sym=>{
-   const q=quoteStore[sym];if(q)rows.push(card(sym,q.label,q.price,q.detail,q.kind,q.change));
-  });
-  ["XAUUSD","EURUSD","GBPUSD","USDJPY","USDCHF","USDCAD","AUDUSD","NZDUSD"].forEach(sym=>{if(!quoteStore[sym])rows.push(card(sym,sym,"—","No reference rate returned","Daily reference unavailable"))});
-  grid.innerHTML=rows.join("");
-  const status=document.getElementById("pipelineMeta");
-  if(status)status.textContent="Open data only · Binance public crypto stream + Frankfurter daily FX/metals · refreshed "+nowIST()+" IST";
-  const st=document.getElementById("pipelineStatus");if(st)st.textContent=socket&&socket.readyState===1?"OPEN DATA CONNECTED":"OPEN DATA / REST";
+  // Dashboard Market Pulse is rendered only by loadNativeQuotes() using PRIORITY_SYMBOLS.
+  // This legacy open-data feed must not overwrite the six-instrument watchlist or its status.
   updateSectionStrips();
  }
  function updateSectionStrips(){
