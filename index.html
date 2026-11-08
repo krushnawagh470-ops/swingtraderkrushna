@@ -1881,62 +1881,34 @@ const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisR
  }
 })();
 </script>
-<script>
-/* Isolated News Desk fallback: independent of the main terminal script. */
+<script id="circuit-news-backend">
 (function(){
- const feeds=[
-  ["BBC World","https://feeds.bbci.co.uk/news/world/rss.xml"],
-  ["BBC Business","https://feeds.bbci.co.uk/news/business/rss.xml"],
-  ["Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml"],
-  ["The Guardian","https://www.theguardian.com/world/rss"],
-  ["DW","https://rss.dw.com/xml/rss-en-all"],
-  ["WSJ","https://feeds.a.dj.com/rss/RSSWorldNews.xml"]
- ];
- const topics=/war|conflict|attack|missile|ceasefire|invasion|sanction|tariff|trade|central bank|interest rate|inflation|CPI|GDP|recession|bond|yield|oil|energy|OPEC|gold|market|econom|election|government|summit|shipping|debt|banking|geopolitic|diplomac/i;
- const dateText=d=>{const x=new Date(d);return isNaN(x)?"Time unavailable":x.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",hour:"numeric",minute:"2-digit",hour12:true})};
+ const API="https://circuit-api-gidq.onrender.com";
  let busy=false;
+ const dateText=d=>{const x=new Date(d);return isNaN(x)?"Time unavailable":x.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",hour:"numeric",minute:"2-digit",hour12:true})};
  async function load(){
   const list=document.getElementById("nativeNews"),meta=document.getElementById("newsPipelineMeta");
-  if(!list||busy)return;busy=true;
-  list.textContent="Connecting to global news publishers…";
-  if(meta)meta.textContent="Fetching latest publisher headlines…";
+  if(!list||busy)return;busy=true;list.textContent="Connecting to CIRCUIT news service…";
+  if(meta)meta.textContent="Requesting latest publisher headlines from CIRCUIT API…";
   try{
-   const jobs=feeds.map(async ([source,url])=>{
-    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),8000);
-    try{
-     const r=await fetch("https://proxy.cors.dev/"+url,{signal:ctl.signal,cache:"no-store"});
-     if(!r.ok)throw Error(source+" HTTP "+r.status);
-     const xml=new DOMParser().parseFromString(await r.text(),"text/xml");
-     if(xml.querySelector("parsererror"))throw Error("Invalid RSS from "+source);
-     return [...xml.querySelectorAll("item")].map(n=>{
-      const title=n.querySelector("title")?.textContent?.trim()||"";
-      const link=n.querySelector("link")?.textContent?.trim()||"";
-      const raw=n.querySelector("pubDate")?.textContent||n.querySelector("published")?.textContent||"";
-      const description=(n.querySelector("description")?.textContent||"").replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim();
-      return {source,title,link,date:new Date(raw),description};
-     }).filter(x=>x.title&&/^https?:\/\//i.test(x.link)&&!isNaN(x.date));
-    }finally{clearTimeout(timer)}
-   });
-   const batches=await Promise.race([Promise.allSettled(jobs),new Promise((_,reject)=>setTimeout(()=>reject(Error("Publisher feeds timed out. Try Refresh news.")),10000))]);
-   const all=batches.flatMap(x=>x.status==="fulfilled"?x.value:[]);
-   const unique=new Map();
-   all.forEach(x=>{if(topics.test(x.title+" "+x.description)&&!unique.has(x.link))unique.set(x.link,x)});
-   const rows=[...unique.values()].sort((a,b)=>b.date-a.date).slice(0,5);
-   if(!rows.length)throw Error("No publisher headlines received. Check network access and retry.");
+   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),25000);
+   let response;
+   try{response=await fetch(API+"/api/v1/news/latest?limit=5",{cache:"no-store",signal:ctl.signal})}
+   finally{clearTimeout(timer)}
+   if(!response.ok)throw Error("CIRCUIT News API HTTP "+response.status);
+   const payload=await response.json(),rows=Array.isArray(payload.items)?payload.items:[];
+   if(!rows.length)throw Error("No publisher headlines are currently available.");
    list.replaceChildren();
-   rows.forEach((x,i)=>{
+   rows.sort((a,b)=>new Date(b.published_at)-new Date(a.published_at)).slice(0,5).forEach(x=>{
     const a=document.createElement("article");a.className="native-news-item";
     const h=document.createElement("h3");h.className="news-story-title";
-    const link=document.createElement("a");link.href=x.link;link.target="_blank";link.rel="noopener noreferrer";link.textContent=x.title;h.appendChild(link);a.appendChild(h);
-    const p=document.createElement("p");p.className="news-story-summary";p.textContent=x.description||"Open the publisher report for details.";a.appendChild(p);
-    const f=document.createElement("div");f.className="news-story-source";f.textContent=x.source+" · "+dateText(x.date);a.appendChild(f);
-    list.appendChild(a);
+    const link=document.createElement("a");link.href=x.url;link.target="_blank";link.rel="noopener noreferrer";link.textContent=x.title||"Untitled story";h.appendChild(link);a.appendChild(h);
+    const p=document.createElement("p");p.className="news-story-summary";p.textContent=x.summary||"Open the publisher report for details.";a.appendChild(p);
+    const f=document.createElement("div");f.className="news-story-source";f.textContent=(x.source||"Publisher")+" · "+dateText(x.published_at);a.appendChild(f);list.appendChild(a);
    });
-   if(meta)meta.textContent="Verified publisher RSS · "+rows.length+" latest stories · "+dateText(new Date());
-  }catch(e){
-   list.textContent="News feed unavailable: "+e.message;
-   if(meta)meta.textContent="News connection issue · tap Refresh news to retry.";
-  }finally{busy=false}
+   if(meta)meta.textContent="CIRCUIT API · publisher RSS · "+Math.min(rows.length,5)+" latest stories · updated "+dateText(payload.updated_at||new Date());
+  }catch(e){list.textContent="News feed unavailable: "+(e.name==="AbortError"?"CIRCUIT API timed out":e.message);if(meta)meta.textContent="Backend news connection issue · tap Refresh news to retry."}
+  finally{busy=false}
  }
  window.loadNativeNews=load;
  const start=()=>{if(document.getElementById("nativeNews"))load();else setTimeout(start,200)};
@@ -1945,64 +1917,39 @@ const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisR
 })();
 </script>
 <script id="circuit-market-pulse-isolated">
-/* Independent Market Pulse renderer. Does not depend on the main terminal bundle. */
 (function(){
  "use strict";
- const symbols=["XAUUSD","XAGUSD","EURUSD","BTCUSD","USOIL","DXY"];
- const gridId="nativeQuoteGrid";
+ const API="https://circuit-api-gidq.onrender.com";
+ const symbols=["XAUUSD","XAGUSD","EURUSD","BTCUSD","USOIL","DXY"],gridId="nativeQuoteGrid";
  let busy=false;
  const el=id=>document.getElementById(id);
- const fmt=(v,s)=>{const n=Number(v);if(!Number.isFinite(n))return "—";const d=(s==="EURUSD"?5:((s==="XAUUSD"||s==="XAGUSD"||s==="BTCUSD"||s==="USOIL")?2:3));return n.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d})};
- function status(ok,msg){const a=el("pipelineStatus"),b=el("pipelineMeta");if(a)a.textContent=ok?"API CONNECTED":"API ISSUE";if(b)b.textContent=msg}
- function normalise(data){
-  if(Array.isArray(data))return data;
-  if(data&&Array.isArray(data.items))return data.items;
-  if(data&&Array.isArray(data.ticks))return data.ticks;
-  if(data&&typeof data==="object")return Object.entries(data).filter(([,v])=>v&&typeof v==="object").map(([k,v])=>Object.assign({symbol:k},v));
-  return [];
- }
+ const fmt=(v,s)=>{const n=Number(v);if(!Number.isFinite(n))return "—";const d=s==="EURUSD"?5:((s==="XAUUSD"||s==="XAGUSD"||s==="BTCUSD"||s==="USOIL")?2:3);return n.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d})};
+ function status(ok,msg){const a=el("pipelineStatus"),b=el("pipelineMeta");if(a)a.textContent=ok?"CIRCUIT API CONNECTED":"API ISSUE";if(b)b.textContent=msg}
  function card(sym,q){
-  const mid=Number(q.mid??((Number(q.bid)+Number(q.ask))/2));
-  const age=Number(q.quoteAgeSeconds),stale=q.stale===true||(Number.isFinite(age)&&age>300);
-  const closed=String(q.marketState||"").toLowerCase()==="closed";
-  const change=Number(q.dayDiffPercent);
-  return '<div class="live-quote"><div class="q-label">'+sym+'</div><div class="q-price">'+fmt(mid,sym)+'</div><div class="q-meta">Bid '+fmt(q.bid,sym)+' · Ask '+fmt(q.ask,sym)+'</div><div class="q-meta">'+(Number.isFinite(change)?(change>=0?"▲ ":"▼ ")+change.toFixed(2)+"% today":"Change unavailable")+' · '+(Number.isFinite(age)?"quote age "+Math.round(age)+"s":"age unavailable")+'</div><div class="q-meta">'+String(q.source||"Biquote")+' · '+(closed?"Market closed · last quote":stale?"STALE · delayed quote":"Provider quote")+'</div></div>';
- }
- async function get(url,ms){
-  const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
-  try{const r=await fetch(url,{cache:"no-store",mode:"cors",signal:c.signal});if(!r.ok)throw Error("HTTP "+r.status);return await r.json()}
-  catch(e){if(e.name==="AbortError")throw Error("request timed out");throw e}
-  finally{clearTimeout(t)}
+  const mid=Number(q.mid??((Number(q.bid)+Number(q.ask))/2)),age=Number(q.quoteAgeSeconds),stale=q.stale===true||(Number.isFinite(age)&&age>300),change=Number(q.dayDiffPercent);
+  return '<div class="live-quote"><div class="q-label">'+sym+'</div><div class="q-price">'+fmt(mid,sym)+'</div><div class="q-meta">Bid '+fmt(q.bid,sym)+' · Ask '+fmt(q.ask,sym)+'</div><div class="q-meta">'+(Number.isFinite(change)?(change>=0?"▲ ":"▼ ")+change.toFixed(2)+"% today":"Change unavailable")+' · '+(Number.isFinite(age)?"quote age "+Math.round(age)+"s":"age unavailable")+'</div><div class="q-meta">'+String(q.source||"Biquote")+' · '+(q.available===false?"Quote unavailable":stale?"STALE · delayed quote":"Provider quote")+'</div></div>';
  }
  async function refresh(){
-  if(busy||document.visibilityState==="hidden")return;
-  const grid=el(gridId);if(!grid)return;
-  busy=true;
+  if(busy||document.visibilityState==="hidden")return;const grid=el(gridId);if(!grid)return;busy=true;
   try{
-   const params=new URLSearchParams();symbols.forEach(x=>params.append("symbols",x));
-   let data,rows=[],by={};
-   try{data=await get("https://biquote.io/api/latest?"+params.toString(),9000);rows=normalise(data)}
-   catch(batchError){
-    const settled=await Promise.allSettled(symbols.map(sym=>get("https://biquote.io/api/"+encodeURIComponent(sym),7000)));
-    settled.forEach((r,i)=>{if(r.status==="fulfilled")rows.push(Object.assign({symbol:symbols[i]},r.value))});
-    if(!rows.length)throw batchError;
-   }
-   rows.forEach(q=>{const k=String(q.symbol||q.name||"").toUpperCase();if(symbols.includes(k)&&Number.isFinite(Number(q.mid??((Number(q.bid)+Number(q.ask))/2))))by[k]=q});
+   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),25000);let response;
+   try{response=await fetch(API+"/api/v1/market/quotes?symbols="+encodeURIComponent(symbols.join(",")),{cache:"no-store",signal:ctl.signal})}
+   finally{clearTimeout(timer)}
+   if(!response.ok)throw Error("CIRCUIT Market API HTTP "+response.status);
+   const payload=await response.json(),rows=Array.isArray(payload.quotes)?payload.quotes:[],by={};
+   rows.forEach(q=>{const k=String(q.symbol||"").toUpperCase();if(symbols.includes(k)&&q.available!==false)by[k]=q});
    const count=symbols.filter(x=>by[x]).length;
-   grid.innerHTML=symbols.map(sym=>by[sym]?card(sym,by[sym]):'<div class="live-quote"><div class="q-label">'+sym+'</div><div class="q-price">—</div><div class="q-meta">No quote returned by provider</div></div>').join("");
-   if(count)status(true,"Biquote REST · "+count+"/6 instruments · refreshed "+new Date().toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata",hour12:true}));
-   else status(false,"Biquote responded, but returned no valid watchlist quotes. Retrying automatically.");
+   grid.innerHTML=symbols.map(sym=>by[sym]?card(sym,by[sym]):'<div class="live-quote"><div class="q-label">'+sym+'</div><div class="q-price">—</div><div class="q-meta">No valid quote returned</div></div>').join("");
+   if(count)status(true,"CIRCUIT API · Biquote · "+count+"/6 instruments · refreshed "+new Date().toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata",hour12:true}));
+   else status(false,"Backend responded, but Biquote returned no valid watchlist quotes. Retrying automatically.");
   }catch(e){
    grid.innerHTML=symbols.map(sym=>'<div class="live-quote"><div class="q-label">'+sym+'</div><div class="q-price">—</div><div class="q-meta">Quote unavailable</div><div class="q-meta">'+String(e.message||e).replace(/[<>]/g,"")+'</div></div>').join("");
-   status(false,"Biquote connection failed: "+String(e.message||e)+" · retrying");
+   status(false,"CIRCUIT API connection failed: "+(e.name==="AbortError"?"request timed out":String(e.message||e))+" · retrying");
   }finally{busy=false}
  }
- window.circuitRefreshMarketPulse=refresh;
- window.loadPriorityMarketQuotes=refresh;
- window.loadNativeQuotes=refresh;
- function start(){refresh();setInterval(refresh,15000)}
+ window.circuitRefreshMarketPulse=refresh;window.loadPriorityMarketQuotes=refresh;window.loadNativeQuotes=refresh;
+ function start(){refresh();setInterval(refresh,30000)}
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
- document.addEventListener("click",e=>{if(e.target.closest('#nativeQuoteGrid')===null&&e.target.closest('[onclick*="loadNativeQuotes"]'))refresh()});
 })();
 </script>
 </body></html>
