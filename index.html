@@ -1067,7 +1067,8 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
       if (cancelRequested) throw new DOMException("Request cancelled by user.", "AbortError");
       const modeRules=quickReplies?"\\n\\nKeep the answer brief by default: 2–6 sentences or a few short bullets, unless the user asks for detail.":"\\n\\nDetailed replies are enabled; give the depth the question requires.";
       const webRules=webLookupOn?"\\n\\nWeb lookup mode is ON. Use a real search tool only if the connected backend provides one. If unavailable, say live lookup is not connected; never invent a search or source.":"\\n\\nWeb lookup mode is OFF. Clearly flag facts that need current verification.";
-      const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisRules+closedMarketOverride+globalIntelligenceRules+modeRules+webRules}];
+      const domainRules="\\n\\nIMPORTANT FORMAT OVERRIDE: For non-chart and non-trading questions, ignore all trading-only instructions in the generic response template, including BUY SETUP / SELL SETUP / WAIT labels. Answer the actual question naturally. For economy, geopolitics, institutions and conflict questions, use concise fact/analysis/scenario structure and cite only sources actually retrieved.";
+      const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisRules+closedMarketOverride+globalIntelligenceRules+modeRules+webRules+domainRules}];
       activeRequestController=new AbortController();
       const response = await fetch(url + "/chat", {
         method: "POST",
