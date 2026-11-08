@@ -384,6 +384,24 @@ body.circuit-admin-mode #settings.active{display:block!important}
     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitSaveLearning">Save to memory</button><button type="button" class="btn secondary" id="circuitClearLearning">Clear memory</button><span class="q-meta" id="circuitLearningStatus" aria-live="polite">Memory stays in this browser until you clear it.</span></div>
     <div id="circuitLearningList" class="q-meta" style="margin-top:10px"></div>
    </div>
+   <div class="card" id="circuitCloudMemoryPanel" style="margin-top:12px;border:1px solid #2b5b79;background:linear-gradient(145deg,#0b2031,#071321)">
+    <div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><div class="terminal-label">CIRCUIT · PERSISTENT MEMORY</div><b>Cloud memory</b><div class="q-meta">Private, cross-device memory. Only items you explicitly save are stored.</div></div><span class="signal-tag" id="circuitCloudMemoryState">CLOUD MEMORY · LOCKED</span></div>
+    <div id="circuitMemoryLogin" style="margin-top:10px">
+     <label class="terminal-label" for="circuitMemoryPassphrase">MEMORY PASSPHRASE</label>
+     <input id="circuitMemoryPassphrase" type="password" autocomplete="current-password" placeholder="Enter your private memory passphrase">
+     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitMemoryLoginButton">Unlock cloud memory</button></div>
+     <p class="q-meta">Your passphrase is checked by the secure Worker. It is not saved in this browser or sent to the AI model.</p>
+    </div>
+    <div id="circuitMemoryManager" hidden style="margin-top:10px">
+     <label class="terminal-label" for="circuitCloudMemoryCategory">CATEGORY</label>
+     <select id="circuitCloudMemoryCategory"><option>General</option><option>Preferences</option><option>Personal planning</option><option>Finance and career</option><option>Business and content</option><option>Technology and projects</option><option>Trading and investing</option></select>
+     <label class="terminal-label" for="circuitCloudMemoryInput" style="display:block;margin-top:9px">ADD APPROVED MEMORY</label>
+     <textarea id="circuitCloudMemoryInput" rows="3" maxlength="1200" placeholder="Example: Use 12-hour time format. Keep answers concise and practical."></textarea>
+     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitCloudMemorySave">Save memory</button><button type="button" class="btn secondary" id="circuitCloudMemoryRefresh">Refresh</button><button type="button" class="btn secondary" id="circuitCloudMemoryLogout">Lock memory</button><button type="button" class="btn secondary" id="circuitCloudMemoryClear">Delete all</button><span class="signal-tag" id="circuitCloudMemoryCount">0 saved</span></div>
+     <div id="circuitCloudMemoryList" class="q-meta" style="margin-top:10px"></div>
+    </div>
+    <p class="q-meta" id="circuitCloudMemoryStatus" aria-live="polite" style="margin-top:9px">Cloud memory needs a D1 database and Worker secrets before it can be unlocked.</p>
+   </div>
    <div class="section-title" style="margin:16px 0 8px">CIRCUIT · LIVE TASK EXECUTION</div>
    <div class="q-meta">Follow the real handoff from your instruction to the provider response. A stage changes only when its corresponding event occurs.</div>
    <div class="ai-task-steps circuit-steps" id="aiTaskSteps">
@@ -1176,7 +1194,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|federal reserve|\bfed\b|imf|world bank|global economy|macroeconom|election|military|diplomac|opec|wto|united nations|nato)\b/i.test(prompt);
       const compactWorkspaceRules="\n\nYou are CIRCUIT, the user's practical multidisciplinary assistant. Handle the actual task, not only trading. Be accurate, concise and actionable. Use relevant context only. Never invent facts, sources, tests or completed actions. Protect credentials. State uncertainty when needed.";
       const requestRules=(chartRequest?analysisRules+closedMarketOverride:"")+compactWorkspaceRules+(globalIntelRequest?globalIntelligenceRules:"")+modeRules+(needsLiveWebSearch?webRules:"")+(chartRequest?"":domainRules);
-      const learningContext=circuitLearningContext().slice(0,3500);
+      const learningContext=(circuitLearningContext()+(await window.circuitCloudMemoryContext?.()||"")).slice(0,6000);
       const outgoing=[...terminalContext.context,{role:"user",content:prompt+requestRules+liveNewsContext+learningContext}];
       status.textContent="Sending to connected AI…";
       let workerTimedOut=false;
@@ -2057,4 +2075,5 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
 /* The primary sendMessage handler already owns the button. Do not invoke it again
    during capture: doing so races the activity tracker and can double-submit. */
 </script>
+<script src="memory.js"></script>
 </body></html>
