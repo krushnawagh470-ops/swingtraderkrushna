@@ -398,6 +398,54 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 }
 </style>
 
+
+<style id="circuit-horizontal-console-workspace">
+/* CIRCUIT Intelligence Console on the left; Current Workspace on the right, edge-to-edge. */
+@media (min-width:651px){
+  #ai .ai-workbench{
+    display:grid!important;
+    grid-template-columns:minmax(0,1.12fr) minmax(340px,.88fr)!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    gap:0!important;padding:0!important;align-items:stretch!important;
+    border-radius:0!important;overflow:hidden!important
+  }
+  #ai .ai-workbench-head{
+    grid-column:1!important;grid-row:1!important;
+    min-width:0!important;margin:0!important;
+    border:0!important;border-bottom:1px solid #203149!important;
+    border-right:1px solid #203149!important;border-radius:0!important;
+    padding:16px 20px!important
+  }
+  #ai .ai-workbench-grid{
+    display:contents!important
+  }
+  #ai .ai-workbench-grid>div:first-child{
+    display:block!important;grid-column:1!important;grid-row:2!important;
+    width:100%!important;min-width:0!important;margin:0!important
+  }
+  #ai .ai-agent-visual.circuit-stage{
+    width:100%!important;max-width:none!important;
+    height:clamp(300px,46vh,560px)!important;min-height:300px!important;
+    max-height:none!important;aspect-ratio:auto!important;margin:0!important;
+    border:0!important;border-right:1px solid #203149!important;
+    border-radius:0!important
+  }
+  #ai .ai-workspace-panel{
+    display:block!important;grid-column:2!important;grid-row:1 / span 2!important;
+    width:100%!important;min-width:0!important;height:100%!important;
+    min-height:0!important;margin:0!important;padding:18px!important;
+    border:0!important;border-radius:0!important
+  }
+}
+@media(max-width:650px){
+  #ai .ai-workbench{display:block!important}
+  #ai .ai-workbench-head{display:block!important}
+  #ai .ai-workbench-grid{display:flex!important;flex-direction:column!important;gap:10px!important;padding:8px!important}
+  #ai .ai-workbench-grid>div:first-child{order:1!important}
+  #ai .ai-workspace-panel{order:2!important;width:100%!important}
+}
+</style>
+
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
