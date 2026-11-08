@@ -1541,6 +1541,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 /* CIRCUIT holographic neural mass — built against the uploaded 60-second reference. */
 (function(){
  const stage=document.getElementById("aiAgentVisual"),canvas=document.getElementById("circuitNeuralCanvas");
+ if(stage&&stage.querySelector(".circuit-reference-video"))return;
  if(!stage||!canvas||canvas.dataset.ready)return;canvas.dataset.ready="1";
  const ctx=canvas.getContext("2d");if(!ctx)return;
  const TAU=Math.PI*2,rand=(a,b)=>a+Math.random()*(b-a),reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
