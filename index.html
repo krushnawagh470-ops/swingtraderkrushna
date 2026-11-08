@@ -174,10 +174,11 @@ body.circuit-admin-mode #settings.active{display:block!important}
 }
 
 .chart-tools{background:#071326;border-bottom:1px solid #1b3554}.native-chart{height:520px;min-height:390px;width:100%;background:#07101e;border-radius:0;overflow:hidden;touch-action:pan-y}.native-chart canvas{max-width:100%}@media(max-width:650px){.native-chart{height:430px;min-height:380px}}
-/* AI visual uses the exact supplied neural-network artwork. */
-#ai .ai-agent-visual.circuit-stage{position:relative;display:block;width:100%;height:420px;min-height:360px;max-height:520px;aspect-ratio:auto;border:1px solid #24334e;border-radius:12px;background:radial-gradient(ellipse at 52% 45%,#171c2b 0%,#0d101b 60%,#080a12 100%);isolation:isolate;overflow:hidden;cursor:crosshair;box-shadow:inset 0 0 50px #03050c}
-#ai #circuitNeuralCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-@media(max-width:720px){#ai .ai-agent-visual.circuit-stage{height:360px;min-height:360px;max-height:none;aspect-ratio:auto}}
+/* CIRCUIT AI core — amber orbital interface inspired by image 9002. */
+#ai .ai-agent-visual.circuit-stage{position:relative;display:block;width:100%;height:440px;min-height:360px;max-height:540px;aspect-ratio:auto;border:1px solid rgba(255,177,75,.24);border-radius:14px;background:radial-gradient(ellipse at 51% 55%,#42200d 0%,#1d1009 38%,#0b0908 76%,#070707 100%);isolation:isolate;overflow:hidden;cursor:crosshair;box-shadow:inset 0 0 75px #030201,0 12px 38px rgba(0,0,0,.28)}
+#ai #circuitNeuralCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
+#ai .ai-handoff-note{color:#b99a72}
+@media(max-width:720px){#ai .ai-agent-visual.circuit-stage{height:370px;min-height:340px;max-height:none;aspect-ratio:auto}}
 </style><meta name="circuit-build" content="chart-levels-panel-20261108-v2">
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
@@ -1535,76 +1536,82 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 </script>
 
 <script>
-/* CIRCUIT animated neural field — dense, multicolour particle mesh inspired by the supplied reference. */
+/* CIRCUIT amber intelligence core — procedural motion based on image 9002. */
 (function(){
  const stage=document.getElementById("aiAgentVisual"),canvas=document.getElementById("circuitNeuralCanvas");
- if(!stage||!canvas||canvas.dataset.ready)return;canvas.dataset.ready="1";
+ if(!stage||!canvas||canvas.dataset.ready)return;
+ canvas.dataset.ready="1";
  const ctx=canvas.getContext("2d");if(!ctx)return;
- let w=0,h=0,dpr=1,raf=0,last=0,points=[],pointer={x:-9999,y:-9999,active:false};
+ let w=0,h=0,dpr=1,raf=0,last=0,particles=[],pointer={x:-9999,y:-9999,active:false};
  const reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
- const colors=["#ff4b42","#ff8b38","#ffc44e","#d9e45a","#6bdc91","#36d8c4","#43b9f5","#668aff","#a47bff","#e17bdc","#f3f5ff"];
- const clusters=[
-  [.12,.23,.19,.24], [.32,.54,.22,.36], [.53,.36,.25,.32],
-  [.75,.55,.20,.32], [.90,.24,.13,.23], [.15,.83,.17,.18], [.63,.88,.24,.14]
- ];
- function rand(a,b){return a+Math.random()*(b-a)}
+ const TAU=Math.PI*2,gold=["#ffb13f","#ff8b22","#ffd16b","#e86b16","#ffdf9a","#b94d12"];
+ const rand=(a,b)=>a+Math.random()*(b-a);
  function resize(){
-  const r=stage.getBoundingClientRect();w=Math.max(320,r.width);h=Math.max(280,r.height);
-  dpr=Math.min(1.5,window.devicePixelRatio||1);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+  const r=stage.getBoundingClientRect();w=Math.max(300,r.width);h=Math.max(280,r.height);
+  dpr=Math.min(1.6,window.devicePixelRatio||1);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
   ctx.setTransform(dpr,0,0,dpr,0,0);
-  const density=Math.max(260,Math.min(560,Math.round(w*h/650)));
-  points=[];
-  clusters.forEach((c,ci)=>{
-   const n=Math.round(density*[.15,.18,.18,.17,.10,.10,.12][ci]);
-   for(let i=0;i<n;i++){
-    const a=rand(0,Math.PI*2),rad=Math.sqrt(Math.random());
-    const x=(c[0]+Math.cos(a)*rad*c[2])*w,y=(c[1]+Math.sin(a)*rad*c[3])*h;
-    points.push({x,y,ox:x,oy:y,vx:rand(-.22,.22),vy:rand(-.22,.22),r:rand(.65,1.65),color:colors[(ci*2+Math.floor(rand(0,4)))%colors.length],phase:rand(0,6.28)});
-   }
-  });
+  const count=Math.max(150,Math.min(330,Math.round(w*h/950)));
+  particles=Array.from({length:count},(_,i)=>({a:rand(0,TAU),orbit:rand(.16,.73),speed:rand(.025,.15)*(Math.random()<.5?-1:1),size:rand(.45,2),phase:rand(0,TAU),alpha:rand(.22,.88),color:gold[i%gold.length]}));
+ }
+ function glow(x,y,r,color,alpha){
+  const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,"rgba(0,0,0,0)");
+  ctx.globalAlpha=alpha;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1;
  }
  function draw(t){
   if(!stage.isConnected)return;
   const time=t/1000,dt=Math.min(2,(t-last)/16.67||1);last=t;
   ctx.clearRect(0,0,w,h);
-  const bg=ctx.createRadialGradient(w*.52,h*.48,4,w*.52,h*.48,Math.max(w,h)*.72);
-  bg.addColorStop(0,"#161b2a");bg.addColorStop(.58,"#0e111d");bg.addColorStop(1,"#080a12");
+  const cx=w*.51,cy=h*.55,unit=Math.min(w,h),R=unit*.39,pulse=1+Math.sin(time*1.35)*.018;
+  const bg=ctx.createRadialGradient(cx,cy,2,cx,cy,Math.max(w,h)*.7);
+  bg.addColorStop(0,"#4a210b");bg.addColorStop(.24,"#251207");bg.addColorStop(.68,"#100b08");bg.addColorStop(1,"#070707");
   ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
-  const cell=48,grid=new Map();
-  points.forEach((p,i)=>{
-   if(!reduced){
-    p.x+=p.vx*dt+Math.sin(time*.55+p.phase)*.12;
-    p.y+=p.vy*dt+Math.cos(time*.48+p.phase)*.12;
-    p.x+=(p.ox-p.x)*.0015;p.y+=(p.oy-p.y)*.0015;
-    if(pointer.active){const dx=p.x-pointer.x,dy=p.y-pointer.y,d=Math.hypot(dx,dy);if(d<105&&d>1){const force=(105-d)/105*.55;p.x+=dx/d*force*dt;p.y+=dy/d*force*dt}}
-   }
-   const gx=Math.floor(p.x/cell),gy=Math.floor(p.y/cell),key=gx+","+gy;
-   if(!grid.has(key))grid.set(key,[]);grid.get(key).push(i);
+  ctx.save();ctx.translate(cx,cy);
+  // Fine radial beams.
+  for(let i=0;i<34;i++){
+   const a=i*TAU/34+time*.018,len=R*(.88+((i*17)%11)/100);
+   ctx.beginPath();ctx.moveTo(Math.cos(a)*R*.24,Math.sin(a)*R*.24);ctx.lineTo(Math.cos(a)*len,Math.sin(a)*len);
+   ctx.strokeStyle=i%3===0?"rgba(255,166,55,.20)":"rgba(225,111,25,.095)";ctx.lineWidth=i%4===0?1.4:.65;ctx.stroke();
+  }
+  // Layered rotating orbital rings.
+  for(let k=0;k<7;k++){
+   const rr=R*(.28+k*.105),rot=time*(k%2?-.12:.085)+k*.37;
+   ctx.save();ctx.rotate(rot);ctx.beginPath();ctx.ellipse(0,0,rr,rr*(k%2?.76:.91),0,0,TAU);
+   ctx.strokeStyle=k===3?"rgba(255,184,79,.58)":"rgba(255,146,42,"+(.12+k*.025)+")";
+   ctx.lineWidth=k===3?1.8:.8;ctx.setLineDash(k%2?[5,8]:[2,5]);ctx.stroke();ctx.setLineDash([]);
+   for(let j=0;j<7;j++){const a=j*TAU/7+time*(k%2?-.18:.14),x=Math.cos(a)*rr,y=Math.sin(a)*rr*(k%2?.76:.91);glow(x,y,k===3?8:4,"#ffad42",.58);ctx.fillStyle="#ffd58a";ctx.beginPath();ctx.arc(x,y,k===3?1.7:1,0,TAU);ctx.fill()}
+   ctx.restore();
+  }
+  // Angular micro-circuit segments.
+  for(let i=0;i<18;i++){
+   const a=i*TAU/18+time*.025,inner=R*.78,outer=R*(.88+((i*17)%11)/100);
+   const x1=Math.cos(a)*inner,y1=Math.sin(a)*inner,x2=Math.cos(a)*outer,y2=Math.sin(a)*outer;
+   ctx.strokeStyle="rgba(255,174,73,.28)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineTo(x2+Math.cos(a+1.2)*7,y2+Math.sin(a+1.2)*7);ctx.stroke();
+  }
+  ctx.restore();
+  // Central energy halo and rotating core.
+  glow(cx,cy,R*.95,"#e66b16",.23);glow(cx,cy,R*.46,"#ff9b2f",.22);
+  ctx.save();ctx.translate(cx,cy);ctx.rotate(time*.18);
+  for(let k=0;k<4;k++){const rr=R*(.105+k*.035);ctx.beginPath();ctx.ellipse(0,0,rr,rr*(k%2?.82:1),k*.3,0,TAU);ctx.strokeStyle=k===0?"rgba(255,224,157,.95)":"rgba(255,166,64,"+(.68-k*.1)+")";ctx.lineWidth=k===0?2.4:1.2;ctx.shadowBlur=18;ctx.shadowColor="#ff9a32";ctx.stroke();ctx.shadowBlur=0}
+  const core=ctx.createRadialGradient(-R*.025,-R*.035,1,0,0,R*.19);core.addColorStop(0,"#fff2c4");core.addColorStop(.12,"#ffd078");core.addColorStop(.36,"#ff9b31");core.addColorStop(.7,"#a9410d");core.addColorStop(1,"rgba(63,20,3,0)");
+  ctx.fillStyle=core;ctx.beginPath();ctx.arc(0,0,R*.2*pulse,0,TAU);ctx.fill();ctx.restore();
+  // Floating sparks orbit the core and react to touch.
+  particles.forEach(p=>{
+   if(!reduced)p.a+=p.speed*.006*dt;
+   const rr=R*p.orbit,px=cx+Math.cos(p.a)*rr,py=cy+Math.sin(p.a)*rr*.72+Math.sin(time*.7+p.phase)*8;let x=px,y=py;
+   if(pointer.active){const dx=x-pointer.x,dy=y-pointer.y,d=Math.hypot(dx,dy);if(d<100&&d>1){const f=(100-d)/100*.22;x+=dx/d*f*R*.12;y+=dy/d*f*R*.12}}
+   glow(x,y,p.size*5,p.color,p.alpha*.35);ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(x,y,p.size,0,TAU);ctx.fill();ctx.globalAlpha=1;
   });
-  ctx.lineWidth=.65;
-  points.forEach((p,i)=>{
-   const gx=Math.floor(p.x/cell),gy=Math.floor(p.y/cell);
-   for(let xx=gx-1;xx<=gx+1;xx++)for(let yy=gy-1;yy<=gy+1;yy++){
-    const arr=grid.get(xx+","+yy);if(!arr)continue;
-    for(const j of arr){if(j<=i)continue;const q=points[j],d=Math.hypot(p.x-q.x,p.y-q.y);if(d<48){ctx.globalAlpha=(1-d/48)*.29;ctx.strokeStyle=p.color;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke()}}
-   }
-  });
-  points.forEach(p=>{
-   const glow=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,5.5);
-   glow.addColorStop(0,p.color);glow.addColorStop(1,"rgba(0,0,0,0)");
-   ctx.globalAlpha=.96;ctx.fillStyle=glow;ctx.beginPath();ctx.arc(p.x,p.y,5.5,0,Math.PI*2);ctx.fill();
-   ctx.globalAlpha=.95;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();
-  });
-  ctx.globalAlpha=1;
-  if(pointer.active){const g=ctx.createRadialGradient(pointer.x,pointer.y,0,pointer.x,pointer.y,95);g.addColorStop(0,"rgba(130,185,255,.14)");g.addColorStop(1,"rgba(130,185,255,0)");ctx.fillStyle=g;ctx.fillRect(pointer.x-95,pointer.y-95,190,190)}
+  // Travelling scan arc.
+  const scan=time*.52%TAU;ctx.beginPath();ctx.arc(cx,cy,R*.58,scan,scan+.68);ctx.strokeStyle="rgba(255,211,133,.72)";ctx.lineWidth=2;ctx.shadowBlur=14;ctx.shadowColor="#ff9b32";ctx.stroke();ctx.shadowBlur=0;
+  if(pointer.active)glow(pointer.x,pointer.y,90,"#ffad48",.12);
   if(!reduced)raf=requestAnimationFrame(draw);
  }
  function move(e){const r=stage.getBoundingClientRect();pointer.x=e.clientX-r.left;pointer.y=e.clientY-r.top;pointer.active=true}
- stage.addEventListener("pointermove",move,{passive:true});stage.addEventListener("pointerleave",()=>pointer.active=false);
+ stage.addEventListener("pointermove",move,{passive:true});stage.addEventListener("pointerleave",()=>pointer.active=false,{passive:true});stage.addEventListener("pointerdown",move,{passive:true});
  if("ResizeObserver"in window)new ResizeObserver(()=>{resize();if(reduced)draw(0)}).observe(stage);else window.addEventListener("resize",()=>{resize();if(reduced)draw(0)});
  resize();if(reduced)draw(0);else raf=requestAnimationFrame(draw);
  document.addEventListener("visibilitychange",()=>{if(document.hidden)cancelAnimationFrame(raf);else if(!reduced){last=0;raf=requestAnimationFrame(draw)}});
 })();
-</script>
+</script>>
 
 </body></html>
