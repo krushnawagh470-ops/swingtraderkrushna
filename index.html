@@ -328,11 +328,21 @@ function ffCalendarImpact(v){const x=String(v||"").toLowerCase();if(x==="high"||
 function renderForexFactoryCalendar(){
  const box=document.getElementById("ffCalendarTable"),status=document.getElementById("ffCalendarStatus");if(!box)return;
  const impact=document.getElementById("ffImpactFilter")?.value||"High",currency=document.getElementById("ffCurrencyFilter")?.value||"all";
- const rows=ffCalendarEvents.filter(e=>(impact==="all"||ffCalendarImpact(e.impact)===impact)&&(currency==="all"||String(e.country||e.currency||"").toUpperCase()===currency)).sort((a,b)=>new Date(a.date)-new Date(b.date));
- if(status)status.textContent=rows.length+" events · "+(impact==="all"?"all impact levels":impact+" impact")+(currency==="all"?"":" · "+currency)+" · times in IST";
- if(!rows.length){box.textContent=ffCalendarEvents.length?"No events match these filters in the current weekly feed.":"No calendar events returned.";return;}
  const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
- box.innerHTML='<table class="native-table"><thead><tr><th>DATE / TIME (IST)</th><th>CCY</th><th>IMPACT</th><th>EVENT</th><th>ACTUAL</th><th>FORECAST</th><th>PREVIOUS</th></tr></thead><tbody>'+rows.map(e=>{const d=new Date(e.date);const dt=isNaN(d)?String(e.date||"Time TBA"):d.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit",hour12:false});const level=ffCalendarImpact(e.impact);const color=level==="High"?"#ff626e":level==="Medium"?"#f3b34c":"#9aa9bb";return '<tr><td>'+esc(dt)+'</td><td><b>'+esc(e.country||e.currency||"—")+'</b></td><td><b style="color:'+color+'">'+esc(level)+'</b></td><td><b>'+esc(e.title||e.event||"Unnamed event")+'</b></td><td>'+esc(e.actual||"—")+'</td><td>'+esc(e.forecast||"—")+'</td><td>'+esc(e.previous||"—")+'</td></tr>'}).join("")+'</tbody></table>';
+ const dateKey=d=>{const p=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);const o={};p.forEach(x=>o[x.type]=x.value);return o.year+"-"+o.month+"-"+o.day;};
+ const parseEventDate=e=>{const d=new Date(e.date);return isNaN(d)?null:d;};
+ const rows=ffCalendarEvents.filter(e=>(impact==="all"||ffCalendarImpact(e.impact)===impact)&&(currency==="all"||String(e.country||e.currency||"").toUpperCase()===currency)).map(e=>({...e,_date:parseEventDate(e)})).filter(e=>e._date).sort((a,b)=>a._date-b._date);
+ const base=rows.length?rows[0]._date:new Date();
+ const baseKey=dateKey(base),parts=baseKey.split("-").map(Number),anchor=new Date(Date.UTC(parts[0],parts[1]-1,parts[2]));
+ const weekday=(anchor.getUTCDay()+6)%7;anchor.setUTCDate(anchor.getUTCDate()-weekday);
+ const days=Array.from({length:7},(_,i)=>{const d=new Date(anchor);d.setUTCDate(anchor.getUTCDate()+i);return dateKey(d);});
+ const dayNames=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+ const grouped=Object.fromEntries(days.map(k=>[k,[]]));
+ rows.forEach(e=>{const k=dateKey(e._date);if(grouped[k])grouped[k].push(e);});
+ const count=rows.length;
+ if(status)status.textContent=count+" events · "+(impact==="all"?"all impact levels":impact+" impact")+(currency==="all"?"":" · "+currency)+" · weekly view · times in IST";
+ const cells=days.map((k,i)=>{const [y,m,d]=k.split("-").map(Number),label=new Date(Date.UTC(y,m-1,d)).toLocaleDateString("en-IN",{day:"2-digit",month:"short",timeZone:"UTC"});const events=grouped[k]||[];return '<div class="ff-day-cell" style="min-width:0;min-height:142px;padding:9px;border:1px solid #263b55;border-radius:10px;background:#081525"><div style="font-weight:700;color:#dce8f7;font-size:12px">'+dayNames[i]+'</div><div style="font-size:11px;color:#91a8c3;margin:2px 0 8px">'+label+'</div>'+(events.length?events.map(e=>{const t=e._date.toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata",hour:"2-digit",minute:"2-digit",hour12:false});const level=ffCalendarImpact(e.impact),color=level==="High"?"#ff626e":level==="Medium"?"#f3b34c":"#9aa9bb";return '<div style="padding:7px 6px;margin:5px 0;border-left:3px solid '+color+';border-radius:5px;background:#10243a"><div style="font-size:11px;font-weight:700;color:#fff">'+esc(t)+' IST · '+esc(e.country||e.currency||"")+'</div><div style="font-size:11px;color:#d6e1ef;line-height:1.35;margin-top:3px">'+esc(e.title||e.event||"Unnamed event")+'</div><div style="font-size:10px;color:'+color+';margin-top:3px">'+esc(level)+'</div></div>'}).join(""):'<div style="font-size:11px;color:#627992;padding:8px 0">No events</div>')+'</div>';}).join("");
+ box.innerHTML='<div class="ff-week-grid" style="display:grid;grid-template-columns:repeat(7,minmax(150px,1fr));gap:8px;overflow-x:auto;padding-bottom:8px">'+cells+'</div><div style="font-size:11px;color:#8fa5bf;margin-top:5px">Monday–Sunday · All event times shown in India Standard Time (IST). Scroll horizontally on smaller screens.</div>';
 }
 async function loadForexFactoryCalendar(force=false){
  const box=document.getElementById("ffCalendarTable"),status=document.getElementById("ffCalendarStatus");if(!box)return;
