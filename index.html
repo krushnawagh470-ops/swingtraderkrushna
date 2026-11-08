@@ -1153,6 +1153,7 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
       const requestRules=(chartRequest?analysisRules+closedMarketOverride:"")+compactWorkspaceRules+(globalIntelRequest?globalIntelligenceRules:"")+modeRules+(needsLiveWebSearch?webRules:"")+(chartRequest?"":domainRules);
       const learningContext=circuitLearningContext().slice(0,3500);
       const outgoing=[...terminalContext.context,{role:"user",content:prompt+requestRules+liveNewsContext+learningContext}];
+      status.textContent="Sending to connected AI…";
       const response = await fetch(url + "/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1500,7 +1501,7 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
  if(status){
   const observer=new MutationObserver(function(){
    const value=status.textContent.trim();if(!value||value===lastStatus)return;lastStatus=value;
-   if(/sending message|sending to secure|thinking|sending to gemini/i.test(value)){
+   if(/sending message|sending to secure|thinking|sending to gemini|sending to connected ai/i.test(value)){
     step(1,"done","Instruction received","✓");step(2,"done","Context prepared for provider request","✓");step(3,"active","Request sent; waiting for provider","●");
     setState("executing","Your task has been sent. Waiting for the provider response.");activity(value);
    }else if(/reply received/i.test(value)){
