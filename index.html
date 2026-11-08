@@ -189,6 +189,32 @@ body.circuit-admin-mode #settings.active{display:block!important}
 #ai .circuit-stage.state-error .circuit-live-dot{background:#ff6689;box-shadow:0 0 12px #ff6689}
 @keyframes circuitBrainBeat{to{transform:scale(1.8);opacity:.55}}
 </style><meta name="circuit-build" content="ai-3d-neuron-brain-20261108-v8">
+
+<style id="circuit-neural-command-ui">
+/* CIRCUIT // Neural command interface — responsive visual layer */
+#ai .ai-workbench{border:1px solid #24527c;border-radius:18px;background:linear-gradient(145deg,rgba(7,18,34,.98),rgba(3,8,18,.99));box-shadow:0 24px 80px #0008,0 0 45px #168dff12;position:relative}
+#ai .ai-workbench:before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(120deg,#53c8ff0b,transparent 35%,#53c8ff08 70%,transparent)}
+#ai .ai-workbench-head{padding:18px 20px;background:linear-gradient(90deg,#0d2440,#071426);border-bottom:1px solid #20446a}
+#ai .ai-workbench-head b{font-size:19px!important;letter-spacing:-.035em}
+#ai .ai-workbench-grid{grid-template-columns:minmax(0,1.08fr) minmax(310px,.92fr);align-items:stretch;gap:16px;padding:16px}
+#ai .ai-agent-visual{min-height:440px;border-radius:14px;border-color:#24527c;background:radial-gradient(ellipse at 50% 46%,#0b3260 0%,#071a31 42%,#030914 78%);box-shadow:inset 0 0 60px #168dff17,0 12px 35px #0005}
+#ai .ai-agent-visual:before{content:"";position:absolute;inset:12px;z-index:2;pointer-events:none;border:1px solid #69cfff25;border-radius:9px;background:linear-gradient(#8bdfff12 1px,transparent 1px),linear-gradient(90deg,#8bdfff12 1px,transparent 1px);background-size:32px 32px;mask-image:linear-gradient(transparent,#000 18%,#000 82%,transparent)}
+#ai .ai-agent-visual:after{content:"";position:absolute;z-index:2;pointer-events:none;left:8%;right:8%;height:1px;top:24%;background:linear-gradient(90deg,transparent,#56c8ff88,transparent);box-shadow:0 0 18px #43baff;animation:circuitScan 6s ease-in-out infinite}
+#ai .ai-agent-visual canvas{z-index:1}
+#ai .circuit-state-label{z-index:4;position:absolute;top:25px;left:25px;padding:7px 10px;border:1px solid #32638b;border-radius:5px;background:#061426c9;color:#c7eaff;font:700 9px/1.2 ui-monospace,monospace;letter-spacing:.15em;backdrop-filter:blur(8px)}
+#ai .ai-handoff-note{letter-spacing:.04em}
+#ai .ai-workspace-panel{border-radius:14px;padding:18px;background:linear-gradient(155deg,#0b1d33,#071120);border-color:#24496e;box-shadow:inset 0 1px #ffffff09}
+#ai .ai-workspace-panel textarea{min-height:145px;line-height:1.65;background:#040c18;border-color:#23486f}
+#ai .ai-workspace-panel .terminal-label{letter-spacing:.16em}
+#ai .ai-agent-tools button,#ai .ai-workspace-panel button{transition:transform .18s,border-color .18s,box-shadow .18s}
+#ai .ai-agent-tools button:hover,#ai .ai-workspace-panel button:hover{transform:translateY(-1px);border-color:#64c8ff;box-shadow:0 0 18px #269dff22}
+#ai .signal-tag{background:#0b2038;border-color:#2a5881;color:#bce4ff}
+@keyframes circuitScan{0%,100%{top:20%;opacity:.2}50%{top:78%;opacity:.9}}
+@media(max-width:850px){#ai .ai-workbench-grid{grid-template-columns:1fr}#ai .ai-agent-visual{min-height:350px}}
+@media(max-width:600px){#ai .ai-workbench-head{padding:14px;gap:8px}#ai .ai-workbench-grid{padding:10px;gap:10px}#ai .ai-agent-visual{min-height:300px}#ai .ai-workspace-panel{padding:13px}#ai .ai-workspace-panel textarea{min-height:115px}#ai .circuit-state-label{top:19px;left:18px}}
+@media(prefers-reduced-motion:reduce){#ai .ai-agent-visual:after{animation:none}}
+</style>
+
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
