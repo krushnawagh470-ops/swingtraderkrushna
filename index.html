@@ -353,7 +353,7 @@ body.circuit-admin-mode #settings.active{display:block!important}
     <button type="button" class="btn secondary" id="stkVoiceStop">■ Stop voice</button>
     <span id="stkVoiceStatus" class="q-meta" aria-live="polite">Tap Talk to AI, speak, and your message will be sent automatically.</span>
    </div>
-   <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><button type="button" class="btn" id="aiSendToClaude">Send message</button><button class="btn secondary" id="aiPrepareTask">Prepare task</button><button class="btn secondary" id="aiCopyPrepared">Copy prompt</button><span id="aiWorkbenchStatus" class="q-meta" aria-live="polite">Connect your Cloudflare Worker before sending a message.</span></div>
+   <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:9px"><button type="button" class="btn" id="aiSendToClaude">Send message</button><button type="button" class="btn secondary" id="stkCancelTask">Cancel tasks</button><button class="btn secondary" id="aiPrepareTask">Prepare task</button><button class="btn secondary" id="aiCopyPrepared">Copy prompt</button><span id="aiWorkbenchStatus" class="q-meta" aria-live="polite">Connect your Cloudflare Worker before sending a message.</span></div>
    <div id="aiAgentConversation" class="card" style="margin-top:12px;min-height:76px;white-space:pre-wrap;overflow-wrap:anywhere" aria-live="polite">Your AI conversation will appear here after the secure Worker connects.</div>
    <div class="section-title" style="margin:16px 0 8px">CIRCUIT · LIVE TASK EXECUTION</div>
    <div class="q-meta">Follow the real handoff from your instruction to the provider response. A stage changes only when its corresponding event occurs.</div>
@@ -823,6 +823,29 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   if (!button || !input || !output || !status) return;
   let messages = [];
   let busy = false;
+  let activeRequestController = null;
+  let quickReplies = true;
+  let webLookupOn = localStorage.getItem("stk_web_lookup_on") === "true";
+  let voiceOn = true;
+  const cancelButton = document.getElementById("stkCancelTask");
+  const voiceToggle = document.getElementById("stkVoiceToggle");
+  const voiceStatus = document.getElementById("stkVoiceStatus");
+  function showCommand(text) { add("assistant", text); status.textContent = "Command processed."; }
+  function cancelActiveRequest() {
+    if (!busy) { status.textContent = "No active request to cancel."; return; }
+    if (activeRequestController) activeRequestController.abort();
+    status.textContent = "Cancellation requested.";
+  }
+  function processCommand(value) {
+    const c = String(value || "").trim().toLowerCase();
+    if (c === "commands" || c === "/help" || c === "help") { showCommand("CIRCUIT COMMANDS\\n\\nQuick replies — brief answers by default\\nDetailed replies — longer explanations\\nMute / Unmute — spoken replies off / on\\nWeb on / Web off — toggle web lookup mode\\nCancel tasks — stop the active AI request\\nCommands or /help — open this guide"); return true; }
+    if (c === "quick replies" || c === "quick replies on") { quickReplies = true; showCommand("Quick replies are ON."); return true; }
+    if (c === "detailed replies" || c === "quick replies off") { quickReplies = false; showCommand("Detailed replies are ON."); return true; }
+    if (c === "mute" || c === "unmute") { voiceOn = c === "unmute"; if (!voiceOn && "speechSynthesis" in window) window.speechSynthesis.cancel(); if (voiceToggle) { voiceToggle.textContent = voiceOn ? "🔊 Voice replies: ON" : "🔇 Voice replies: OFF"; voiceToggle.setAttribute("aria-pressed", String(voiceOn)); } if (voiceStatus) voiceStatus.textContent = voiceOn ? "Voice replies are on." : "Voice replies are muted."; showCommand(voiceOn ? "Voice replies enabled." : "Voice replies muted."); return true; }
+    if (c === "web on" || c === "web off") { webLookupOn = c === "web on"; localStorage.setItem("stk_web_lookup_on", String(webLookupOn)); showCommand(webLookupOn ? "Web lookup mode is ON. Live search still requires a search service connected to the Worker; I will not claim a search until one is connected." : "Web lookup mode is OFF."); return true; }
+    if (c === "cancel tasks") { cancelActiveRequest(); return true; }
+    return false;
+  }
   function add(role, value) {
     const wrap = document.createElement("div");
     wrap.style.cssText = "padding:10px 11px;margin:8px 0;border:1px solid #1c3859;border-radius:9px;background:#091a2e;white-space:pre-wrap;overflow-wrap:anywhere";
@@ -1010,6 +1033,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     const prompt = input.value.trim();
     const url = (localStorage.getItem("stk_gemini_worker_url") || window.STK_DEFAULT_WORKER_URL || "https://floral-wood-dfe4.swingtraderkrushna.workers.dev").trim().replace(/\/+$/, "");
     if (!prompt) { status.textContent = "Type a message first."; input.focus(); return; }
+    if (processCommand(prompt)) { input.value = ""; return; }
     if (!url) { status.textContent = "Worker is not connected. Save and test the Worker URL first."; return; }
     busy = true;
     button.disabled = true;
@@ -1018,9 +1042,14 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     input.value = "";
     let terminalContext=null;
     try {
-      const symbol=detectChartSymbol(prompt);
-      status.textContent="Syncing CIRCUIT with live terminal data: quotes, movers, breadth, calendars, news and "+symbol+" candles…";
-      terminalContext=await buildTerminalContext(symbol);
+      const chartRequest=isChartAnalysisRequest(prompt);
+      if(chartRequest) {
+        const symbol=detectChartSymbol(prompt);
+        status.textContent="Syncing validated chart data for "+symbol+"…";
+        terminalContext=await buildTerminalContext(symbol);
+      } else {
+        status.textContent="Preparing your request for CIRCUIT AI…";
+      }
       status.textContent="Terminal sync received · "+terminalContext.quoteCount+" quotes · "+terminalContext.candleCount+"/5 validated candle timeframes · "+(terminalContext.tradeReady?"fresh":"stale or invalid")+" · "+circuitIST(new Date())+" · sending to CIRCUIT AI…";
       button.textContent = "Thinking…";
       const prior=[];
@@ -1030,11 +1059,15 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
       const closedMarketPlan=weekendDay&&!cryptoSymbol&&/overview|analysis|monday|next session|plan|market/i.test(prompt);
       const closedMarketOverride=closedMarketPlan?"\\n\\nHIGHEST-PRIORITY REQUEST MODE: This is a CLOSED-MARKET WEEKEND OVERVIEW request for "+symbol+". The user wants preparation for the next trading session, not a live trade. Do NOT answer DATA INVALID and do NOT demand tradeReady=true. STALE means the market is closed, not that historical candles are unusable. Read each timeframe marked STALE as historical data if structuralValid=true. Build the overview from those validated closed candles: latest close, confirmed swing levels, market structure and Monday bullish/bearish conditions. State the actual last candle date/time from the attached data. No live entry. If a timeframe is INVALID or has too few valid candles, exclude only that timeframe and say so; still analyze valid timeframes. Never invent levels.":"";
       const globalIntelligenceRules = "\\n\\nCIRCUIT GLOBAL INTELLIGENCE ROLE: You are also a multidisciplinary global economy, geopolitics, institutions and conflict-risk analyst. Use clear, evidence-led reasoning. Cover these domains when relevant: (1) global macroeconomics — inflation, growth, employment, fiscal policy, sovereign debt, trade, currencies, rates, central-bank policy and commodities; (2) geopolitics — elections, governments, sanctions, alliances, diplomacy, strategic competition and political instability; (3) institutional intelligence — IMF, World Bank, BIS, WTO, UN, NATO, IEA, OPEC, central banks, finance ministries, statistical agencies and official releases; (4) armed conflicts and security — conflict timelines, verified battlefield/political developments, military posture at a high level, escalation/de-escalation pathways, ceasefires, sanctions, energy/shipping disruptions and humanitarian consequences; (5) cross-asset transmission — implications for USD, rates, bonds, gold, oil, FX, equities, supply chains and risk sentiment.\\n\\nEVIDENCE AND FRESHNESS: Separate VERIFIED FACTS, REPORTED CLAIMS, ANALYSIS and SCENARIOS. Give dates and source names/links when available. Prefer primary sources and original datasets: official institutional releases, central-bank statements, government documents, UN agencies and recognized statistical bodies; use reputable independent reporting to corroborate fast-moving events. For every statistic, state its period, unit, geography and whether it is actual, estimate, forecast or revision when known. Never invent figures, quotes, source links, troop losses, territorial control, weapons use, institutional decisions or event dates. Do not present model memory as breaking news. If current source retrieval or live data is unavailable, explicitly say the information may be outdated and explain what must be checked. If sources conflict, show the disagreement and confidence level.\\n\\nSCENARIO METHOD: For geopolitical or war-risk questions, give a baseline, downside/escalation and upside/de-escalation scenario where useful. For each, state the trigger, plausible pathway, time horizon, likely economic/market transmission and indicators that would confirm or weaken it. Use qualitative likelihood (low/medium/high) unless defensible quantitative evidence exists; do not invent precise probabilities. Distinguish capability from intent and possibility from probability. Avoid sensationalism and deterministic predictions. Discuss military matters at strategic and public-interest level; do not provide operational targeting, attack planning or actionable instructions for violence. Include civilian, humanitarian, legal and regional spillover impacts where relevant.\\n\\nANALYTICAL DISCIPLINE: Explain causal chains, second-order effects, counterarguments and what is not yet known. Do not assume every geopolitical event moves markets in the same direction; account for positioning, expectations, liquidity, policy response and the event already being priced in. For market implications, identify the transmission channel and relevant time horizon; do not turn a macro view into an automatic trade signal. Use concise language, define technical terms, and adapt the depth to the question. For non-market questions, do not force a trading angle. This global-intelligence framework supplements the user's request and must not override the existing validated-terminal-data and no-fabrication rules."; 
-      const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisRules+closedMarketOverride+globalIntelligenceRules}];
+      const modeRules=quickReplies?"\\n\\nKeep the answer brief by default: 2–6 sentences or a few short bullets, unless the user asks for detail.":"\\n\\nDetailed replies are enabled; give the depth the question requires.";
+      const webRules=webLookupOn?"\\n\\nWeb lookup mode is ON. Use a real search tool only if the connected backend provides one. If unavailable, say live lookup is not connected; never invent a search or source.":"\\n\\nWeb lookup mode is OFF. Clearly flag facts that need current verification.";
+      const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisRules+closedMarketOverride+globalIntelligenceRules+modeRules+webRules}];
+      activeRequestController=new AbortController();
       const response = await fetch(url + "/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: outgoing })
+        body: JSON.stringify({ messages: outgoing }),
+        signal: activeRequestController.signal
       });
       const rawResponse = await response.text();
       let data = {};
@@ -1063,17 +1096,15 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
       button.textContent = "Send message";
     }
   }
+  if (cancelButton) cancelButton.addEventListener("click", cancelActiveRequest);
   window.stkGeminiSend = sendMessage;
 
   // Browser-native voice mode: speech recognition in, spoken reply out.
   const mic = document.getElementById("stkVoiceMic");
-  const voiceToggle = document.getElementById("stkVoiceToggle");
   const stopVoice = document.getElementById("stkVoiceStop");
-  const voiceStatus = document.getElementById("stkVoiceStatus");
   const voiceInput = document.getElementById("aiWorkbenchPrompt");
   const voiceLanguage = document.getElementById("stkVoiceLanguage");
   const selectedVoiceLanguage = () => "en-US";
-  let voiceOn = true;
   let recognition = null;
   let listening = false;
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
