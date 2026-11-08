@@ -1256,11 +1256,27 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
   const voiceLanguage = document.getElementById("stkVoiceLanguage");
   const agentVisual = document.getElementById("aiAgentVisual");
   const agentVideo = agentVisual && agentVisual.querySelector(".circuit-agent-video");
+  let agentBeatAnimation = null;
   function setAgentSpeaking(active) {
     if (agentVisual) agentVisual.classList.toggle("is-speaking", !!active);
     if (!agentVideo) return;
+    if (!active && agentBeatAnimation) { agentBeatAnimation.cancel(); agentBeatAnimation = null; }
     if (active) { const playback = agentVideo.play(); if (playback && playback.catch) playback.catch(function(){}); }
     else { agentVideo.pause(); try { agentVideo.currentTime = 0; } catch (e) {} }
+  }
+  function pulseAgentForWord(word) {
+    if (!agentVideo || !agentVisual || !word || !agentVisual.classList.contains("is-speaking") || !agentVideo.animate) return;
+    const clean = word.toLowerCase().replace(/[^a-z]/g, "");
+    if (!clean) return;
+    const groups = clean.match(/[aeiouy]+/g) || [];
+    const syllables = Math.max(1, Math.min(5, groups.length - (clean.endsWith("e") && groups.length > 1 ? 1 : 0)));
+    if (agentBeatAnimation) agentBeatAnimation.cancel();
+    try {
+      agentBeatAnimation = agentVideo.animate(
+        [{transform:"scale(1)",filter:"brightness(1.05) saturate(1.1)"},{transform:"scale(1.045)",filter:"brightness(1.28) saturate(1.3)"},{transform:"scale(1)",filter:"brightness(1.05) saturate(1.1)"}],
+        {duration:Math.max(170,syllables*150),iterations:syllables,easing:"ease-in-out"}
+      );
+    } catch (e) {}
   }
   const selectedVoiceLanguage = () => "en-US";
   let recognition = null;
@@ -1335,6 +1351,13 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
         utterance.onstart = function () {
           setAgentSpeaking(true);
           if (voiceStatus) voiceStatus.textContent = "Speaking reply aloud…";
+        };
+        utterance.onboundary = function (event) {
+          if (run !== stkSpeechRun || event.name && event.name !== "word") return;
+          const start = Math.max(0, event.charIndex || 0);
+          const end = event.charLength ? start + event.charLength : speechText.indexOf(" ", start);
+          const spokenWord = speechText.slice(start, end > start ? end : start + 12).split(/\\s+/)[0];
+          pulseAgentForWord(spokenWord);
         };
         utterance.onend = function () {
           if (run === stkSpeechRun) setAgentSpeaking(false);
