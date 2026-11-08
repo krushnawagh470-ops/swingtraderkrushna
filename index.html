@@ -336,22 +336,24 @@ function renderForexFactoryCalendar(){
 }
 async function loadForexFactoryCalendar(force=false){
  const box=document.getElementById("ffCalendarTable"),status=document.getElementById("ffCalendarStatus");if(!box)return;
- const cacheKey="circuit_ff_calendar_weekly_v1",ttl=60*60*1000;
+ const cacheKey="circuit_ff_calendar_weekly_v2",ttl=60*60*1000;
  try{
   let cached=null;try{cached=JSON.parse(localStorage.getItem(cacheKey)||"null")}catch{}
-  if(cached&&Array.isArray(cached.events)&&Date.now()-cached.fetchedAt<ttl){ffCalendarEvents=cached.events;ffCalendarLastFetch=cached.fetchedAt;renderForexFactoryCalendar();if(status)status.textContent+=" · cached "+new Date(cached.fetchedAt).toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata"});return;}
-  if(box)box.textContent="Fetching the official weekly calendar export…";
-  const response=await fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json",{cache:"no-store"});
-  if(!response.ok)throw Error("Forex Factory feed returned HTTP "+response.status);
-  const data=await response.json();if(!Array.isArray(data))throw Error("Unexpected calendar response (not an event list)");
+  if(!force&&cached&&Array.isArray(cached.events)&&cached.events.length&&Date.now()-cached.fetchedAt<ttl){ffCalendarEvents=cached.events;ffCalendarLastFetch=cached.fetchedAt;renderForexFactoryCalendar();if(status)status.textContent+=" · saved snapshot "+new Date(cached.fetchedAt).toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata"});return;}
+  if(box)box.textContent="Loading same-site Forex Factory calendar snapshot…";
+  const response=await fetch("./data/forex_factory_calendar.json?ts="+Math.floor(Date.now()/60000),{cache:"no-store"});
+  if(!response.ok)throw Error("Calendar snapshot HTTP "+response.status);
+  const payload=await response.json(),data=Array.isArray(payload)?payload:payload.events;
+  if(!Array.isArray(data)||!data.length)throw Error("The server snapshot has no events yet. The scheduled feed update may still be running.");
   ffCalendarEvents=data.filter(e=>e&&e.date&&(e.title||e.event)).map(e=>({...e,impact:ffCalendarImpact(e.impact)}));
-  if(!ffCalendarEvents.length)throw Error("The weekly feed returned no usable events");
-  ffCalendarLastFetch=Date.now();try{localStorage.setItem(cacheKey,JSON.stringify({fetchedAt:ffCalendarLastFetch,events:ffCalendarEvents}))}catch{}
-  renderForexFactoryCalendar();if(status)status.textContent+=" · Source refreshed "+new Date(ffCalendarLastFetch).toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata"});
+  if(!ffCalendarEvents.length)throw Error("Snapshot contained no usable calendar events");
+  ffCalendarLastFetch=payload.fetchedAt?new Date(payload.fetchedAt).getTime():Date.now();
+  try{localStorage.setItem(cacheKey,JSON.stringify({fetchedAt:ffCalendarLastFetch,events:ffCalendarEvents}))}catch{}
+  renderForexFactoryCalendar();if(status)status.textContent+=" · snapshot updated "+new Date(ffCalendarLastFetch).toLocaleString("en-IN",{timeZone:"Asia/Kolkata"});
  }catch(err){
   let cached=null;try{cached=JSON.parse(localStorage.getItem(cacheKey)||"null")}catch{}
-  if(cached&&Array.isArray(cached.events)&&cached.events.length){ffCalendarEvents=cached.events;renderForexFactoryCalendar();if(status)status.textContent+=" · showing saved feed; refresh failed: "+err.message;}
-  else{if(status)status.textContent="Forex Factory feed unavailable: "+err.message;if(box)box.textContent="The calendar feed could not be loaded in this browser. This is a feed/network restriction, not a blank iframe. Try again later; no sample events are shown.";}
+  if(cached&&Array.isArray(cached.events)&&cached.events.length){ffCalendarEvents=cached.events;renderForexFactoryCalendar();if(status)status.textContent+=" · showing saved snapshot; update issue: "+err.message;}
+  else{if(status)status.textContent="Calendar snapshot unavailable: "+err.message;if(box)box.textContent="Forex Factory data is not available yet. CIRCUIT now loads it through its own site to avoid browser feed blocking. Wait for the scheduled update, then refresh.";}
  }
 }
 function openCircuitCalendar(){showPage("news");loadForexFactoryCalendar();window.scrollTo({top:0,behavior:"smooth"});const panel=document.getElementById("circuitCalendarPanel");if(panel)panel.scrollIntoView({behavior:"smooth",block:"start"});}
