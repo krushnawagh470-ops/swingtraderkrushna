@@ -292,6 +292,13 @@ body.circuit-admin-mode #settings.active{display:block!important}
 #ai .circuit-state-label{top:auto!important;left:14px!important;bottom:14px!important;z-index:4!important}
 #ai .ai-handoff-note{display:none!important}
 </style>
+
+<style id="circuit-remove-core-status-overlay">
+/* Keep the animated half-earth unobstructed: remove the floating status box. */
+#ai .circuit-state-label{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+#ai .ai-agent-visual.circuit-stage{overflow:hidden!important;position:relative!important}
+#ai #circuitNeuralCanvas{display:block!important;visibility:visible!important;opacity:1!important;z-index:1!important}
+</style>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
