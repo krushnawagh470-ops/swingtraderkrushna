@@ -1074,7 +1074,9 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
     if (!url) { status.textContent = "Worker is not connected. Save and test the Worker URL first."; return; }
     busy = true;
     cancelRequested = false;
-    activeRequestController = null;
+    /* Create the controller before any asynchronous preparation so the Worker
+       fetch always receives a valid AbortSignal and Cancel can abort the request. */
+    activeRequestController = new AbortController();
     if (cancelButton) cancelButton.disabled = false;
     button.disabled = true;
     button.textContent = "Preparing…";
@@ -1161,8 +1163,11 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
       },30000);
       let response, rawResponse;
       try {
+        if (!activeRequestController) activeRequestController = new AbortController();
         response = await fetch(url + "/chat", {
           method: "POST",
+          mode: "cors",
+          cache: "no-store",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: outgoing }),
           signal: activeRequestController.signal
