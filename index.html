@@ -313,7 +313,7 @@ body.circuit-admin-mode #settings.active{display:block!important}
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script><script defer src="https://unpkg.com/lightweight-charts@4.2.2/dist/lightweight-charts.standalone.production.js"></script><script>
 const BIQUOTE_API="https://biquote.io/api";
 const titles={overview:"CIRCUIT",ai:"All AI",markets:"Trading terminal",charts:"Live market charts",news:"News",forex:"Forex major pairs",tester:"Strategy tester",pips:"Pip measuring tool",risk:"Risk calculator",journal:"Trade journal",checklist:"Pre-trade checklist",plan:"My trading plan",playbook:"Strategy notes",studio:"Studio",learn:"Learning hub",settings:"Settings"};
-let currentSymbol="XAUUSD",currentInterval="15m",nativeChart=null,nativeCandleSeries=null,nativeResizeObserver=null;
+let currentSymbol="XAUUSD",currentInterval="15m",nativeChart=null,nativeCandleSeries=null,chartResizeObserver=null;
 const chartNames={XAUUSD:"XAUUSD · Gold",XAGUSD:"XAGUSD · Silver",EURUSD:"EURUSD · Euro / US Dollar",BTCUSD:"BTCUSD · Bitcoin",USOIL:"USOIL · Crude Oil",DXY:"DXY · US Dollar Index"};
 function copyAITask(){const t=document.getElementById("aiTask").value.trim();if(!t){document.getElementById("aiTaskStatus").textContent="Enter a task first.";return}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>document.getElementById("aiTaskStatus").textContent="Copied. Paste into your chosen AI workspace.").catch(()=>document.getElementById("aiTaskStatus").textContent="Clipboard unavailable.")}else document.getElementById("aiTaskStatus").textContent="Clipboard unavailable."}
 const MARKET_WATCHLISTS={
