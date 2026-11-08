@@ -293,11 +293,11 @@ body.circuit-admin-mode #settings.active{display:block!important}
   <div>
    <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="CIRCUIT animated neural-network virtual intelligence">
 <canvas id="circuitNeuralCanvas" aria-hidden="true"></canvas>
-    <div class="circuit-state-label"><span class="circuit-live-dot"></span><span id="circuitStateText">STANDING BY</span></div>
+    <div class="circuit-state-label"><span class="circuit-live-dot"></span><span id="circuitStateText">NEURAL CORE ONLINE</span></div>
    </div>
    <div class="ai-handoff-note">CIRCUIT · GROQ AI CORE · SECURE CONNECTION</div>
 
-   <div class="ai-handoff-note">The animated agent is a visual interface, not a connected autonomous model. A provider's official API, authorization and secure server-side key storage are required before tasks can be executed from this website.</div>
+   <div class="ai-handoff-note">Drag the globe to rotate its longitude field. On mobile, swipe across the hemisphere to interact; the particle field stays live while CIRCUIT is idle.</div>
   </div>
   <div class="ai-workspace-panel">
    <div class="row"><div><div class="terminal-label">CURRENT WORKSPACE</div><b id="aiSelectedName">CIRCUIT · Groq workspace</b></div><span class="signal-tag" id="aiConnectionState">WORKER · NOT CONNECTED</span></div>
@@ -1612,90 +1612,71 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 </script>
 
 <script>
-/* CIRCUIT 3D half-earth core — rotating hemisphere with moving neutron particles. */
+/* CIRCUIT 3D half-earth core — bottom-anchored globe with touch/mouse gesture rotation. */
 (function(){
  const stage=document.getElementById("aiAgentVisual"),canvas=document.getElementById("circuitNeuralCanvas");
- if(!stage||!canvas||canvas.dataset.ready)return;canvas.dataset.ready="1";
+ if(!stage||!canvas)return;
  const ctx=canvas.getContext("2d");if(!ctx)return;
  const TAU=Math.PI*2,rand=(a,b)=>a+Math.random()*(b-a),reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
- const palette=["#e9ffff","#c7f8ff","#8beaff","#4bd5ff","#159dff","#1763dc"];
- let w=0,h=0,dpr=1,particles=[],dust=[],raf=0,visible=true;
+ const palette=["#efffff","#b9f4ff","#79e4ff","#36c9ff","#168dff","#285bd8"];
+ let w=0,h=0,dpr=1,particles=[],dust=[],raf=0,visible=true,spinOffset=0,dragging=false,lastX=0,lastY=0,tilt=0;
  function resize(){
-  const b=stage.getBoundingClientRect();w=Math.max(260,b.width);h=Math.max(260,b.height);dpr=Math.min(1.6,devicePixelRatio||1);
+  const b=stage.getBoundingClientRect();w=Math.max(260,b.width);h=Math.max(260,b.height);dpr=Math.min(1.8,devicePixelRatio||1);
   canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);
-  particles=Array.from({length:Math.max(90,Math.min(210,Math.round(w/3)))},(_,i)=>({a:rand(0,TAU),lat:rand(-1.35,1.35),speed:rand(.18,.62)*(i%2?1:-1),phase:rand(0,TAU),size:rand(.7,1.7),tone:Math.floor(rand(0,palette.length)),orbit:i%4}));
-  dust=Array.from({length:Math.round(w*h/500)},()=>({x:rand(0,w),y:rand(0,h),p:rand(0,TAU),r:rand(.3,.9)}));
+  particles=Array.from({length:Math.max(120,Math.min(260,Math.round(w/2.5)))},(_,i)=>({a:rand(0,TAU),lat:rand(-1.3,1.3),speed:rand(.12,.42)*(i%2?1:-1),phase:rand(0,TAU),size:rand(.65,1.65),orbit:i%4,tone:i%palette.length}));
+  dust=Array.from({length:Math.round(w*h/650)},()=>({x:rand(0,w),y:rand(0,h),p:rand(0,TAU)}));
  }
  function glow(x,y,r,color,alpha){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,"rgba(0,0,0,0)");ctx.globalAlpha=alpha;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1}
  function draw(ms){
   if(!stage.isConnected||!visible)return;
-  const t=ms/1000,cx=w*.5,cy=h*.53,rx=Math.min(w*.39,h*.39),ry=rx*.91;
+  const t=ms/1000,cx=w*.5,base=h*.94,rx=Math.min(w*.49,h*.66),ry=Math.min(h*.78,rx*1.08);
   const mode=["listening","thinking","researching","executing","reviewing"].find(n=>stage.classList.contains("state-"+n))||"idle";
-  const activity={idle:.75,listening:1.25,thinking:1.65,researching:1.9,executing:2.2,reviewing:1.1,completed:.8,error:.55}[mode];
-  ctx.clearRect(0,0,w,h);ctx.fillStyle="#050a11";ctx.fillRect(0,0,w,h);
-  dust.forEach(p=>{ctx.globalAlpha=.12+.18*(.5+.5*Math.sin(t+p.p));ctx.fillStyle="#69cfff";ctx.fillRect(p.x,p.y,1,1)});ctx.globalAlpha=1;
-  // Technical halo behind the hemisphere.
-  glow(cx,cy,rx*1.55,"#087bff",.10);
-  ctx.strokeStyle="rgba(92,177,220,.18)";ctx.lineWidth=1;
-  [1.18,1.32,1.47].forEach(k=>{ctx.beginPath();ctx.ellipse(cx,cy,rx*k,ry*k,0,Math.PI,TAU);ctx.stroke()});
-  // Half-earth body: luminous hemisphere with a clean equatorial cut.
-  const body=ctx.createRadialGradient(cx-rx*.34,cy-ry*.58,rx*.04,cx,cy,rx*1.18);
-  body.addColorStop(0,"#174c70");body.addColorStop(.42,"#0b2945");body.addColorStop(.82,"#07182b");body.addColorStop(1,"#020811");
-  ctx.save();ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,Math.PI,TAU);ctx.closePath();ctx.fillStyle=body;ctx.fill();
-  ctx.clip();
-  // Rotating longitude meridians and curved latitude bands.
-  const spin=t*.19*activity;
+  const activity={idle:.8,listening:1.25,thinking:1.6,researching:1.8,executing:2.05,reviewing:1.1,completed:.8,error:.6}[mode];
+  ctx.clearRect(0,0,w,h);
+  const bg=ctx.createLinearGradient(0,0,0,h);bg.addColorStop(0,"#06101d");bg.addColorStop(.58,"#071b30");bg.addColorStop(1,"#020811");ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
+  dust.forEach(p=>{ctx.globalAlpha=.12+.2*(.5+.5*Math.sin(t+p.p));ctx.fillStyle="#7bdfff";ctx.fillRect(p.x,p.y,1,1)});ctx.globalAlpha=1;
+  const top=base-ry;
+  glow(cx,base-ry*.48,rx*1.5,"#087bff",.16);
+  // Bottom-anchored half planet: its equator sits at the bottom edge of the visual box.
+  const body=ctx.createRadialGradient(cx-rx*.32,top+ry*.28,rx*.04,cx,base,rx*1.5);
+  body.addColorStop(0,"#23688d");body.addColorStop(.38,"#104064");body.addColorStop(.76,"#09243d");body.addColorStop(1,"#020914");
+  ctx.save();ctx.beginPath();ctx.ellipse(cx,base,rx,ry,0,Math.PI,TAU);ctx.closePath();ctx.fillStyle=body;ctx.fill();ctx.clip();
+  const spin=t*.18*activity+spinOffset;
   ctx.lineWidth=1;
-  for(let j=-4;j<=4;j++){
-   const k=j/5,wide=Math.sqrt(1-k*k);
-   ctx.beginPath();ctx.ellipse(cx,cy-ry*.5,rx*wide,ry*.5*wide,0,Math.PI,TAU);
-   ctx.strokeStyle=j===0?"rgba(116,230,255,.42)":"rgba(83,184,235,.2)";ctx.stroke();
-  }
-  for(let j=0;j<9;j++){
-   const a=spin+j*Math.PI/9;
-   ctx.beginPath();ctx.ellipse(cx,cy,Math.abs(rx*Math.cos(a)),ry,0,Math.PI,TAU);
-   ctx.strokeStyle="rgba(87,190,245,.24)";ctx.stroke();
-  }
-  // Subtle surface arcs suggest topographic / data contours.
-  for(let j=0;j<7;j++){
-   const yy=cy-ry*(.12+j*.105),ww=rx*Math.sqrt(Math.max(.04,1-Math.pow((yy-cy)/ry,2)));
-   ctx.beginPath();ctx.ellipse(cx+Math.sin(t*.12+j)*rx*.025,yy,ww*.78,ry*.045,0,0,TAU);
-   ctx.strokeStyle="rgba(79,171,222,.12)";ctx.stroke();
-  }
-  // Neutrons / data particles move around the hemisphere and along orbital paths.
-  particles.forEach((p,i)=>{
-   const a=p.a+t*p.speed*activity,lat=p.lat,orbit=p.orbit;
-   let x,y;
-   if(orbit===0){x=cx+Math.cos(a)*rx*1.13;y=cy-ry*.5+Math.sin(a)*ry*.62}
-   else if(orbit===1){x=cx+Math.cos(a)*rx*.88;y=cy-ry*.48+Math.sin(a)*ry*.52}
-   else {const cl=Math.cos(lat);x=cx+Math.cos(a)*rx*cl*.94;y=cy-ry*.5+Math.sin(a)*ry*cl*.48-Math.sin(lat)*ry*.42}
-   if(y<cy+2){
-    glow(x,y,p.size*5,palette[p.tone],.28);
-    ctx.fillStyle=palette[p.tone];ctx.globalAlpha=.55+.45*Math.sin(t*3+p.phase);
-    ctx.beginPath();ctx.arc(x,y,p.size,0,TAU);ctx.fill();ctx.globalAlpha=1;
-   }
+  // Curved latitude bands across the visible hemisphere.
+  for(let j=1;j<=7;j++){const f=j/8,y=base-ry*f,half=rx*Math.sqrt(Math.max(.02,1-f*f));ctx.beginPath();ctx.ellipse(cx,y,half,Math.max(2,ry*.035),0,0,TAU);ctx.strokeStyle="rgba(103,210,255,"+(0.10+(1-f)*.12)+")";ctx.stroke()}
+  // Rotating longitude arcs give the globe depth and a clear 3D structure.
+  for(let j=0;j<9;j++){const a=spin+j*Math.PI/9,wide=Math.max(.025,Math.abs(Math.cos(a)));ctx.beginPath();ctx.ellipse(cx,base,rx*wide,ry,0,Math.PI,TAU);ctx.strokeStyle="rgba(112,210,255,"+(wide<.18?.38:.17)+")";ctx.stroke()}
+  // Soft geographic contour lines.
+  for(let j=0;j<8;j++){const f=.18+j*.085,y=base-ry*f,half=rx*Math.sqrt(Math.max(.02,1-f*f));ctx.beginPath();ctx.ellipse(cx+Math.sin(t*.12+j)*rx*.018,y,half*.76,ry*.026,0,0,TAU);ctx.strokeStyle="rgba(96,190,235,.13)";ctx.stroke()}
+  // Moving neutron particles orbit the curved surface and outer rim.
+  particles.forEach(p=>{const a=p.a+t*p.speed*activity+spinOffset*.25,cl=Math.cos(p.lat);let x,y;
+   if(p.orbit===0){x=cx+Math.cos(a)*rx*1.05;y=base-ry*.5+Math.sin(a)*ry*.49}
+   else if(p.orbit===1){x=cx+Math.cos(a)*rx*.83;y=base-ry*.48+Math.sin(a)*ry*.42}
+   else{x=cx+Math.cos(a)*rx*cl*.94;y=base-ry*.5+Math.sin(a)*ry*cl*.47-Math.sin(p.lat)*ry*.28}
+   if(y<base+1){glow(x,y,p.size*5,palette[p.tone],.28);ctx.globalAlpha=.62+.38*Math.sin(t*3+p.phase);ctx.fillStyle=palette[p.tone];ctx.beginPath();ctx.arc(x,y,p.size,0,TAU);ctx.fill();ctx.globalAlpha=1}
   });
   ctx.restore();
-  // Crisp equator / open cut edge and restrained 3D rim lighting.
-  ctx.beginPath();ctx.ellipse(cx,cy,rx,ry,0,Math.PI,TAU);ctx.strokeStyle="rgba(116,225,255,.82)";ctx.lineWidth=1.5;ctx.shadowColor="#36bfff";ctx.shadowBlur=12;ctx.stroke();ctx.shadowBlur=0;
-  ctx.beginPath();ctx.ellipse(cx,cy,rx,ry*.13,0,0,Math.PI);ctx.strokeStyle="rgba(67,166,220,.48)";ctx.lineWidth=1;ctx.stroke();
-  // Central rotating energy nucleus.
-  const pulse=1+.12*Math.sin(t*(mode==="idle"?1.2:3.1)),core=rx*.095*pulse;
-  glow(cx,cy-ry*.45,core*4,"#087bff",.3);glow(cx,cy-ry*.45,core*2,"#39d9ff",.48);
-  const cg=ctx.createRadialGradient(cx-core*.2,cy-ry*.45-core*.2,1,cx,cy-ry*.45,core*1.5);
-  cg.addColorStop(0,"#ffffff");cg.addColorStop(.3,"#c7f8ff");cg.addColorStop(.72,"#159dff");cg.addColorStop(1,"rgba(0,110,255,0)");
-  ctx.fillStyle=cg;ctx.beginPath();ctx.arc(cx,cy-ry*.45,core*1.5,0,TAU);ctx.fill();
-  // Fine particle trails around the globe.
-  for(let i=0;i<5;i++){const a=t*.28+i*TAU/5,x=cx+Math.cos(a)*rx*1.18,y=cy-ry*.5+Math.sin(a)*ry*.66;glow(x,y,5,"#8beaff",.55);ctx.fillStyle="#e9ffff";ctx.beginPath();ctx.arc(x,y,1.1,0,TAU);ctx.fill()}
-  ctx.fillStyle="rgba(173,211,235,.62)";ctx.font="9px ui-monospace,monospace";ctx.textAlign="center";ctx.fillText("CIRCUIT  /  NEURAL CORE",cx,Math.max(22,cy-ry-22));ctx.fillText("PARTICLE FIELD · 3D HEMISPHERE",cx,Math.min(h-18,cy+ry+25));
+  // Bright equator rim and orbital tracks.
+  ctx.beginPath();ctx.ellipse(cx,base,rx,ry,0,Math.PI,TAU);ctx.strokeStyle="rgba(130,232,255,.92)";ctx.lineWidth=1.8;ctx.shadowColor="#39caff";ctx.shadowBlur=16;ctx.stroke();ctx.shadowBlur=0;
+  for(let j=0;j<3;j++){ctx.beginPath();ctx.ellipse(cx,base-ry*.08,rx*(1.12+j*.11),ry*(.12+j*.045),0,Math.PI,TAU);ctx.strokeStyle="rgba(71,178,239,.22)";ctx.lineWidth=1;ctx.stroke()}
+  const pulse=1+.13*Math.sin(t*(mode==="idle"?1.2:3.2)),core=rx*.075*pulse,kx=cx,ky=base-ry*.57;
+  glow(kx,ky,core*4,"#087bff",.38);glow(kx,ky,core*2,"#39d9ff",.5);
+  const cg=ctx.createRadialGradient(kx-core*.2,ky-core*.2,1,kx,ky,core*1.5);cg.addColorStop(0,"#fff");cg.addColorStop(.35,"#c7f8ff");cg.addColorStop(.75,"#159dff");cg.addColorStop(1,"rgba(0,110,255,0)");
+  ctx.fillStyle=cg;ctx.beginPath();ctx.arc(kx,ky,core*1.5,0,TAU);ctx.fill();
+  ctx.fillStyle="rgba(173,211,235,.72)";ctx.font="9px ui-monospace,monospace";ctx.textAlign="center";ctx.fillText("CIRCUIT  /  NEURAL CORE",cx,Math.max(18,top-12));
   if(!reduced)raf=requestAnimationFrame(draw);
  }
+ function pointerDown(e){dragging=true;lastX=e.clientX;lastY=e.clientY;stage.classList.add("gesture-active");if(canvas.setPointerCapture)canvas.setPointerCapture(e.pointerId)}
+ function pointerMove(e){if(!dragging)return;const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;spinOffset+=dx*.009;tilt=Math.max(-.18,Math.min(.18,tilt+dy*.0008));}
+ function pointerUp(){dragging=false;stage.classList.remove("gesture-active")}
+ canvas.style.touchAction="pan-y";canvas.addEventListener("pointerdown",pointerDown);canvas.addEventListener("pointermove",pointerMove);canvas.addEventListener("pointerup",pointerUp);canvas.addEventListener("pointercancel",pointerUp);canvas.addEventListener("lostpointercapture",pointerUp);
  function stop(){visible=false;cancelAnimationFrame(raf)}
  function start(){if(visible)return;visible=true;if(!reduced)raf=requestAnimationFrame(draw);else draw(0)}
  if("ResizeObserver"in window)new ResizeObserver(()=>{resize();if(reduced)draw(0)}).observe(stage);else window.addEventListener("resize",()=>{resize();if(reduced)draw(0)});
  document.addEventListener("visibilitychange",()=>{if(document.hidden)stop();else start()});
  resize();if(reduced)draw(0);else raf=requestAnimationFrame(draw);
-})();</script>>>
+})();</script>>
 
 
 <script id="circuit-agent-live-state-fix">
