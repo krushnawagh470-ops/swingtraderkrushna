@@ -1697,4 +1697,54 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
  resize();if(reduced)draw(0);else raf=requestAnimationFrame(draw);
 })();</script>>>
 
+
+<script id="circuit-agent-live-state-fix">
+/* Keep the neural-core label synchronized with the real send lifecycle. */
+(function(){
+ const root=document.getElementById("aiAgentVisual");
+ const label=document.getElementById("circuitStateText");
+ const input=document.getElementById("aiWorkbenchPrompt");
+ const send=document.getElementById("aiSendToClaude");
+ const status=document.getElementById("aiWorkbenchStatus");
+ const output=document.getElementById("aiAgentConversation");
+ if(!root||!label||!input||!send||!status)return;
+ function paint(state,text){
+   root.className="ai-agent-visual circuit-stage state-"+state;
+   label.textContent=text;
+ }
+ input.addEventListener("input",function(){
+   if(input.value.trim()) paint("listening","TASK READY");
+   else if(!send.disabled) paint("idle","STANDING BY");
+ });
+ /* Capture before the send handler clears the textarea. */
+ document.addEventListener("click",function(event){
+   const button=event.target&&event.target.closest?event.target.closest("#aiSendToClaude"):null;
+   if(!button||!input.value.trim())return;
+   paint("researching","PREPARING REQUEST");
+ },true);
+ input.addEventListener("keydown",function(event){
+   if(event.key==="Enter"&&!event.shiftKey&&input.value.trim())paint("researching","PREPARING REQUEST");
+ },true);
+ const observer=new MutationObserver(function(){
+   const value=(status.textContent||"").trim().toLowerCase();
+   if(!value)return;
+   if(/reply received/.test(value)){
+     paint("completed","RESPONSE RECEIVED");
+   }else if(/request failed|connection failed|timed out|worker is not connected|http [45][0-9]{2}|error:/.test(value)){
+     paint("error","REQUEST FAILED");
+   }else if(/sending to circuit ai|sending to secure|sending to gemini|thinking|sending message/.test(value)){
+     paint("thinking","AI PROCESSING");
+   }else if(/syncing circuit|terminal sync received|preparing message|preparing context/.test(value)){
+     paint("researching","SYNCING CONTEXT");
+   }
+ });
+ observer.observe(status,{childList:true,subtree:true,characterData:true});
+ if(output){
+   const outputObserver=new MutationObserver(function(){
+     if(output.querySelector("div")&&/reply received/i.test(status.textContent||""))paint("completed","RESPONSE RECEIVED");
+   });
+   outputObserver.observe(output,{childList:true,subtree:true});
+ }
+})();
+</script>
 </body></html>
