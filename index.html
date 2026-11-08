@@ -774,7 +774,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
       ...frames.map(([label,interval])=>circuitFetchJson("/"+encodeURIComponent(symbol)+"/ohlc?interval="+interval+"&limit=120",9000))
     ]);
     const value=i=>tasks[i].status==="fulfilled"?tasks[i].value:{unavailable:String(tasks[i].reason?.message||"feed unavailable")};
-    const quoteRaw=value(0),quoteRows=Array.isArray(quoteRaw)?quoteRaw:(quoteRaw.items||quoteRaw.ticks||Object.values(quoteRaw).filter(x=>x&&typeof x==="object"&&x.symbol));
+    const quoteRaw=value(0),quoteRows=Array.isArray(quoteRaw)?quoteRaw:(Array.isArray(quoteRaw.items)?quoteRaw.items:Array.isArray(quoteRaw.ticks)?quoteRaw.ticks:Object.values(quoteRaw||{}).filter(x=>x&&typeof x==="object"&&x.symbol));
     const groupData=i=>value(i).map(x=>x.status==="fulfilled"?x.value:{unavailable:String(x.reason?.message||"feed unavailable")});
     const marketGroup=groupData(1),calendarGroup=groupData(2),newsRaw=groupData(3);
     const marketData={requestedInstrumentCount:symbols.length,allWatchlistQuotes:quoteRows,quoteFeedStatus:tasks[0].status==="fulfilled"?"received":"unavailable: "+String(tasks[0].reason?.message||"feed unavailable"),terminalWatchlists:MARKET_WATCHLISTS,marketMoversAndBreadth:{gainers:marketGroup[0],losers:marketGroup[1],summary:marketGroup[2]}};
