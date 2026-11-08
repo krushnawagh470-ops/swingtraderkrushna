@@ -909,6 +909,14 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
 
 /* Keep the complete terminal header block at the top; prevent flex auto-margin vertical centering. */
 @media(min-width:651px){.main{margin:0 auto!important;align-self:stretch}.side{align-self:stretch}}
+
+/* Final desktop layout: start the full right workspace at the same top edge as Desk. */
+@media(min-width:651px){
+  .shell{align-items:flex-start!important}
+  .side{margin-top:0!important;padding-top:0!important;align-self:flex-start!important}
+  .main{margin-top:0!important;padding-top:0!important;align-self:flex-start!important;top:0!important;transform:none!important}
+  .main>.top{margin-top:0!important}
+}
 </style>
 <script>
 /* CIRCUIT event-driven state: UI follows actual input, send, and provider response events. */
