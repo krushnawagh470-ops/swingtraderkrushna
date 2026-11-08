@@ -58,7 +58,7 @@ async def ai_chat(body: ChatRequest) -> dict[str, str]:
     payload = {"contents": [{"role": "user", "parts": [{"text": combined}]}], "generationConfig": {"temperature": body.temperature, "maxOutputTokens": 2048}}
     try:
         async with httpx.AsyncClient(timeout=45) as client:
-            response = await client.post(url, params={"key": GEMINI_API_KEY}, json=payload)
+            response = await client.post(url, headers={"x-goog-api-key": GEMINI_API_KEY}, json=payload)
             response.raise_for_status()
             data = response.json()
         parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
