@@ -1691,6 +1691,32 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   for(let j=0;j<9;j++){const a=spin+j*Math.PI/9,wide=Math.max(.025,Math.abs(Math.cos(a)));ctx.beginPath();ctx.ellipse(cx,base,rx*wide,ry,0,Math.PI,TAU);ctx.strokeStyle="rgba(112,210,255,"+(wide<.18?.38:.17)+")";ctx.stroke()}
   // Soft geographic contour lines.
   for(let j=0;j<8;j++){const f=.18+j*.085,y=base-ry*f,half=rx*Math.sqrt(Math.max(.02,1-f*f));ctx.beginPath();ctx.ellipse(cx+Math.sin(t*.12+j)*rx*.018,y,half*.76,ry*.026,0,0,TAU);ctx.strokeStyle="rgba(96,190,235,.13)";ctx.stroke()}
+  const landmasses=[
+   [[-168,66],[-150,72],[-132,68],[-125,58],[-116,54],[-108,49],[-101,50],[-96,56],[-84,58],[-78,51],[-68,48],[-60,53],[-58,62],[-72,70],[-92,74],[-112,72],[-130,70]],
+   [[-81,12],[-72,10],[-64,5],[-50,2],[-43,-5],[-48,-18],[-54,-28],[-62,-40],[-70,-55],[-76,-42],[-78,-22]],
+   [[-11,36],[-8,44],[2,50],[12,55],[25,60],[38,57],[48,52],[60,55],[75,60],[90,58],[104,52],[120,54],[132,48],[145,50],[160,60],[178,56],[170,45],[155,40],[145,35],[132,32],[122,24],[112,20],[105,10],[98,8],[90,20],[80,8],[72,18],[60,22],[50,28],[42,38],[30,40],[22,36],[12,38],[2,42],[-5,36]],
+   [[-17,35],[-5,37],[10,35],[25,32],[34,22],[42,12],[50,5],[43,-10],[35,-22],[28,-34],[18,-35],[10,-28],[4,-16],[-4,-2],[-12,10],[-17,22]],
+   [[-10,50],[-5,58],[2,58],[1,51]],
+   [[45,42],[55,48],[60,42],[55,35]],
+   [[130,32],[140,40],[145,44],[142,35]],
+   [[112,-10],[130,-12],[145,-18],[153,-28],[145,-39],[130,-35],[115,-25]],
+   [[-24,64],[-15,66],[-13,60],[-20,58]]
+  ];
+  function projectGeo(lon,lat){const a=(lon*Math.PI/180)+spin,la=lat*Math.PI/180,depth=Math.cos(la)*Math.cos(a);return {x:cx+rx*Math.cos(la)*Math.sin(a),y:base-ry*Math.sin(la),depth};}
+  landmasses.forEach(poly=>{
+   const pts=poly.map(([lo,la])=>projectGeo(lo,la));
+   if(pts.every(p=>p.depth<-.08))return;
+   ctx.save();ctx.beginPath();let started=false;
+   pts.forEach(p=>{if(p.depth>-.02){if(!started){ctx.moveTo(p.x,p.y);started=true}else ctx.lineTo(p.x,p.y)}else started=false;});
+   if(started)ctx.closePath();
+   ctx.fillStyle="rgba(30,174,225,.13)";ctx.strokeStyle="rgba(105,231,255,.82)";ctx.lineWidth=1.25;ctx.shadowColor="#26cfff";ctx.shadowBlur=9;ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+   // Fine internal divisions suggest country borders without obscuring the map.
+   ctx.clip();ctx.strokeStyle="rgba(125,224,255,.34)";ctx.lineWidth=.65;
+   const minX=Math.min(...pts.map(p=>p.x)),maxX=Math.max(...pts.map(p=>p.x)),minY=Math.min(...pts.map(p=>p.y)),maxY=Math.max(...pts.map(p=>p.y));
+   for(let k=1;k<4;k++){const xx=minX+(maxX-minX)*k/4;ctx.beginPath();ctx.moveTo(xx,minY);ctx.lineTo(xx,maxY);ctx.stroke();}
+   for(let k=1;k<3;k++){const yy=minY+(maxY-minY)*k/3;ctx.beginPath();ctx.moveTo(minX,yy);ctx.lineTo(maxX,yy);ctx.stroke();}
+   ctx.restore();
+  });
   // Moving neutron particles orbit the curved surface and outer rim.
   particles.forEach(p=>{const a=p.a+t*p.speed*activity+spinOffset*.25,cl=Math.cos(p.lat);let x,y;
    if(p.orbit===0){x=cx+Math.cos(a)*rx*1.05;y=base-ry*.5+Math.sin(a)*ry*.49}
