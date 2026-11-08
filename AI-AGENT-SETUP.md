@@ -1,33 +1,53 @@
-# SwingTraderKrushna Claude Agent — setup
+# CIRCUIT AI Core — free-first setup
 
-This Worker keeps the Anthropic API key off the public GitHub Pages site.
+CIRCUIT now has a provider-independent AI core in `worker.js`. Groq remains the default provider. The website calls the Cloudflare Worker; provider API keys stay private in Cloudflare and are never placed in the public website.
 
-## 1. Deploy the Worker from a phone
+## What changed
 
-1. Sign in or create a Cloudflare account: https://dash.cloudflare.com/
-2. Open **Workers & Pages**: https://dash.cloudflare.com/?to=/:account/workers-and-pages
-3. Choose **Create application** → **Create Worker** and name it `swingtraderkrushna-agent`.
-4. Open the Worker editor / Quick Edit. Replace the sample code with the complete contents of `cloudflare-worker.js` from this repository.
-5. Save and deploy. Copy the Worker URL, for example `https://swingtraderkrushna-agent.<your-subdomain>.workers.dev`.
+- A central CIRCUIT identity and operating prompt now lives in the Worker, rather than being tied to one model provider.
+- The Worker uses a provider adapter. Groq is active by default.
+- OpenAI can be selected later by changing one Worker variable and adding an API key secret. The website chat interface does not need to be rebuilt.
+- The browser's existing learning memory remains user-controlled and local to that browser for now. It is not yet cross-device cloud memory; that requires a secure user identity and persistent database.
 
-## 2. Add two private Worker secrets
+## Deploy the updated CIRCUIT brain
 
-In the Worker dashboard open **Settings → Variables and Secrets → Add**. Add both as type **Secret**:
+A GitHub commit does **not** automatically update the already-running Cloudflare Worker unless a Cloudflare deployment pipeline has been configured. The website may deploy separately through GitHub Pages.
 
-- `ANTHROPIC_API_KEY` — create a key at https://platform.claude.com/settings/keys
-- `AGENT_ACCESS_TOKEN` — create a separate long random password. Do not reuse your Claude API key.
+1. Open Cloudflare Dashboard: https://dash.cloudflare.com/
+2. Go to **Workers & Pages** and open the existing Worker used by CIRCUIT (the URL currently saved in the website).
+3. Open **Edit code** / **Quick Edit**.
+4. In this repository, open `worker.js`: https://github.com/krushnawagh470-ops/swingtraderkrushna/blob/main/worker.js
+5. Replace the Worker editor contents with the complete `worker.js` file, then **Save and Deploy**.
+6. Keep the existing `GROQ_API_KEY` secret. Do not paste it into GitHub or into this chat.
+7. Open the website's AI Agent connection test. The health response should show **CIRCUIT Core v2**, provider **Groq**, and `configured: true`.
 
-Save and deploy the Worker again. Never put either value in GitHub or send either value in chat.
+## Optional: switch to OpenAI later
 
-## 3. Connect the website
+Only do this when you choose to pay for OpenAI API usage. ChatGPT Free and OpenAI API billing are separate.
 
-Open https://krushnawagh470-ops.github.io/swingtraderkrushna/ and go to Home → AI Agent.
-Enter the Worker URL and the same Agent Access Token, then press **Save & test connection**.
-The Anthropic API key itself is entered only in Cloudflare as a secret.
+In the same Cloudflare Worker:
+1. Open **Settings → Variables and Secrets**.
+2. Add a plain-text variable `AI_PROVIDER` with value `openai`.
+3. Add `OPENAI_API_KEY` as a **Secret**.
+4. Save and deploy. The Worker health check should report provider **OpenAI**.
 
-## Important
+To switch back, set `AI_PROVIDER` to `groq` (or remove the variable) and ensure `GROQ_API_KEY` remains configured.
 
-- The Worker only accepts browser requests from the SwingTraderKrushna GitHub Pages origin and also requires the separate access token. Origin checks alone are not authentication.
-- This first version is a conversational Claude assistant. It does not browse, control other apps, execute trades, or operate a broker.
-- Cloudflare Workers has a free plan with usage limits; Claude API calls are separately billed by Anthropic. Set a spend limit in Claude Console before testing.
-- If the access token is lost, replace the `AGENT_ACCESS_TOKEN` secret in Cloudflare and update the saved token in the website.
+Optional model overrides:
+- `GROQ_MODEL` (defaults to `openai/gpt-oss-120b`)
+- `OPENAI_MODEL` (defaults to `gpt-4.1-mini`)
+
+## Current limits — stated clearly
+
+- This is CIRCUIT's central reasoning/assistant layer, not a direct connection to the ChatGPT Free app.
+- It does not automatically gain access to ChatGPT, Claude, Gemini, broker accounts, GitHub actions, or other apps. Those require separate, explicitly connected tools.
+- Learning memory is currently saved in browser local storage. Clearing browser data or changing devices may make that memory unavailable.
+- Market data/news context is only available when the website successfully retrieves and attaches it. The AI must not invent missing live data.
+- The Worker accepts chat messages only; no broker execution or financial transactions are implemented.
+- Groq and OpenAI API availability, quotas, and charges are controlled by their respective providers. Check current terms and limits before relying on a free tier or enabling paid API use.
+
+## Security
+
+- Never put provider API keys in `index.html`, GitHub, screenshots, or chat messages.
+- Store keys only as Cloudflare Worker **Secrets**.
+- The Worker restricts browser origins to the SwingTraderKrushna GitHub Pages origin. Origin checks are not a substitute for user authentication; do not expose sensitive personal records through this public chat endpoint.
