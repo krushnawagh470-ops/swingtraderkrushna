@@ -1141,6 +1141,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   updateSectionStrips();
  }
  window.loadNativeQuotes=loadNativeQuotes;window.loadNativeMovers=loadNativeMovers;window.loadNativeSummary=loadNativeSummary;window.loadNativeCalendar=loadNativeCalendar;window.loadNativeNews=loadNativeNews;
+ try{if(typeof liveHubConnection!=="undefined"&&liveHubConnection)liveHubConnection.stop()}catch(_){}
  addSectionStrips();
  loadNativeQuotes();loadNativeMovers();loadNativeSummary();loadNativeCalendar();loadNativeNews(true);
  setInterval(()=>{if(!socket||socket.readyState>1)loadCryptoRest()},30000);
