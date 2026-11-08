@@ -740,8 +740,10 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   }
   function isChartAnalysisRequest(prompt) {
     const p=String(prompt||"");
-    return /\b(chart|technical analysis|market analysis|price action|support|resistance|BOS|CHoCH|trade setup|candles?)\b/i.test(p) &&
-      /\b(analy[sz]e|analysis|review|read|assess|bias|setup|levels|trend|direction)\b/i.test(p);
+    const action=/\b(analy[sz]e|analysis|review|read|assess|bias|setup|levels|trend|direction|outlook|structure)\b/i.test(p);
+    const chartTopic=/\b(chart|technical analysis|market analysis|price action|support|resistance|BOS|CHoCH|trade setup|candles?|market structure)\b/i.test(p);
+    const knownSymbol=/\b(BTCUSD|BTC|BITCOIN|XAUUSD|XAU|GOLD|XAGUSD|XAG|SILVER|EURUSD|EURO|USOIL|WTI|CRUDE OIL|DXY|DOLLAR INDEX)\b/i.test(p);
+    return action && (chartTopic || knownSymbol);
   }
   async function buildChartContext(symbol) {
     const frames=[["5m","5m"],["15m","15m"],["1H","1h"],["4H","4h"],["1D","1d"]];
