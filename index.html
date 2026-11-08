@@ -177,8 +177,6 @@ body.circuit-admin-mode #settings.active{display:block!important}
 /* CIRCUIT AI core — dark holographic thinking brain matching the supplied reference. */
 #ai .ai-agent-visual.circuit-stage{position:relative;display:block;width:100%;height:auto;min-height:300px;max-height:520px;aspect-ratio:16/9;border:1px solid rgba(91,145,174,.38);border-radius:5px;background:#02070d !important;isolation:isolate;overflow:hidden;cursor:crosshair;box-shadow:inset 0 0 70px #000b,0 12px 38px rgba(0,0,0,.35)}
 #ai .ai-agent-visual.circuit-stage:before{content:"";position:absolute;z-index:2;left:0;right:0;top:0;height:4px;background:linear-gradient(90deg,#ff8a16,#ffc15b 42%,#ff8a16);box-shadow:0 0 9px #ff941b88;pointer-events:none}
-#ai .circuit-reference-video{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;background:#02070d;z-index:3;pointer-events:none}
-#ai #circuitNeuralCanvas{display:none !important}
 #ai .ai-handoff-note{color:#8fcff0}
 @media(max-width:720px){#ai .ai-agent-visual.circuit-stage{height:auto;min-height:260px;max-height:none;aspect-ratio:16/10}}
 #ai .circuit-reference-video{display:none!important}
@@ -1560,7 +1558,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   {x:.275,y:.005,z:.015,rx:.245,ry:.255,rz:.255,n:.18},
   {x:.205,y:.205,z:.015,rx:.265,ry:.205,rz:.235,n:.17},
   {x:.405,y:.055,z:-.015,rx:.145,ry:.205,rz:.185,n:.12}
- ];;
+ ];
  let w=0,h=0,dpr=1,pts=[],dust=[],links=[],threads=[],signals=[],raf=0,visible=true;
  function resize(){
   const b=stage.getBoundingClientRect();w=Math.max(280,b.width);h=Math.max(220,b.height);dpr=Math.min(1.7,devicePixelRatio||1);
