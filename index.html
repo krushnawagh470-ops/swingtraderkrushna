@@ -398,7 +398,7 @@ async function loadForexFactoryCalendar(force=false){
  }
 }
 function openCircuitCalendar(){showPage("news");loadForexFactoryCalendar();window.scrollTo({top:0,behavior:"smooth"});const panel=document.getElementById("circuitCalendarPanel");if(panel)panel.scrollIntoView({behavior:"smooth",block:"start"});}
-function showPage(p){document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id===p));document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===p));document.getElementById("pageTitle").textContent=titles[p]||titles.overview;window.scrollTo({top:0,behavior:"smooth"});if(p==="charts")renderChart();if(p==="markets")renderMarketCatalogue();if(p==="news"){loadNativeNews(true);loadForexFactoryCalendar();}if(p==="settings"){const n=document.getElementById("settingsNewsStatus");if(n)n.textContent=document.getElementById("newsPipelineMeta")?.textContent||"News not loaded";}}
+function showPage(p){document.querySelectorAll(".section").forEach(x=>x.classList.toggle("active",x.id===p));document.querySelectorAll("[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===p));document.getElementById("pageTitle").textContent=titles[p]||titles.overview;window.scrollTo({top:0,behavior:"smooth"});if(p==="charts")renderChart();if(p==="markets"){renderMarketCatalogue();loadActiveSymbols();loadNativeMovers();loadNativeSummary();}if(p==="news"){loadNativeNews(true);loadForexFactoryCalendar();loadNativeCalendar();}if(p==="settings"){const n=document.getElementById("settingsNewsStatus");if(n)n.textContent=document.getElementById("newsPipelineMeta")?.textContent||"News not loaded";}}
 document.querySelectorAll("[data-page]").forEach(b=>b.addEventListener("click",()=>{if(!b.hasAttribute("data-group-toggle"))showPage(b.dataset.page)}));
 
 /* Desk navigation: expand first, then load only the chosen tool into the workspace. */
@@ -559,7 +559,7 @@ async function loadNativeNews(force=false){
 
 async function loadNativeMovers(){const el=document.getElementById("nativeMovers");if(!el)return;try{const [g,l]=await Promise.all([apiJSON("/market/gainers?limit=8"),apiJSON("/market/losers?limit=8")]);const gain=Array.isArray(g.items)?g.items:[],lose=Array.isArray(l.items)?l.items:[];const all=[...gain.map(x=>({...x,side:"Gainer"})),...lose.map(x=>({...x,side:"Loser"}))];el.innerHTML='<table class="native-table"><thead><tr><th>Instrument</th><th>Side</th><th>Last price</th><th>Change</th></tr></thead><tbody>'+all.map(x=>'<tr><td>'+esc(x.symbol)+'</td><td>'+esc(x.side)+'</td><td>'+esc(x.lastPrice)+'</td><td>'+esc(Number(x.changePercent).toFixed(2))+'%</td></tr>').join("")+'</tbody></table>'}catch(e){el.textContent="Market movers unavailable: "+e.message}}
 async function loadNativeSummary(){const el=document.getElementById("nativeMarketSummary");if(!el)return;try{const d=await apiJSON("/market/summary");el.textContent="Market breadth · "+JSON.stringify(d)}catch(e){el.textContent="Market breadth unavailable: "+e.message}}
-loadNativeQuotes();loadNativeCalendar();loadNativeNews();loadNativeMovers();loadNativeSummary();loadActiveSymbols();
+/* Data is loaded on demand when its workspace is opened; avoid six parallel startup pipelines. */
 /* Legacy Biquote polling disabled: open-source data bridge below owns refresh scheduling. */
 renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBacktest();toggleSimStrategyFields();document.getElementById("btDate").value=new Date().toISOString().slice(0,10);
 
@@ -1228,11 +1228,11 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
  window.loadNativeQuotes=loadNativeQuotes;window.loadNativeMovers=loadNativeMovers;window.loadNativeSummary=loadNativeSummary;window.loadNativeCalendar=loadNativeCalendar;window.loadNativeNews=loadNativeNews;
  try{if(typeof liveHubConnection!=="undefined"&&liveHubConnection)liveHubConnection.stop()}catch(_){}
  addSectionStrips();
- loadNativeQuotes();loadNativeMovers();loadNativeSummary();loadNativeCalendar();loadNativeNews(true);
+ loadNativeQuotes();
  setInterval(()=>{if(!socket||socket.readyState>1)loadCryptoRest()},30000);
  setInterval(loadDailyReferences,30*60*1000);
- setInterval(loadNativeMovers,60000);
- setInterval(loadNativeSummary,15000);
+ setInterval(()=>{if(document.getElementById("markets")?.classList.contains("active"))loadNativeMovers()},60000);
+ setInterval(()=>{if(document.getElementById("markets")?.classList.contains("active"))loadNativeSummary()},60000);
  setInterval(()=>{if(document.getElementById("news")?.classList.contains("active"))loadNativeNews(true)},10*60*1000);
  setInterval(()=>{if(document.getElementById("settings")?.classList.contains("active"))loadNativeCalendar()},5*60*1000);
 })();
