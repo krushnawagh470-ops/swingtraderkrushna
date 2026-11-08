@@ -384,7 +384,10 @@ body.circuit-admin-mode #settings.active{display:block!important}
     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitSaveLearning">Save to memory</button><button type="button" class="btn secondary" id="circuitClearLearning">Clear memory</button><span class="q-meta" id="circuitLearningStatus" aria-live="polite">Memory stays in this browser until you clear it.</span></div>
     <div id="circuitLearningList" class="q-meta" style="margin-top:10px"></div>
    </div>
-   <div class="card" id="circuitCloudMemoryPanel" style="margin-top:12px;border:1px solid #2b5b79;background:linear-gradient(145deg,#0b2031,#071321)">
+   <div class="row" style="justify-content:flex-start;margin-top:12px">
+    <button type="button" class="btn secondary small" id="circuitCloudMemoryToggle" aria-expanded="false" aria-controls="circuitCloudMemoryPanel" onclick="toggleCircuitCloudMemoryPanel()">☁ Cloud Memory · Show</button>
+   </div>
+   <div class="card" id="circuitCloudMemoryPanel" hidden style="margin-top:12px;border:1px solid #2b5b79;background:linear-gradient(145deg,#0b2031,#071321)">
     <div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><div class="terminal-label">CIRCUIT · PERSISTENT MEMORY</div><b>Cloud memory</b><div class="q-meta">Private, cross-device memory. Only items you explicitly save are stored.</div></div><span class="signal-tag" id="circuitCloudMemoryState">CLOUD MEMORY · LOCKED</span></div>
     <div id="circuitMemoryLogin" style="margin-top:10px">
      <label class="terminal-label" for="circuitMemoryPassphrase">MEMORY PASSPHRASE</label>
@@ -402,6 +405,17 @@ body.circuit-admin-mode #settings.active{display:block!important}
     </div>
     <p class="q-meta" id="circuitCloudMemoryStatus" aria-live="polite" style="margin-top:9px">Cloud memory needs a D1 database and Worker secrets before it can be unlocked.</p>
    </div>
+   <script>
+   function toggleCircuitCloudMemoryPanel(){
+    const panel=document.getElementById("circuitCloudMemoryPanel");
+    const button=document.getElementById("circuitCloudMemoryToggle");
+    if(!panel||!button)return;
+    const opening=panel.hidden;
+    panel.hidden=!opening;
+    button.setAttribute("aria-expanded",String(opening));
+    button.textContent=opening?"☁ Cloud Memory · Hide":"☁ Cloud Memory · Show";
+   }
+   </script>
    <div class="section-title" style="margin:16px 0 8px">CIRCUIT · LIVE TASK EXECUTION</div>
    <div class="q-meta">Follow the real handoff from your instruction to the provider response. A stage changes only when its corresponding event occurs.</div>
    <div class="ai-task-steps circuit-steps" id="aiTaskSteps">
