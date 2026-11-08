@@ -182,6 +182,12 @@ body.circuit-admin-mode #settings.active{display:block!important}
 #ai .circuit-reference-video{display:none!important}
 #ai #circuitNeuralCanvas{display:block!important;position:absolute;inset:0;width:100%;height:100%;z-index:3}
 #ai .ai-agent-visual.circuit-stage{background:radial-gradient(ellipse at 50% 48%,#092b50 0%,#041326 56%,#02070d 100%)!important}
+#ai .circuit-state-label{z-index:5;bottom:12px;color:#9eeaff;text-shadow:0 0 10px #32bfff;pointer-events:none}
+#ai .circuit-live-dot{box-shadow:0 0 10px #8cecff}
+#ai .circuit-stage.state-thinking .circuit-live-dot,#ai .circuit-stage.state-researching .circuit-live-dot,#ai .circuit-stage.state-executing .circuit-live-dot{animation:circuitBrainBeat .55s ease-in-out infinite alternate}
+#ai .circuit-stage.state-completed .circuit-live-dot{background:#29d9bb;box-shadow:0 0 12px #29d9bb}
+#ai .circuit-stage.state-error .circuit-live-dot{background:#ff6689;box-shadow:0 0 12px #ff6689}
+@keyframes circuitBrainBeat{to{transform:scale(1.8);opacity:.55}}
 </style><meta name="circuit-build" content="ai-3d-neuron-brain-20261108-v8">
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
@@ -221,6 +227,7 @@ body.circuit-admin-mode #settings.active{display:block!important}
   <div>
    <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="CIRCUIT animated neural-network virtual intelligence">
 <canvas id="circuitNeuralCanvas" aria-hidden="true"></canvas>
+    <div class="circuit-state-label"><span class="circuit-live-dot"></span><span id="circuitStateText">STANDING BY</span></div>
    </div>
    <div class="ai-handoff-note">CIRCUIT · GROQ AI CORE · SECURE CONNECTION</div>
 
@@ -1587,7 +1594,10 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
  function glow(x,y,r,color,alpha){if(r<=0)return;const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,color);g.addColorStop(1,"rgba(0,0,0,0)");ctx.globalAlpha=alpha;ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,r,0,TAU);ctx.fill();ctx.globalAlpha=1}
  function draw(ms){
   if(!stage.isConnected||!visible)return;
-  const t=ms/1000,cx=w*.5,cy=h*.51,R=Math.min(w*.78,h*1.12),rot=t*.12;
+  const t=ms/1000,cx=w*.5,cy=h*.49,R=Math.min(w*.78,h*1.12);
+  const mode=["listening","thinking","researching","executing","reviewing"].find(n=>stage.classList.contains("state-"+n))||"idle";
+  const modeSpeed={idle:.65,listening:1.35,thinking:1.8,researching:2.15,executing:2.6,reviewing:1.05,completed:.7,error:.5}[mode];
+  const rot=t*.12*modeSpeed;
   // Reference has a dark technical grid and deliberate glow/fade pulses.
   const cycle=(t%19)/19,fade=cycle<.12?cycle/.12:cycle>.88?(1-cycle)/.12:1,energy=.12+.88*Math.min(1,fade);
   ctx.clearRect(0,0,w,h);ctx.fillStyle="#02070d";ctx.fillRect(0,0,w,h);
@@ -1607,8 +1617,8 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   signals.forEach(p=>{const e=links[p.edge];if(!e)return;const a=projected[e.a],b=projected[e.b],q=(p.phase+t*p.speed)%1,x=a.x+(b.x-a.x)*q,y=a.y+(b.y-a.y)*q;glow(x,y,5.5*p.size,"#8cecff",.78*energy);ctx.fillStyle="rgba(235,255,255,"+(.92*energy)+")";ctx.beginPath();ctx.arc(x,y,1.05*p.size,0,TAU);ctx.fill()});
   threads.forEach((th,i)=>{const ph=t*.42+th.phase;ctx.beginPath();th.path.forEach((p,j)=>{const q=j/(th.path.length-1),x=p.x+Math.sin(ph+q*15)*.012,z=p.z+Math.cos(ph+q*12)*.012,xr=x*Math.cos(rot)-z*Math.sin(rot),zr=x*Math.sin(rot)+z*Math.cos(rot),pers=2.8/(2.8+zr*.38),px=cx+xr*R*pers,py=cy+p.y*R*.88*pers;if(!j)ctx.moveTo(px,py);else ctx.lineTo(px,py)});ctx.strokeStyle=th.bright?"rgba(175,246,255,"+(.42*energy)+")":"rgba(36,155,255,"+(.18*energy)+")";ctx.lineWidth=th.bright?1.05:.55;ctx.stroke()});
   // Dense, almost-white electrical nucleus with short radial filaments.
-  const pulse=1+.12*Math.sin(t*2.5),coreR=R*.16*pulse;
-  glow(cx,cy,coreR*3.6,"#087bff",.35*energy);glow(cx,cy,coreR*2.1,"#39d9ff",.48*energy);
+  const pulse=1+({idle:.06,listening:.13,thinking:.2,researching:.23,executing:.28,reviewing:.11,completed:.08,error:.04}[mode]) * Math.sin(t*(mode==="idle"?1.4:3.2));const coreR=R*.16*pulse;
+  glow(cx,cy,coreR*3.6,"#087bff",(.25+(modeSpeed*.045))*energy);glow(cx,cy,coreR*2.1,"#39d9ff",(.38+(modeSpeed*.045))*energy);
   for(let k=0;k<54;k++){const a=k*TAU/54+t*.09,len=coreR*(1.25+(k%5)*.22),x1=cx+Math.cos(a)*coreR*.34,y1=cy+Math.sin(a)*coreR*.34,x2=cx+Math.cos(a)*len,y2=cy+Math.sin(a)*len*.72;ctx.strokeStyle="rgba(116,230,255,"+(.22*energy)+")";ctx.lineWidth=.55;ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke()}
   const g=ctx.createRadialGradient(cx-coreR*.2,cy-coreR*.22,1,cx,cy,coreR*1.65);g.addColorStop(0,"rgba(255,255,255,"+(.98*energy)+")");g.addColorStop(.18,"rgba(190,250,255,"+(.9*energy)+")");g.addColorStop(.48,"rgba(49,194,255,"+(.62*energy)+")");g.addColorStop(1,"rgba(0,110,255,0)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,coreR*1.7,0,TAU);ctx.fill();
   projected.forEach(p=>{const tw=.55+.45*Math.sin(t*2.1+p.phase),front=.45+Math.max(0,p.z)*.55;glow(p.x,p.y,p.size*3,palette[p.tone],.17*energy*tw*front);ctx.globalAlpha=(.3+front*.65)*tw*energy;ctx.fillStyle=palette[p.tone];ctx.beginPath();ctx.arc(p.x,p.y,p.size*(.55+front*.55),0,TAU);ctx.fill();ctx.globalAlpha=1});
