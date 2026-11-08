@@ -1698,76 +1698,7 @@ const outgoing=[...terminalContext.context,{role:"user",content:prompt+analysisR
 })();
 </script>
 <script>
-/* Independent News Desk loader: starts on page load and reports failures visibly. */
-(function(){
- const feeds=[
-  ["BBC World","https://feeds.bbci.co.uk/news/world/rss.xml"],
-  ["BBC Business","https://feeds.bbci.co.uk/news/business/rss.xml"],
-  ["Al Jazeera","https://www.aljazeera.com/xml/rss/all.xml"],
-  ["The Guardian","https://www.theguardian.com/world/rss"],
-  ["DW","https://rss.dw.com/xml/rss-en-all"]
- ];
- let busy=false;
- async function getFeed(source,url){
-  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),9000);
-  try{
-   const response=await fetch("https://proxy.cors.dev/"+url,{signal:ctl.signal,cache:"no-store",credentials:"omit"});
-   if(!response.ok)throw Error(source+" HTTP "+response.status);
-   const xml=new DOMParser().parseFromString(await response.text(),"application/xml");
-   if(xml.querySelector("parsererror"))throw Error(source+" XML error");
-   return [...xml.querySelectorAll("item, entry")].map(node=>{
-    const title=node.querySelector("title")?.textContent?.trim()||"";
-    const linkNode=node.querySelector("link");
-    const link=linkNode?.textContent?.trim()||linkNode?.getAttribute("href")||"";
-    const raw=node.querySelector("pubDate, published, updated")?.textContent||"";
-    const description=node.querySelector("description, summary, content")?.textContent||"";
-    return {source,title,link,date:new Date(raw),description:description.replace(/<[^>]*>/g," ").replace(/\s+/g," ").trim().slice(0,500)};
-   }).filter(x=>x.title);
-  }finally{clearTimeout(timer)}
- }
- async function load(){
-  const list=document.getElementById("nativeNews"),meta=document.getElementById("newsPipelineMeta");
-  if(!list||busy)return;
-  busy=true;list.textContent="Connecting to global publisher feeds…";
-  if(meta)meta.textContent="News loader active · requesting publisher feeds…";
-  try{
-   const results=await Promise.allSettled(feeds.map(f=>getFeed(f[0],f[1])));
-   const failures=results.filter(x=>x.status==="rejected").length;
-   const all=results.flatMap(x=>x.status==="fulfilled"?x.value:[]);
-   const seen=new Set();
-   const rows=all.filter(x=>{
-    const t=(x.title+" "+x.description).toLowerCase();
-    const relevant=/war|conflict|attack|missile|ceasefire|sanction|tariff|trade|bond|treasury|yield|central bank|federal reserve|interest rate|inflation|cpi|recession|gdp|oil|energy|opec|government|election|summit|debt|banking|geopolitic|military|shipping|market/.test(t);
-    if(!relevant||!x.title||seen.has(x.title))return false;seen.add(x.title);return true;
-   }).sort((a,b)=>(b.date-a.date)).slice(0,30);
-   list.replaceChildren();
-   if(!rows.length){
-    list.textContent="Global news unavailable. "+(all.length?"No matching major-world stories were returned.":"Publisher feeds could not be reached.")+" Failed feeds: "+failures+"/"+feeds.length+".";
-    if(meta)meta.textContent="News connection failed · "+failures+" of "+feeds.length+" feeds unavailable.";
-   }else{
-    rows.forEach((x,i)=>{
-     const article=document.createElement("article");article.className="native-news-item";
-     const heading=document.createElement("div");heading.className="news-story-title";heading.textContent=x.title;article.appendChild(heading);
-     if(x.description){const summary=document.createElement("p");summary.className="news-story-summary";summary.textContent=x.description;article.appendChild(summary)}
-     const foot=document.createElement("div");foot.className="news-story-source";foot.textContent=x.source+" · "+(isNaN(x.date.getTime())?"Publication time unavailable":x.date.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",hour:"numeric",minute:"2-digit",hour12:true}));article.appendChild(foot);
-     list.appendChild(article);
-    });
-    if(meta)meta.textContent="Global publisher feeds · "+rows.length+" stories · "+failures+" feeds unavailable.";
-   }
-  }catch(error){
-   list.textContent="News loader error: "+(error&&error.message?error.message:"Unknown error");
-   if(meta)meta.textContent="News loader stopped · tap Refresh news to retry.";
-  }finally{busy=false}
- }
- window.loadNativeNews=load;
- function start(){const list=document.getElementById("nativeNews");if(list)load();else setTimeout(start,300)}
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
- document.addEventListener("click",function(event){
-  const target=event.target;
-  const button=target&&target.closest?target.closest('[data-page="news"],#refreshGlobalNewsBtn'):null;
-  if(button)setTimeout(load,150);
- },true);
-})();
+/* Removed duplicate legacy news loader: the primary ranked loader above owns this section. */
 </script>
 
 <script>
