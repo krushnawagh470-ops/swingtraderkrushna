@@ -4,6 +4,8 @@ import os
 from datetime import datetime, timezone
 from typing import Any
 import httpx
+from dotenv import load_dotenv
+load_dotenv()
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
