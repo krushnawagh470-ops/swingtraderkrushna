@@ -1,0 +1,49 @@
+name: Update Forex Factory calendar snapshot
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-calendar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Fetch weekly Forex Factory export
+        run: |
+          mkdir -p data
+          curl --fail --silent --show-error --location \
+            --retry 2 --retry-delay 10 \
+            "https://nfs.faireconomy.media/ff_calendar_thisweek.json" \
+            -o /tmp/ff-calendar.json
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          with open('/tmp/ff-calendar.json', encoding='utf-8') as f:
+              events = json.load(f)
+          if not isinstance(events, list) or not events:
+              raise SystemExit("Forex Factory returned an empty or invalid event list")
+          payload = {
+              "source": "Forex Factory public weekly calendar export",
+              "fetchedAt": datetime.now(timezone.utc).isoformat(),
+              "events": events
+          }
+          with open('data/forex_factory_calendar.json', 'w', encoding='utf-8') as f:
+              json.dump(payload, f, ensure_ascii=False, separators=(',', ':'))
+          PY
+      - name: Commit updated snapshot
+        run: |
+          if git diff --quiet -- data/forex_factory_calendar.json; then
+            echo "Calendar snapshot is unchanged."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/forex_factory_calendar.json
+          git commit -m "Update Forex Factory calendar snapshot"
+          git push
