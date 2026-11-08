@@ -84,4 +84,5 @@ async def ai_chat(body: ChatRequest) -> dict[str, str]:
             detail += f" {provider_error[:400]}"
         raise HTTPException(status_code=502, detail=detail) from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail="AI provider connection failed.") from exc
+        # Expose only the exception class; never return request headers or API credentials.
+        raise HTTPException(status_code=502, detail=f"AI provider connection failed ({type(exc).__name__}).") from exc
