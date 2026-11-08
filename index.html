@@ -752,7 +752,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   }
   function circuitIST(value){
     const d=value instanceof Date?value:new Date(value);
-    return Number.isNaN(d.getTime())?"Time unavailable":d.toLocaleString("en-IN",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"medium",hour12:false})+" IST";
+    return Number.isNaN(d.getTime())?"Time unavailable":d.toLocaleString("en-US",{timeZone:"Asia/Kolkata",dateStyle:"medium",timeStyle:"medium",hour12:true});
   }
   function circuitTimestampSeconds(value){
     if(value===undefined||value===null||value==="")return NaN;
@@ -1385,7 +1385,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
    if(!events.length)throw Error("Calendar snapshot is empty");
    const filter=document.getElementById("calendarImpact")?.value||"all";
    const rows=events.filter(e=>filter==="all"||(filter==="medium"?["medium","high"].includes(String(e.importance||e.impact).toLowerCase()):String(e.importance||e.impact).toLowerCase()==="high"));
-   el.innerHTML='<div class="q-meta">Source: repository GitHub Actions snapshot · schedule may change · times in AM/PM</div><table class="native-table"><thead><tr><th>Release · IST</th><th>Currency</th><th>Event</th><th>Impact</th><th>Actual</th><th>Forecast</th><th>Previous</th></tr></thead><tbody>'+rows.map(e=>'<tr><td>'+esc(terminalIST(e.time||e.scheduledAt||e.timestamp))+'</td><td>'+esc(e.currency||e.countryCode||"—")+'</td><td>'+esc(e.name||e.title||e.eventName||"—")+'</td><td>'+esc(e.importance||e.impact||"—")+'</td><td>'+esc(e.actual??"—")+'</td><td>'+esc(e.forecast??"—")+'</td><td>'+esc(e.previous??"—")+'</td></tr>').join("")+'</tbody></table>';
+   el.innerHTML='<div class="q-meta">Source: repository GitHub Actions snapshot · schedule may change · event times shown with AM/PM</div><table class="native-table"><thead><tr><th>Release · Time</th><th>Currency</th><th>Event</th><th>Impact</th><th>Actual</th><th>Forecast</th><th>Previous</th></tr></thead><tbody>'+rows.map(e=>'<tr><td>'+esc(terminalIST(e.time||e.scheduledAt||e.timestamp))+'</td><td>'+esc(e.currency||e.countryCode||"—")+'</td><td>'+esc(e.name||e.title||e.eventName||"—")+'</td><td>'+esc(e.importance||e.impact||"—")+'</td><td>'+esc(e.actual??"—")+'</td><td>'+esc(e.forecast??"—")+'</td><td>'+esc(e.previous??"—")+'</td></tr>').join("")+'</tbody></table>';
   }catch(e){el.textContent="Economic calendar unavailable: "+e.message+" · no sample events are shown."}
  }
  async function loadNativeNews(force=false){
