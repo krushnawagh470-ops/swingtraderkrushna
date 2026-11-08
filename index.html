@@ -1388,7 +1388,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
    el.innerHTML='<div class="q-meta">Source: repository GitHub Actions snapshot · schedule may change · event times shown with AM/PM</div><table class="native-table"><thead><tr><th>Release · Time</th><th>Currency</th><th>Event</th><th>Impact</th><th>Actual</th><th>Forecast</th><th>Previous</th></tr></thead><tbody>'+rows.map(e=>'<tr><td>'+esc(terminalIST(e.time||e.scheduledAt||e.timestamp))+'</td><td>'+esc(e.currency||e.countryCode||"—")+'</td><td>'+esc(e.name||e.title||e.eventName||"—")+'</td><td>'+esc(e.importance||e.impact||"—")+'</td><td>'+esc(e.actual??"—")+'</td><td>'+esc(e.forecast??"—")+'</td><td>'+esc(e.previous??"—")+'</td></tr>').join("")+'</tbody></table>';
   }catch(e){el.textContent="Economic calendar unavailable: "+e.message+" · no sample events are shown."}
  }
- async function loadNativeNews(force=false){
+ async function loadOpenDataNewsRSS(force=false){
   const el=document.getElementById("nativeNews");if(!el||window.__circuitOpenNewsBusy)return;
   window.__circuitOpenNewsBusy=true;
   try{
@@ -1414,7 +1414,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   });
   updateSectionStrips();
  }
- window.loadNativeQuotes=loadNativeQuotes;window.loadNativeMovers=loadNativeMovers;window.loadNativeSummary=loadNativeSummary;window.loadNativeCalendar=loadNativeCalendar;window.loadNativeNews=loadNativeNews;
+ window.loadNativeQuotes=loadNativeQuotes;window.loadNativeMovers=loadNativeMovers;window.loadNativeSummary=loadNativeSummary;window.loadNativeCalendar=loadNativeCalendar;
  try{if(typeof liveHubConnection!=="undefined"&&liveHubConnection)liveHubConnection.stop()}catch(_){}
  addSectionStrips();
  const startPriorityQuotes=()=>{if(typeof window.loadPriorityMarketQuotes==="function")window.loadPriorityMarketQuotes()};
