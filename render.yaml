@@ -2,6 +2,7 @@ services:
   - type: web
     name: circuit-api
     runtime: docker
+    plan: free
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     healthCheckPath: /api/v1/health
