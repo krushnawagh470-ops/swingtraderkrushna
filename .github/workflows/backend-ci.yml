@@ -3,10 +3,20 @@ on:
   push:
     paths:
       - 'backend/**'
+      - 'worker.js'
+      - 'auth.js'
+      - 'memory.js'
+      - 'index.html'
+      - 'firebase-config.js'
       - '.github/workflows/backend-ci.yml'
   pull_request:
     paths:
       - 'backend/**'
+      - 'worker.js'
+      - 'auth.js'
+      - 'memory.js'
+      - 'index.html'
+      - 'firebase-config.js'
       - '.github/workflows/backend-ci.yml'
 jobs:
   test:
