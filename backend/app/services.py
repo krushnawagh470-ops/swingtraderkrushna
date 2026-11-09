@@ -57,21 +57,58 @@ async def get_market_quotes(symbols: list[str]) -> list[dict[str, Any]]:
         raise batch_error
     return [{"symbol": symbol, **by_symbol[symbol]} if symbol in by_symbol else {"symbol": symbol, "available": False} for symbol in symbols]
 
-def _text(node: ET.Element, name: str) -> str:
-    child = node.find(name)
-    return (child.text or "").strip() if child is not None else ""
+def _child_text(node: ET.Element, *names: str) -> str:
+    wanted = set(names)
+    for child in list(node):
+        if child.tag.rsplit("}", 1)[-1] in wanted:
+            return (child.text or "").strip()
+    return ""
+
+def _parse_published(raw_date: str):
+    if not raw_date:
+        return None
+    try:
+        value = raw_date.strip()
+        if value.endswith("Z"):
+            value = value[:-1] + "+00:00"
+        try:
+            from datetime import datetime
+            published = datetime.fromisoformat(value)
+        except ValueError:
+            published = email.utils.parsedate_to_datetime(raw_date)
+        if published.tzinfo is None:
+            published = published.replace(tzinfo=timezone.utc)
+        return published.astimezone(timezone.utc)
+    except (TypeError, ValueError, OverflowError):
+        return None
 
 def _parse_feed(source: str, xml_text: str) -> list[dict[str, Any]]:
-    root = ET.fromstring(xml_text); rows = []
-    for item in root.findall(".//item"):
-        title, link = _text(item, "title"), _text(item, "link")
-        raw_date = _text(item, "pubDate") or _text(item, "published") or _text(item, "updated")
-        if not title or not link.startswith(("https://", "http://")): continue
-        try:
-            published = email.utils.parsedate_to_datetime(raw_date)
-            if published.tzinfo is None: published = published.replace(tzinfo=timezone.utc)
-        except (TypeError, ValueError, OverflowError): continue
-        rows.append({"source": source, "title": title, "url": link, "published_at": published.astimezone(timezone.utc).isoformat(), "summary": _text(item, "description")[:700]})
+    root = ET.fromstring(xml_text)
+    rows = []
+    # Accept both RSS <item> and Atom <entry>; Atom elements are namespace-qualified.
+    entries = [node for node in root.iter() if node.tag.rsplit("}", 1)[-1] in {"item", "entry"}]
+    for item in entries:
+        title = _child_text(item, "title")
+        link = _child_text(item, "link")
+        if not link:
+            for node in list(item):
+                if node.tag.rsplit("}", 1)[-1] == "link":
+                    rel = node.attrib.get("rel", "alternate")
+                    if rel == "alternate" and node.attrib.get("href"):
+                        link = node.attrib["href"]
+                        break
+        raw_date = _child_text(item, "pubDate", "published", "updated", "date")
+        published = _parse_published(raw_date)
+        summary = _child_text(item, "description", "summary", "content")
+        if not title or not link.startswith(("https://", "http://")) or published is None:
+            continue
+        rows.append({
+            "source": source,
+            "title": title,
+            "url": link,
+            "published_at": published.isoformat(),
+            "summary": summary[:700],
+        })
     return rows
 
 async def _fetch_feed(client: httpx.AsyncClient, source: str, url: str) -> list[dict[str, Any]]:
