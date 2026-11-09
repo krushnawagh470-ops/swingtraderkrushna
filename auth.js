@@ -4,7 +4,7 @@
   const gate = document.getElementById("spiderAuthGate"), status = document.getElementById("spiderAuthStatus");
   const email = document.getElementById("spiderAuthEmail"), password = document.getElementById("spiderAuthPassword");
   const ownerEmail = String(window.SPIDER_OWNER_EMAIL || "").trim().toLowerCase();
-  let auth = null, resolveReady;
+  let auth = null, resolveReady, pendingGoogleCredential = null;
   window.spiderAuthReady = new Promise(resolve => { resolveReady = resolve; });
   function message(text, error) { if (status) { status.textContent = text; status.dataset.error = error ? "true" : "false"; } }
   function setAuthenticated(user) {
@@ -12,8 +12,11 @@
     document.documentElement.classList.toggle("spider-auth-locked", !ok);
     if (gate) gate.hidden = ok;
     const signOut = document.getElementById("spiderSignOut"); if (signOut) signOut.hidden = !ok;
+    const linkEmail = document.getElementById("spiderLinkEmail");
+    if (linkEmail) linkEmail.hidden = !ok || user.providerData.some(p => p.providerId === "password");
     if (ok) message("Signed in as " + user.email, false);
-    else if (user) { message("This account is not the authorised, verified SPIDER owner.", true); auth.signOut().catch(() => {}); }
+    else if (user && String(user.email || "").toLowerCase() !== ownerEmail) { message("This account is not the authorised SPIDER owner.", true); auth.signOut().catch(() => {}); }
+    else if (user) message("Verify your owner email address before using SPIDER.", true);
     else message("Sign in with the authorised Google account or its email/password login.", false);
     window.dispatchEvent(new CustomEvent("spider-auth-state", { detail: { user: ok ? user : null } }));
     resolveReady(ok ? user : null);
@@ -45,20 +48,28 @@
     document.getElementById("spiderGoogleLogin")?.addEventListener("click", e => busy(e.currentTarget, async () => {
       const p = new firebase.auth.GoogleAuthProvider(); p.setCustomParameters({ prompt: "select_account" });
       try { await auth.signInWithPopup(p); }
-      catch (err) { if (["auth/popup-blocked","auth/popup-closed-by-user","auth/cancelled-popup-request"].includes(err.code)) await auth.signInWithRedirect(p); else throw err; }
+      catch (err) { if (["auth/popup-blocked","auth/popup-closed-by-user","auth/cancelled-popup-request"].includes(err.code)) await auth.signInWithRedirect(p); else if (err.code === "auth/account-exists-with-different-credential") { pendingGoogleCredential = firebase.auth.GoogleAuthProvider.credentialFromError(err); message("This owner email already has an email/password login. Sign in with email below to link Google.", true); }
+        else throw err; }
     }));
     document.getElementById("spiderEmailLogin")?.addEventListener("click", e => busy(e.currentTarget, async () => {
       const value = (email?.value || "").trim().toLowerCase();
       if (value !== ownerEmail) throw new Error("Use the configured SPIDER owner email address.");
-      await auth.signInWithEmailAndPassword(value, password?.value || ""); if (password) password.value = "";
+      const result = await auth.signInWithEmailAndPassword(value, password?.value || "");
+      if (!result.user.emailVerified) { await result.user.sendEmailVerification(); await auth.signOut(); throw new Error("Email verification link sent. Verify your email, then sign in again."); }
+      if (pendingGoogleCredential) { await result.user.linkWithCredential(pendingGoogleCredential); pendingGoogleCredential = null; }
+      if (password) password.value = "";
     }));
-    document.getElementById("spiderEmailCreate")?.addEventListener("click", e => busy(e.currentTarget, async () => {
-      const value = (email?.value || "").trim().toLowerCase(), secret = password?.value || "";
-      if (value !== ownerEmail) throw new Error("Only the configured owner email can create the email/password account.");
-      if (secret.length < 12) throw new Error("Use a password with at least 12 characters.");
-      await auth.createUserWithEmailAndPassword(value, secret); await auth.currentUser.sendEmailVerification(); await auth.signOut();
-      if (password) password.value = ""; message("Verification email sent. Verify the owner email, then sign in.", false);
-    }));
+    document.getElementById("spiderLinkEmail")?.addEventListener("click", async () => {
+      const secret = window.prompt("Create a password for your SPIDER owner account (minimum 12 characters).");
+      if (secret === null) return;
+      if (secret.length < 12) { message("Use a password with at least 12 characters.", true); return; }
+      try {
+        const credential = firebase.auth.EmailAuthProvider.credential(ownerEmail, secret);
+        await auth.currentUser.linkWithCredential(credential);
+        message("Email/password sign-in is now linked to this owner account.", false);
+        setAuthenticated(auth.currentUser);
+      } catch (error) { message(error.message || "Could not link email/password sign-in.", true); }
+    });
     document.getElementById("spiderSignOut")?.addEventListener("click", () => auth.signOut().catch(e => message(e.message, true)));
     auth.getRedirectResult().catch(e => message(e.message, true));
     auth.onAuthStateChanged(setAuthenticated);
