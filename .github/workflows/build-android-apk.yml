@@ -32,13 +32,18 @@ jobs:
           "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
       - name: Generate launcher icon from the supplied SPIDER logo
         run: |
           python3 -m pip install --quiet pillow
           python3 - <<'PY'
-          from PIL import Image
+          from PIL import Image, ImageFile
           from pathlib import Path
-          src = Image.open("assets/spider-favicon.png").convert("RGBA")
+          ImageFile.LOAD_TRUNCATED_IMAGES = True
+          src = Image.open("assets/spider-favicon.png")
+          src.load()
+          src = src.convert("RGBA")
           # Preserve the supplied artwork exactly; only scale the canvas resolution.
           sizes = {"mdpi":48, "hdpi":72, "xhdpi":96, "xxhdpi":144, "xxxhdpi":192}
           for density, size in sizes.items():
