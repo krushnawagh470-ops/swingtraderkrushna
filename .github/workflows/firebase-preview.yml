@@ -23,7 +23,9 @@ jobs:
       - name: Stage frontend-only hosting files
         run: |
           mkdir -p hosting/assets hosting/data
-          cp index.html auth.js firebase-config.js memory.js hosting/
+          cp index.html auth.js firebase-config.js memory.js manifest.webmanifest sw.js hosting/
+          mkdir -p hosting/icons
+          cp icons/spider.svg hosting/icons/
           cp assets/spider-agent.mp4 hosting/assets/
           cp data/calendar.json data/forex_factory_calendar.json hosting/data/
 
