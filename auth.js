@@ -6,7 +6,25 @@
   const ownerEmail = String(window.SPIDER_OWNER_EMAIL || "").trim().toLowerCase();
   let auth = null, resolveReady, pendingGoogleCredential = null;
   window.spiderAuthReady = new Promise(resolve => { resolveReady = resolve; });
-  function message(text, error) { if (status) { status.textContent = text; status.dataset.error = error ? "true" : "false"; } }
+  function message(text, error) {
+    if (status) { status.textContent = text; status.dataset.error = error ? "true" : "false"; }
+    // Once the owner is signed in, the auth gate is hidden. Keep auth/linking
+    // feedback visible on the dashboard instead of writing into hidden content.
+    if (gate && gate.hidden) {
+      let toast = document.getElementById("spiderAuthToast");
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.id = "spiderAuthToast";
+        toast.setAttribute("role", "status");
+        toast.setAttribute("aria-live", "polite");
+        toast.style.cssText = "position:fixed;top:58px;right:12px;z-index:10001;max-width:min(420px,calc(100vw - 32px));padding:11px 14px;border:1px solid #3975a8;border-radius:8px;background:#07172a;color:#d9edff;font:12px/1.5 system-ui,sans-serif;box-shadow:0 8px 28px #0008";
+        document.body.appendChild(toast);
+      }
+      toast.textContent = text;
+      toast.style.borderColor = error ? "#b85b5b" : "#3975a8";
+      toast.style.color = error ? "#ffb0b0" : "#d9edff";
+    }
+  }
   function setAuthenticated(user) {
     const ok = Boolean(user && ownerEmail && String(user.email || "").toLowerCase() === ownerEmail && user.emailVerified);
     document.documentElement.classList.toggle("spider-auth-locked", !ok);
