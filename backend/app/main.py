@@ -31,6 +31,7 @@ def _owner_claims_valid(claims: dict[str, Any]) -> bool:
         and claims.get("aud") == FIREBASE_PROJECT_ID
         and claims.get("iss") == f"https://securetoken.google.com/{FIREBASE_PROJECT_ID}"
         and claims.get("email_verified") is True
+        and claims.get("firebase", {}).get("sign_in_provider") in {"google.com", "password"}
         and str(claims.get("email", "")).strip().lower() == SPIDER_OWNER_EMAIL
         and isinstance(claims.get("sub"), str) and bool(claims.get("sub"))
     )
