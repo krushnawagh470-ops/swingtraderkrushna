@@ -27,6 +27,12 @@ jobs:
           cp assets/spider-agent.mp4 hosting/assets/
           cp data/calendar.json data/forex_factory_calendar.json hosting/data/
 
+      - name: Verify Firebase deploy identity (non-secret fields only)
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SPIDER_121 }}
+        run: |
+          node -e 'const k=JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT); console.log("Firebase key project_id:", k.project_id); console.log("Firebase key client_email:", k.client_email); if (k.project_id !== "spider-121") process.exit(1)'
+
       - name: Deploy isolated Firebase preview channel
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
