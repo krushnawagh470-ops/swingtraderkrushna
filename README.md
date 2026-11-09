@@ -1,6 +1,6 @@
-# SwingTraderKrushna — CIRCUIT
+# SwingTraderKrushna — SPIDER
 
-CIRCUIT is a mobile-friendly AI workspace with a static web frontend and a separate Python API backend.
+SPIDER is a mobile-friendly AI workspace with a static web frontend and a separate Python API backend.
 
 ## Architecture
 
