@@ -35,6 +35,8 @@ jobs:
           mkdir -p hosting/assets
           cp index.html auth.js firebase-config.js memory.js hosting/
           cp assets/spider-agent.mp4 hosting/assets/
+          mkdir -p hosting/icons
+          cp icons/spider.png hosting/icons/
           echo "Static hosting payload:"
           find hosting -type f -printf '%P (%s bytes)\n' | sort
 
