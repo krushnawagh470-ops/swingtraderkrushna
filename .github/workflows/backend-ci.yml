@@ -23,4 +23,6 @@ jobs:
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r requirements.txt
       - run: python -m compileall -q app
-      - run: pytest -q
+      - run: PYTHONPATH=. pytest -q
+      - name: Check Worker and browser JavaScript syntax
+        run: for file in ../worker.js ../auth.js ../memory.js; do node --check "$file"; done
