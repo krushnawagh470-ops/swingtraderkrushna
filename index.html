@@ -314,9 +314,9 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 #ai #circuitNeuralCanvas{display:none!important;visibility:hidden!important;opacity:0!important}
 </style>
 <style id="circuit-agent-speech-sync">
-#ai #aiAgentVisual.is-speaking video.circuit-agent-video{animation:circuitVoicePulse 1.15s ease-in-out infinite alternate;filter:brightness(1.12) saturate(1.16)}
+#ai #aiAgentVisual.is-speaking video.circuit-agent-video{animation:none!important;transform:none!important;filter:none!important}
 #ai #aiAgentVisual.is-speaking:after{content:"";position:absolute;inset:0;z-index:11;pointer-events:none;border:1px solid rgba(106,190,255,.48);box-shadow:inset 0 0 34px rgba(42,145,255,.18);animation:circuitVoiceGlow .8s ease-in-out infinite alternate}
-@keyframes circuitVoicePulse{from{transform:scale(1)}to{transform:scale(1.035)}}
+@keyframes circuitVoicePulse{from{transform:none}to{transform:none}}
 @keyframes circuitVoiceGlow{from{opacity:.25}to{opacity:.85}}
 @media(prefers-reduced-motion:reduce){#ai #aiAgentVisual.is-speaking video.circuit-agent-video,#ai #aiAgentVisual.is-speaking:after{animation:none}}
 </style>
@@ -1529,26 +1529,20 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
     }
   }
   if (agentVideo) {
+    agentVideo.loop = false;
+    agentVideo.style.objectFit = "cover";
+    agentVideo.style.objectPosition = "center center";
     agentVideo.addEventListener("loadedmetadata", function () {
       agentVideo.pause();
       try { agentVideo.currentTime = 0; } catch (e) {}
     }, { once: true });
+    /* Exclude the unrelated book promotion at the end of the uploaded clip. */
+    agentVideo.addEventListener("timeupdate", function () {
+      if (agentVisual && agentVisual.classList.contains("is-speaking") && agentVideo.currentTime >= 27.2) agentVideo.currentTime = 0;
+    });
     setAgentSpeaking(false);
   }
-  function pulseAgentForWord(word) {
-    if (!agentVideo || !agentVisual || !word || !agentVisual.classList.contains("is-speaking") || !agentVideo.animate) return;
-    const clean = word.toLowerCase().replace(/[^a-z]/g, "");
-    if (!clean) return;
-    const groups = clean.match(/[aeiouy]+/g) || [];
-    const syllables = Math.max(1, Math.min(5, groups.length - (clean.endsWith("e") && groups.length > 1 ? 1 : 0)));
-    if (agentBeatAnimation) agentBeatAnimation.cancel();
-    try {
-      agentBeatAnimation = agentVideo.animate(
-        [{transform:"scale(1)",filter:"brightness(1.05) saturate(1.1)"},{transform:"scale(1.045)",filter:"brightness(1.28) saturate(1.3)"},{transform:"scale(1)",filter:"brightness(1.05) saturate(1.1)"}],
-        {duration:Math.max(170,syllables*150),iterations:syllables,easing:"ease-in-out"}
-      );
-    } catch (e) {}
-  }
+  function pulseAgentForWord(word) { return; /* Fixed camera: no zoom/pulse. */ }
   const selectedVoiceLanguage = () => "en-US";
   let recognition = null;
   let listening = false;
@@ -2478,18 +2472,11 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
 </script>
 
 <style id="spider-agent-final-panel-fit">
-/* Match the panel to the portrait source ratio: no side gutters or letterboxing. */
-#ai #aiAgentVisual.circuit-stage{
- width:100%!important;max-width:none!important;height:auto!important;min-height:0!important;
- max-height:none!important;aspect-ratio:1080/1430!important;padding:0!important;margin:0!important;
- border:0!important;border-radius:0!important;overflow:hidden!important;background:#02070d!important;
-}
-#ai #aiAgentVisual video.circuit-agent-video{
- position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
- min-width:100%!important;min-height:100%!important;object-fit:cover!important;
- object-position:center center!important;background:#02070d!important;
-}
+/* Full-bleed avatar: fill the console viewport without side gutters or zoom motion. */
+#ai #aiAgentVisual.circuit-stage{position:relative!important;display:block!important;width:100%!important;max-width:none!important;height:clamp(320px,58vw,520px)!important;min-height:320px!important;max-height:520px!important;aspect-ratio:auto!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;overflow:hidden!important;background:#02070d!important}
+#ai #aiAgentVisual video.circuit-agent-video{position:absolute!important;inset:0!important;display:block!important;width:100%!important;height:100%!important;min-width:100%!important;min-height:100%!important;object-fit:cover!important;object-position:center center!important;animation:none!important;transform:none!important;transition:none!important;filter:none!important;background:#02070d!important;z-index:10!important}
+#ai #aiAgentVisual.is-speaking video.circuit-agent-video{animation:none!important;transform:none!important;filter:none!important}
 #ai .ai-workbench-grid>div:first-child{width:100%!important;min-width:0!important;padding:0!important;margin:0!important}
-@media(max-width:900px){#ai .ai-workbench-grid{gap:0!important}}
+@media(max-width:900px){#ai .ai-workbench-grid{gap:0!important}#ai #aiAgentVisual.circuit-stage{height:clamp(320px,72vw,480px)!important;min-height:320px!important;max-height:480px!important}}
 </style>
 </body></html>
