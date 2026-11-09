@@ -535,7 +535,35 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
   #ai .ai-agent-visual.circuit-stage{height:clamp(280px,54vh,480px)!important;min-height:280px!important}
 }
 </style>
-</head><body><div class="shell">
+<script>document.documentElement.classList.add("spider-auth-locked");</script>
+<style>
+html.spider-auth-locked,html.spider-auth-locked body{overflow:hidden!important}
+html.spider-auth-locked .shell{visibility:hidden!important;pointer-events:none!important}
+#spiderAuthGate{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:18px;background:radial-gradient(ellipse at 50% 0%,#173a61 0%,#06101f 65%);color:#eaf4ff;font-family:Arial,sans-serif}
+#spiderAuthGate[hidden]{display:none!important}
+.spider-auth-card{width:min(100%,420px);padding:24px;border:1px solid #315b84;border-radius:16px;background:linear-gradient(145deg,#0c2038,#06111f);box-shadow:0 24px 80px #0009}
+.spider-auth-card h1{margin:0 0 5px;font-size:25px;letter-spacing:.16em}.spider-auth-card p{color:#9bb4d0;font-size:12px;line-height:1.55}
+.spider-auth-card label{display:block;margin:12px 0 5px;color:#9dc7ec;font-size:10px;font-weight:700;letter-spacing:.12em}
+.spider-auth-card input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #315577;border-radius:8px;background:#061426;color:#fff;font-size:14px}
+.spider-auth-card button{width:100%;margin-top:10px;padding:12px;border:1px solid #3975a8;border-radius:8px;background:#12365a;color:#f4faff;font-weight:700}
+.spider-auth-card button:disabled{opacity:.55}.spider-auth-card #spiderEmailCreate{background:transparent}
+#spiderAuthStatus{min-height:34px;margin-top:12px;font-size:11px;color:#a8c8e6}#spiderAuthStatus[data-error="true"]{color:#ff9b9b}
+#spiderSignOut{position:fixed;right:12px;top:12px;z-index:10000;border:1px solid #345879;border-radius:7px;background:#07172a;color:#d9edff;padding:8px 11px}
+@media(max-width:480px){.spider-auth-card{padding:19px}.spider-auth-card h1{font-size:22px}}
+</style>
+</head><body><div id="spiderAuthGate" role="dialog" aria-modal="true" aria-labelledby="spiderAuthTitle">
+  <div class="spider-auth-card">
+    <div class="terminal-label">PRIVATE OWNER WORKSPACE</div><h1 id="spiderAuthTitle">SPIDER</h1>
+    <p>Sign in with your authorised Google account or the owner email/password account. Access is restricted on the server as well as in this browser.</p>
+    <button id="spiderGoogleLogin" type="button">Continue with Google</button>
+    <div style="height:1px;background:#294766;margin:17px 0"></div>
+    <label for="spiderAuthEmail">OWNER EMAIL</label><input id="spiderAuthEmail" type="email" autocomplete="username" placeholder="Your authorised email address">
+    <label for="spiderAuthPassword">PASSWORD</label><input id="spiderAuthPassword" type="password" autocomplete="current-password" placeholder="At least 12 characters">
+    <button id="spiderEmailLogin" type="button">Sign in with email</button>
+    <button id="spiderEmailCreate" type="button">Create owner email account</button>
+    <div id="spiderAuthStatus" role="status" aria-live="polite">Checking authentication setup…</div>
+  </div>
+</div><button id="spiderSignOut" type="button" hidden>Sign out</button><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
 <div class="desk-nav-group"><button data-page="ai" data-group-toggle="aiGroup">✦ <span>SPIDER</span><b class="nav-chevron">⌄</b></button><div class="desk-nav-subnav" id="aiGroup"><button data-agent="Claude" onclick="showPage('ai')">Claude AI</button><button data-agent="ChatGPT" onclick="showPage('ai')">ChatGPT</button><button data-agent="Gemini" onclick="showPage('ai')">Gemini</button><button data-agent="Perplexity" onclick="showPage('ai')">Perplexity</button><button data-agent="Grok" onclick="showPage('ai')">Grok</button><button data-agent="GitHub" onclick="showPage('ai')">GitHub</button><button data-agent="Higgsfield" onclick="showPage('ai')">Higgsfield</button><button data-agent="ElevenLabs" onclick="showPage('ai')">ElevenLabs</button></div></div>
@@ -685,18 +713,13 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
    </div>
    <div class="card" id="circuitCloudMemoryPanel" hidden style="margin-top:12px;border:1px solid #2b5b79;background:linear-gradient(145deg,#0b2031,#071321)">
     <div class="row" style="justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><div class="terminal-label">SPIDER · PERSISTENT MEMORY</div><b>Cloud memory</b><div class="q-meta">Private, cross-device memory. Only items you explicitly save are stored.</div></div><span class="signal-tag" id="circuitCloudMemoryState">CLOUD MEMORY · LOCKED</span></div>
-    <div id="circuitMemoryLogin" style="margin-top:10px">
-     <label class="terminal-label" for="circuitMemoryPassphrase">MEMORY PASSPHRASE</label>
-     <input id="circuitMemoryPassphrase" type="password" autocomplete="current-password" placeholder="Enter your private memory passphrase">
-     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitMemoryLoginButton">Unlock cloud memory</button></div>
-     <p class="q-meta">Your passphrase is checked by the secure Worker. It is not saved in this browser or sent to the AI model.</p>
-    </div>
+    <div id="circuitMemoryLogin" style="margin-top:10px"><p class="q-meta">Sign in to SPIDER with the owner account to unlock cloud memory. Memory uses the same verified account as AI chat.</p></div>
     <div id="circuitMemoryManager" hidden style="margin-top:10px">
      <label class="terminal-label" for="circuitCloudMemoryCategory">CATEGORY</label>
      <select id="circuitCloudMemoryCategory"><option>General</option><option>Preferences</option><option>Personal planning</option><option>Finance and career</option><option>Business and content</option><option>Technology and projects</option><option>Trading and investing</option></select>
      <label class="terminal-label" for="circuitCloudMemoryInput" style="display:block;margin-top:9px">ADD APPROVED MEMORY</label>
      <textarea id="circuitCloudMemoryInput" rows="3" maxlength="1200" placeholder="Example: Use 12-hour time format. Keep answers concise and practical."></textarea>
-     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitCloudMemorySave">Save memory</button><button type="button" class="btn secondary" id="circuitCloudMemoryRefresh">Refresh</button><button type="button" class="btn secondary" id="circuitCloudMemoryLogout">Lock memory</button><button type="button" class="btn secondary" id="circuitCloudMemoryClear">Delete all</button><span class="signal-tag" id="circuitCloudMemoryCount">0 saved</span></div>
+     <div class="row" style="justify-content:flex-start;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn" id="circuitCloudMemorySave">Save memory</button><button type="button" class="btn secondary" id="circuitCloudMemoryRefresh">Refresh</button><button type="button" class="btn secondary" id="circuitCloudMemoryLogout">Sign out of SPIDER</button><button type="button" class="btn secondary" id="circuitCloudMemoryClear">Delete all</button><span class="signal-tag" id="circuitCloudMemoryCount">0 saved</span></div>
      <div id="circuitCloudMemoryList" class="q-meta" style="margin-top:10px"></div>
     </div>
     <p class="q-meta" id="circuitCloudMemoryStatus" aria-live="polite" style="margin-top:9px">Cloud memory needs a D1 database and Worker secrets before it can be unlocked.</p>
@@ -1445,7 +1468,7 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
           method: "POST",
           mode: "cors",
           cache: "no-store",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + await window.spiderGetIdToken() },
           body: JSON.stringify({ messages: outgoing }),
           signal: activeRequestController.signal
         });
@@ -2322,7 +2345,9 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
 /* The primary sendMessage handler already owns the button. Do not invoke it again
    during capture: doing so races the activity tracker and can double-submit. */
 </script>
-<script src="memory.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script><script src="auth.js"></script><script src="memory.js"></script>
 
 <style id="circuit-approved-notebook-layout">
 /* Approved SPIDER layout: notebook structure, flush panel edges. */
