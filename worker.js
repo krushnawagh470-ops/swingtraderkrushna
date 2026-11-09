@@ -75,67 +75,50 @@ function validMessages(input) {
 }
 
 
-function b64url(bytes) {
-  let binary = "";
-  for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
+const FIREBASE_JWKS_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
+let firebaseKeysCache = { expiresAt: 0, keys: null };
 function fromB64url(value) {
   const padded = value.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((value.length + 3) % 4);
   const binary = atob(padded);
   return Uint8Array.from(binary, c => c.charCodeAt(0));
 }
-async function hmacKey(secret) {
-  return crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
-}
-async function issueMemoryToken(secret) {
-  const header = b64url(new TextEncoder().encode(JSON.stringify({ alg: "HS256", typ: "JWT" })));
-  const payload = b64url(new TextEncoder().encode(JSON.stringify({ sub: "owner", iss: "circuit-memory", iat: Math.floor(Date.now()/1000), exp: Math.floor(Date.now()/1000)+43200 })));
-  const input = header + "." + payload;
-  const signature = new Uint8Array(await crypto.subtle.sign("HMAC", await hmacKey(secret), new TextEncoder().encode(input)));
-  return input + "." + b64url(signature);
-}
-async function verifyMemoryToken(token, secret) {
+async function verifyFirebaseOwner(request, env) {
+  const projectId = String(env.FIREBASE_PROJECT_ID || "").trim();
+  const ownerEmail = String(env.SPIDER_OWNER_EMAIL || "").trim().toLowerCase();
+  if (!projectId || !ownerEmail) return { ok: false, status: 503, error: "Owner authentication is not configured. Set FIREBASE_PROJECT_ID and SPIDER_OWNER_EMAIL." };
+  const authorization = request.headers.get("Authorization") || "";
+  if (!authorization.startsWith("Bearer ")) return { ok: false, status: 401, error: "Sign in to SPIDER to continue." };
+  const token = authorization.slice(7).trim();
+  if (!token || token.length > 12000) return { ok: false, status: 401, error: "Invalid sign-in token." };
   try {
-    const parts = String(token || "").split(".");
-    if (parts.length !== 3) return false;
-    const input = parts[0] + "." + parts[1];
-    const valid = await crypto.subtle.verify("HMAC", await hmacKey(secret), fromB64url(parts[2]), new TextEncoder().encode(input));
-    if (!valid) return false;
-    const payload = JSON.parse(new TextDecoder().decode(fromB64url(parts[1])));
-    return payload.iss === "circuit-memory" && payload.sub === "owner" && Number(payload.exp) > Math.floor(Date.now()/1000);
-  } catch (_) { return false; }
-}
-async function sha256Hex(value) {
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
-  return Array.from(digest, b => b.toString(16).padStart(2, "0")).join("");
+    const parts = token.split(".");
+    if (parts.length !== 3) throw new Error("Malformed token");
+    const decode = value => JSON.parse(new TextDecoder().decode(fromB64url(value)));
+    const header = decode(parts[0]), claims = decode(parts[1]);
+    const now = Math.floor(Date.now() / 1000);
+    if (header.alg !== "RS256" || !header.kid) throw new Error("Unsupported token");
+    if (claims.aud !== projectId || claims.iss !== "https://securetoken.google.com/" + projectId) throw new Error("Wrong token audience");
+    if (typeof claims.sub !== "string" || !claims.sub || claims.sub.length > 128) throw new Error("Missing subject");
+    if (!Number.isFinite(claims.exp) || claims.exp <= now || !Number.isFinite(claims.iat) || claims.iat > now + 60) throw new Error("Expired or invalid token time");
+    if (claims.email_verified !== true || String(claims.email || "").trim().toLowerCase() !== ownerEmail) throw new Error("Not the authorised owner");
+    if (!firebaseKeysCache.keys || firebaseKeysCache.expiresAt <= now) {
+      const response = await fetch(FIREBASE_JWKS_URL, { cf: { cacheTtl: 3600, cacheEverything: true } });
+      if (!response.ok) throw new Error("Could not load Firebase signing keys");
+      const data = await response.json();
+      firebaseKeysCache = { keys: data.keys || [], expiresAt: now + 3600 };
+    }
+    const jwk = firebaseKeysCache.keys.find(key => key.kid === header.kid && key.kty === "RSA");
+    if (!jwk) throw new Error("Unknown signing key");
+    const key = await crypto.subtle.importKey("jwk", jwk, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+    const valid = await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, fromB64url(parts[2]), new TextEncoder().encode(parts[0] + "." + parts[1]));
+    if (!valid) throw new Error("Invalid token signature");
+    return { ok: true, userId: claims.sub, email: ownerEmail };
+  } catch (_) {
+    return { ok: false, status: 401, error: "Your SPIDER sign-in is invalid or expired. Sign in again." };
+  }
 }
 async function memoryRoute(request, env, url) {
-  if (!env.DB || !env.CIRCUIT_MEMORY_PASSWORD || !env.CIRCUIT_MEMORY_JWT_SECRET) {
-    return json({ error: "Persistent memory is not configured yet. Set the D1 binding DB and both CIRCUIT_MEMORY secrets in Cloudflare." }, 503);
-  }
-  if (url.pathname === "/memory/login" && request.method === "POST") {
-    let body;
-    try { body = await request.json(); } catch (_) { return json({ error: "Invalid JSON request." }, 400); }
-    const supplied = typeof body.password === "string" ? body.password : "";
-    if (supplied.length < 1 || supplied.length > 256) return json({ error: "Enter your memory passphrase." }, 400);
-    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-    const ipHash = await sha256Hex(ip + ":" + env.CIRCUIT_MEMORY_JWT_SECRET);
-    await env.DB.prepare("DELETE FROM memory_login_attempts WHERE attempted_at < ?").bind(Date.now()-86400000).run();
-    const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM memory_login_attempts WHERE ip_hash = ? AND attempted_at > ?").bind(ipHash, Date.now()-900000).first();
-    if (Number(recent?.n || 0) >= 5) return json({ error: "Too many login attempts. Wait 15 minutes and try again." }, 429);
-    if (supplied !== env.CIRCUIT_MEMORY_PASSWORD) {
-      await env.DB.prepare("INSERT INTO memory_login_attempts (ip_hash, attempted_at) VALUES (?, ?)").bind(ipHash, Date.now()).run();
-      return json({ error: "Incorrect memory passphrase." }, 401);
-    }
-    await env.DB.prepare("DELETE FROM memory_login_attempts WHERE ip_hash = ?").bind(ipHash).run();
-    const token = await issueMemoryToken(env.CIRCUIT_MEMORY_JWT_SECRET);
-    return json({ token, expiresIn: 43200, message: "Memory session started." });
-  }
-  const auth = request.headers.get("Authorization") || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!(await verifyMemoryToken(token, env.CIRCUIT_MEMORY_JWT_SECRET))) return json({ error: "Memory session expired or not signed in. Sign in again." }, 401);
-
+  if (!env.DB) return json({ error: "Persistent memory is not configured. Bind the D1 database as DB." }, 503);
   if (url.pathname === "/memory" && request.method === "GET") {
     const result = await env.DB.prepare("SELECT id, category, content, created_at, updated_at FROM circuit_memories WHERE user_id = 'owner' ORDER BY updated_at DESC LIMIT 100").all();
     return json({ memories: result.results || [] });
@@ -195,11 +178,15 @@ export default {
         providerMode: provider,
         build: "circuit-core-provider-adapter-2026-11-08-v2",
         timeout_seconds: TIMEOUT_MS / 1000,
-        memoryConfigured: Boolean(env.DB && env.CIRCUIT_MEMORY_PASSWORD && env.CIRCUIT_MEMORY_JWT_SECRET)
+        memoryConfigured: Boolean(env.DB), authConfigured: Boolean(env.FIREBASE_PROJECT_ID && env.SPIDER_OWNER_EMAIL)
       });
     }
 
-    if (url.pathname === "/memory" || url.pathname.startsWith("/memory/")) return memoryRoute(request, env, url);
+    if (url.pathname === "/memory" || url.pathname.startsWith("/memory/") || url.pathname === "/chat") {
+      const identity = await verifyFirebaseOwner(request, env);
+      if (!identity.ok) return json({ error: identity.error }, identity.status);
+      if (url.pathname === "/memory" || url.pathname.startsWith("/memory/")) return memoryRoute(request, env, url);
+    }
     if (url.pathname !== "/chat" || request.method !== "POST") return json({ error: "Not found." }, 404);
     if (!config.key) {
       const secret = provider === "openai" ? "OPENAI_API_KEY" : "GROQ_API_KEY";
