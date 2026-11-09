@@ -1,4 +1,4 @@
-"""CIRCUIT API: market data, publisher news and AI gateway."""
+"""SPIDER API: market data, publisher news and AI gateway."""
 from __future__ import annotations
 import os
 from datetime import datetime, timezone
@@ -14,7 +14,7 @@ from .services import get_market_quotes, get_latest_news
 APP_VERSION = "0.1.0"
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
-app = FastAPI(title="CIRCUIT API", description="Backend services for the SwingTraderKrushna CIRCUIT workspace.", version=APP_VERSION)
+app = FastAPI(title="SPIDER API", description="Backend services for the SwingTraderKrushna SPIDER workspace.", version=APP_VERSION)
 origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "https://krushnawagh470-ops.github.io,http://localhost:8000,http://127.0.0.1:8000").split(",") if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
@@ -27,7 +27,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 async def root() -> dict[str, str]:
-    return {"name": "CIRCUIT API", "status": "online", "docs": "/docs"}
+    return {"name": "SPIDER API", "status": "online", "docs": "/docs"}
 
 @app.get("/api/v1/health")
 async def health() -> dict[str, Any]:
