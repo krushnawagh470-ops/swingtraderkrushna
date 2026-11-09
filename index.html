@@ -512,7 +512,12 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
    <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="SPIDER animated neural-network virtual intelligence">
 <video class="circuit-agent-video" autoplay muted loop playsinline preload="metadata" aria-label="SPIDER AI Agent video"><source src="assets/spider-agent.mp4" type="video/mp4"></video>
 <canvas id="circuitNeuralCanvas" aria-hidden="true"></canvas>
-<span class="spider-gesture spider-gesture-left" aria-hidden="true"></span><span class="spider-gesture spider-gesture-right" aria-hidden="true"></span>
+<svg class="spider-body-gestures" viewBox="0 0 1000 650" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+ <defs><linearGradient id="spiderArmGlow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efffff"/><stop offset=".45" stop-color="#68d7ff"/><stop offset="1" stop-color="#278aff"/></linearGradient><filter id="spiderArmBlur"><feGaussianBlur stdDeviation="5"/></filter></defs>
+ <g class="spider-arm spider-arm-left"><path class="arm-halo" d="M340 414 C285 400 260 355 230 318 C213 296 192 281 174 263"/><path class="arm-line" d="M340 414 C285 400 260 355 230 318 C213 296 192 281 174 263"/><path class="arm-line" d="M174 263 C151 246 144 228 151 211 M174 263 C168 236 172 218 184 205 M174 263 C185 241 199 231 211 231 M174 263 C198 254 214 254 224 263"/><circle class="arm-joint" cx="340" cy="414" r="9"/><circle class="arm-joint" cx="230" cy="318" r="7"/></g>
+ <g class="spider-arm spider-arm-right"><path class="arm-halo" d="M660 414 C715 400 740 355 770 318 C787 296 808 281 826 263"/><path class="arm-line" d="M660 414 C715 400 740 355 770 318 C787 296 808 281 826 263"/><path class="arm-line" d="M826 263 C849 246 856 228 849 211 M826 263 C832 236 828 218 816 205 M826 263 C815 241 801 231 789 231 M826 263 C802 254 786 254 776 263"/><circle class="arm-joint" cx="660" cy="414" r="9"/><circle class="arm-joint" cx="770" cy="318" r="7"/></g>
+ <path class="spider-chest-scan" d="M300 465 Q500 510 700 465"/>
+</svg>
     <div class="circuit-state-label"><span class="circuit-live-dot"></span><span id="circuitStateText">SPIDER AI AGENT</span></div>
    </div>
 
@@ -2329,4 +2334,60 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
 }
 </style>
 
+
+<style id="spider-character-visual-v2">
+/* SPIDER holographic character: face video + articulated gesture overlay */
+#ai #aiAgentVisual.circuit-stage{position:relative!important;isolation:isolate!important;overflow:hidden!important;min-height:0!important;height:clamp(390px,58vw,620px)!important;max-height:620px!important;aspect-ratio:16/10!important;background:radial-gradient(ellipse at 50% 43%,#164c79 0%,#081a30 52%,#020812 100%)!important;border:1px solid #2d6a9d!important;border-radius:14px!important;box-shadow:inset 0 0 70px #36baff18,0 18px 55px #0007!important}
+#ai #aiAgentVisual .circuit-agent-video{position:absolute!important;z-index:1!important;inset:0!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center 42%!important;display:block!important;opacity:.98!important;filter:drop-shadow(0 0 22px #55caff55)!important}
+#ai #aiAgentVisual #circuitNeuralCanvas{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;z-index:2!important;pointer-events:none!important;opacity:.28!important}
+#ai #aiAgentVisual .spider-body-gestures{position:absolute;inset:0;width:100%;height:100%;z-index:4;overflow:visible;pointer-events:none}
+#ai #aiAgentVisual .spider-arm{transform-box:fill-box;transform-origin:50% 15%;filter:drop-shadow(0 0 8px #42caffaa)}
+#ai #aiAgentVisual .arm-line{fill:none;stroke:url(#spiderArmGlow);stroke-width:13;stroke-linecap:round;stroke-linejoin:round}
+#ai #aiAgentVisual .arm-halo{fill:none;stroke:#43bfff;stroke-width:25;stroke-linecap:round;opacity:.22;filter:url(#spiderArmBlur)}
+#ai #aiAgentVisual .arm-joint{fill:#d9faff;stroke:#48c9ff;stroke-width:5;filter:drop-shadow(0 0 8px #47caff)}
+#ai #aiAgentVisual .spider-chest-scan{fill:none;stroke:#7adfff;stroke-width:2;opacity:.42;stroke-dasharray:8 13;animation:spiderScan 5s linear infinite}
+#ai #aiAgentVisual .circuit-state-label{position:absolute!important;z-index:8!important;left:50%!important;bottom:14px!important;transform:translateX(-50%)!important;white-space:nowrap!important;padding:8px 14px!important;border:1px solid #55bfff66!important;border-radius:30px!important;background:#031326cc!important;backdrop-filter:blur(12px)!important;color:#d9f5ff!important;letter-spacing:.15em!important;font-size:10px!important}
+#ai #aiAgentVisual.state-idle .spider-arm-left{animation:spiderIdleLeft 4.2s ease-in-out infinite}
+#ai #aiAgentVisual.state-idle .spider-arm-right{animation:spiderIdleRight 4.2s ease-in-out infinite}
+#ai #aiAgentVisual.state-listening .spider-arm-left{animation:spiderListenLeft 1.2s ease-in-out infinite}
+#ai #aiAgentVisual.state-listening .spider-arm-right{animation:spiderListenRight 1.2s ease-in-out infinite}
+#ai #aiAgentVisual.state-thinking .spider-arm-left{animation:spiderThinkLeft 2.2s ease-in-out infinite}
+#ai #aiAgentVisual.state-thinking .spider-arm-right{animation:spiderThinkRight 2.2s ease-in-out infinite}
+#ai #aiAgentVisual.state-speaking .spider-arm-left{animation:spiderTalkLeft 1.05s ease-in-out infinite}
+#ai #aiAgentVisual.state-speaking .spider-arm-right{animation:spiderTalkRight 1.05s ease-in-out infinite .16s}
+#ai #aiAgentVisual.state-speaking .spider-chest-scan{opacity:.95;stroke-dasharray:3 8;animation-duration:.7s}
+#ai #aiAgentVisual.state-error .arm-line{stroke:#ff8caa}
+@keyframes spiderIdleLeft{0%,100%{transform:rotate(-1deg) translateY(0)}50%{transform:rotate(2deg) translateY(-5px)}}
+@keyframes spiderIdleRight{0%,100%{transform:rotate(1deg) translateY(0)}50%{transform:rotate(-2deg) translateY(-5px)}}
+@keyframes spiderListenLeft{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(4deg) translateY(-5px)}}
+@keyframes spiderListenRight{0%,100%{transform:rotate(7deg)}50%{transform:rotate(-4deg) translateY(-5px)}}
+@keyframes spiderThinkLeft{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(13deg) translateY(-12px)}}
+@keyframes spiderThinkRight{0%,100%{transform:rotate(3deg)}50%{transform:rotate(-9deg) translateY(-6px)}}
+@keyframes spiderTalkLeft{0%,100%{transform:rotate(-4deg) translateY(0)}35%{transform:rotate(18deg) translateY(-14px)}70%{transform:rotate(-12deg) translateY(-5px)}}
+@keyframes spiderTalkRight{0%,100%{transform:rotate(4deg) translateY(0)}35%{transform:rotate(-17deg) translateY(-12px)}70%{transform:rotate(11deg) translateY(-4px)}}
+@keyframes spiderScan{to{stroke-dashoffset:-120}}
+@media(max-width:650px){#ai #aiAgentVisual.circuit-stage{height:clamp(330px,66vw,470px)!important;aspect-ratio:4/5!important;max-height:470px!important;border-radius:0!important}#ai #aiAgentVisual .circuit-agent-video{object-position:center 35%!important}#ai #aiAgentVisual .spider-body-gestures{transform:scale(1.08);transform-origin:center center}#ai #aiAgentVisual .circuit-state-label{bottom:9px!important;font-size:9px!important}}
+@media(prefers-reduced-motion:reduce){#ai #aiAgentVisual .spider-arm,#ai #aiAgentVisual .spider-chest-scan{animation:none!important}}
+</style>
+<script id="spider-character-state-controller-v2">
+(function(){
+ const stage=document.getElementById("aiAgentVisual"),label=document.getElementById("circuitStateText");
+ const prompt=document.getElementById("aiWorkbenchPrompt"),send=document.getElementById("aiSendToClaude");
+ const status=document.getElementById("aiWorkbenchStatus"),mic=document.getElementById("stkVoiceMic");
+ if(!stage||!label)return;
+ let state="idle",idleTimer=0;
+ const names={idle:"SPIDER · STANDBY",listening:"SPIDER · LISTENING",thinking:"SPIDER · THINKING",speaking:"SPIDER · SPEAKING",completed:"SPIDER · RESPONSE READY",error:"SPIDER · CONNECTION ISSUE"};
+ function setState(next){if(!names[next])return;state=next;stage.classList.remove("state-idle","state-listening","state-thinking","state-speaking","state-completed","state-error");stage.classList.add("state-"+next);stage.dataset.agentState=next;label.textContent=names[next];}
+ window.spiderSetVisualState=setState;
+ prompt?.addEventListener("focus",()=>{if(!prompt.value.trim())setState("listening")});
+ prompt?.addEventListener("input",()=>setState(prompt.value.trim()?"listening":"idle"));
+ send?.addEventListener("click",()=>{if(prompt?.value.trim())setState("thinking")});
+ mic?.addEventListener("click",()=>setState("listening"));
+ document.addEventListener("click",e=>{if(e.target.closest("#stkVoiceStop"))setState("idle")});
+ if(status&&window.MutationObserver){new MutationObserver(()=>{const s=(status.textContent||"").toLowerCase();if(/reply received|response received/.test(s))setState("completed");else if(/request failed|connection failed|timed out|http [45]\d\d|error:/.test(s))setState("error");else if(/sending|thinking|preparing context|syncing context|processing/.test(s))setState("thinking");}).observe(status,{subtree:true,childList:true,characterData:true});}
+ /* The current voice engine uses browser speech synthesis. Reflect its actual playback state. */
+ if("speechSynthesis"in window){let wasSpeaking=false;setInterval(()=>{const now=window.speechSynthesis.speaking;if(now&&!wasSpeaking)setState("speaking");if(!now&&wasSpeaking){setState("completed");clearTimeout(idleTimer);idleTimer=setTimeout(()=>{if(state==="completed")setState("idle")},2600)}wasSpeaking=now;},180);}
+ const video=stage.querySelector("video");if(video){video.muted=true;video.playsInline=true;const play=()=>video.play().catch(()=>{});play();document.addEventListener("visibilitychange",()=>{if(!document.hidden)play();else video.pause()});}
+})();
+</script>
 </body></html>
