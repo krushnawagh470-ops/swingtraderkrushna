@@ -2473,7 +2473,23 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
  if(status&&window.MutationObserver){new MutationObserver(()=>{const s=(status.textContent||"").toLowerCase();if(/reply received|response received/.test(s))setState("completed");else if(/request failed|connection failed|timed out|http [45]\d\d|error:/.test(s))setState("error");else if(/sending|thinking|preparing context|syncing context|processing/.test(s))setState("thinking");}).observe(status,{subtree:true,childList:true,characterData:true});}
  /* The current voice engine uses browser speech synthesis. Reflect its actual playback state. */
  if("speechSynthesis"in window){let wasSpeaking=false;setInterval(()=>{const now=window.speechSynthesis.speaking;if(now&&!wasSpeaking)setState("speaking");if(!now&&wasSpeaking){setState("completed");clearTimeout(idleTimer);idleTimer=setTimeout(()=>{if(state==="completed")setState("idle")},2600)}wasSpeaking=now;},180);}
- const video=stage.querySelector("video");if(video){video.muted=true;video.playsInline=true;const play=()=>video.play().catch(()=>{});play();document.addEventListener("visibilitychange",()=>{if(!document.hidden)play();else video.pause()});}
+ const video=stage.querySelector("video");if(video){video.muted=true;video.playsInline=true;video.pause();try{video.currentTime=0}catch(e){}document.addEventListener("visibilitychange",()=>{if(document.hidden)video.pause();else if(!window.speechSynthesis?.speaking){video.pause();try{video.currentTime=0}catch(e){}}});}
 })();
 </script>
+
+<style id="spider-agent-final-panel-fit">
+/* Match the panel to the portrait source ratio: no side gutters or letterboxing. */
+#ai #aiAgentVisual.circuit-stage{
+ width:100%!important;max-width:none!important;height:auto!important;min-height:0!important;
+ max-height:none!important;aspect-ratio:1080/1430!important;padding:0!important;margin:0!important;
+ border:0!important;border-radius:0!important;overflow:hidden!important;background:#02070d!important;
+}
+#ai #aiAgentVisual video.circuit-agent-video{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ min-width:100%!important;min-height:100%!important;object-fit:cover!important;
+ object-position:center center!important;background:#02070d!important;
+}
+#ai .ai-workbench-grid>div:first-child{width:100%!important;min-width:0!important;padding:0!important;margin:0!important}
+@media(max-width:900px){#ai .ai-workbench-grid{gap:0!important}}
+</style>
 </body></html>
