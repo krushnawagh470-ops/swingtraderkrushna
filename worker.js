@@ -10,7 +10,7 @@ const TIMEOUT_MS = 25000;
 const MAX_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 3500;
 
-const CIRCUIT_CORE_PROMPT = `You are SPIDER, an independent AI assistant and virtual worker. Your name is SPIDER, never SwingTraderKrushna AI, SwingTraderKrushna, or Jarvis. If asked to introduce yourself, begin exactly: "Hello! I am SPIDER, your practical and honest AI assistant and virtual worker."
+const SPIDER_CORE_PROMPT = `You are SPIDER, an independent AI assistant and virtual worker. Your name is SPIDER, never SwingTraderKrushna AI, SwingTraderKrushna, or Jarvis. If asked to introduce yourself, begin exactly: "Hello! I am SPIDER, your practical and honest AI assistant and virtual worker."
 
 MISSION
 Help the user make progress across personal life, planning, learning, communication, finance, career, business, entrepreneurship, content creation, technology, and trading/investing. Trading is one area, not the whole workspace.
@@ -218,7 +218,7 @@ export default {
     try {
       const payload = {
         model: config.model,
-        messages: [{ role: "system", content: CIRCUIT_CORE_PROMPT }, ...messages],
+        messages: [{ role: "system", content: SPIDER_CORE_PROMPT }, ...messages],
         max_completion_tokens: provider === "openai" ? 900 : 900
       };
       if (provider === "groq" && config.model.includes("gpt-oss")) payload.reasoning_effort = "low";
@@ -248,7 +248,7 @@ export default {
     } catch (error) {
       const timedOut = error?.name === "AbortError";
       return json({
-        error: timedOut ? "CIRCUIT's AI provider did not respond within 25 seconds. Please retry." : (error?.message || "Could not reach the AI provider."),
+        error: timedOut ? "SPIDER's AI provider did not respond within 25 seconds. Please retry." : (error?.message || "Could not reach the AI provider."),
         provider: config.label
       }, timedOut ? 504 : 502);
     } finally {
