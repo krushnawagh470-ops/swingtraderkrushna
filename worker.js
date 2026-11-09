@@ -121,6 +121,14 @@ async function verifyFirebaseOwner(request, env) {
 }
 async function memoryRoute(request, env, url) {
   if (!env.DB) return json({ error: "Persistent memory is not configured. Bind the D1 database as DB." }, 503);
+  // Additive schema: never alters or deletes the existing approved-memory table.
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS circuit_memory_suggestions (
+    id TEXT PRIMARY KEY, user_id TEXT NOT NULL, category TEXT NOT NULL,
+    content TEXT NOT NULL, source TEXT NOT NULL DEFAULT 'user',
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at INTEGER NOT NULL, reviewed_at INTEGER
+  )`).run();
+
   if (url.pathname === "/memory" && request.method === "GET") {
     const result = await env.DB.prepare("SELECT id, category, content, created_at, updated_at FROM circuit_memories WHERE user_id = 'owner' ORDER BY updated_at DESC LIMIT 100").all();
     return json({ memories: result.results || [] });
@@ -136,6 +144,43 @@ async function memoryRoute(request, env, url) {
     const id = crypto.randomUUID(), now = Date.now();
     await env.DB.prepare("INSERT INTO circuit_memories (id, user_id, category, content, created_at, updated_at) VALUES (?, 'owner', ?, ?, ?, ?)").bind(id, category, content, now, now).run();
     return json({ memory: { id, category, content, created_at: now, updated_at: now } }, 201);
+  }
+  if (url.pathname === "/memory/suggestions" && request.method === "GET") {
+    const result = await env.DB.prepare("SELECT id, category, content, source, created_at FROM circuit_memory_suggestions WHERE user_id = 'owner' AND status = 'pending' ORDER BY created_at DESC LIMIT 50").all();
+    return json({ suggestions: result.results || [] });
+  }
+  if (url.pathname === "/memory/suggestions" && request.method === "POST") {
+    let body;
+    try { body = await request.json(); } catch (_) { return json({ error: "Invalid JSON request." }, 400); }
+    const content = typeof body.content === "string" ? body.content.trim() : "";
+    const allowed = ["General", "Preferences", "Personal planning", "Finance and career", "Business and content", "Technology and projects", "Trading and investing"];
+    const category = allowed.includes(body.category) ? body.category : "General";
+    const source = body.source === "assistant" ? "assistant" : "user";
+    if (!content || content.length > 1200) return json({ error: "Suggestion must contain 1–1,200 characters." }, 400);
+    const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM circuit_memory_suggestions WHERE user_id = 'owner' AND status = 'pending'").first();
+    if (Number(count?.n || 0) >= 50) return json({ error: "Suggestion inbox is full. Review pending items first." }, 409);
+    const id = crypto.randomUUID(), now = Date.now();
+    await env.DB.prepare("INSERT INTO circuit_memory_suggestions (id,user_id,category,content,source,status,created_at) VALUES (?,'owner',?,?,?,'pending',?)").bind(id,category,content,source,now).run();
+    return json({ suggestion: { id, category, content, source, status: "pending", created_at: now } }, 201);
+  }
+  const approve = url.pathname.match(/^\/memory\/suggestions\/([0-9a-f-]{36})\/approve$/i);
+  if (approve && request.method === "POST") {
+    const item = await env.DB.prepare("SELECT id, category, content FROM circuit_memory_suggestions WHERE id = ? AND user_id = 'owner' AND status = 'pending'").bind(approve[1]).first();
+    if (!item) return json({ error: "Pending suggestion not found." }, 404);
+    const count = await env.DB.prepare("SELECT COUNT(*) AS n FROM circuit_memories WHERE user_id = 'owner'").first();
+    if (Number(count?.n || 0) >= 100) return json({ error: "Memory limit reached (100). Delete an old memory before approving." }, 409);
+    const now = Date.now(), memoryId = crypto.randomUUID();
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO circuit_memories (id,user_id,category,content,created_at,updated_at) VALUES (?,'owner',?,?,?,?)").bind(memoryId,item.category,item.content,now,now),
+      env.DB.prepare("UPDATE circuit_memory_suggestions SET status='approved', reviewed_at=? WHERE id=? AND user_id='owner' AND status='pending'").bind(now,approve[1])
+    ]);
+    return json({ ok: true, memory: { id: memoryId, category: item.category, content: item.content, created_at: now, updated_at: now } });
+  }
+  const reject = url.pathname.match(/^\/memory\/suggestions\/([0-9a-f-]{36})$/i);
+  if (reject && request.method === "DELETE") {
+    const result = await env.DB.prepare("UPDATE circuit_memory_suggestions SET status='rejected', reviewed_at=? WHERE id=? AND user_id='owner' AND status='pending'").bind(Date.now(),reject[1]).run();
+    if (!result.meta?.changes) return json({ error: "Pending suggestion not found." }, 404);
+    return json({ ok: true });
   }
   const match = url.pathname.match(/^\/memory\/([0-9a-f-]{36})$/i);
   if (match && request.method === "PUT") {
