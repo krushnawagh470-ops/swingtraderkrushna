@@ -101,6 +101,7 @@ async function verifyFirebaseOwner(request, env) {
     if (typeof claims.sub !== "string" || !claims.sub || claims.sub.length > 128) throw new Error("Missing subject");
     if (!Number.isFinite(claims.exp) || claims.exp <= now || !Number.isFinite(claims.iat) || claims.iat > now + 60) throw new Error("Expired or invalid token time");
     if (claims.email_verified !== true || String(claims.email || "").trim().toLowerCase() !== ownerEmail) throw new Error("Not the authorised owner");
+    if (!["google.com", "password"].includes(claims.firebase?.sign_in_provider)) throw new Error("Unsupported sign-in provider");
     if (!firebaseKeysCache.keys || firebaseKeysCache.expiresAt <= now) {
       const response = await fetch(FIREBASE_JWKS_URL, { cf: { cacheTtl: 3600, cacheEverything: true } });
       if (!response.ok) throw new Error("Could not load Firebase signing keys");
