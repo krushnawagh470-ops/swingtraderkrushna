@@ -6,7 +6,10 @@ from typing import Any
 import httpx
 from dotenv import load_dotenv
 load_dotenv()
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from google.auth.transport.requests import Request as GoogleRequest
+from google.oauth2 import id_token as google_id_token
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from .services import get_market_quotes, get_latest_news
@@ -14,9 +17,39 @@ from .services import get_market_quotes, get_latest_news
 APP_VERSION = "0.1.0"
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "").strip()
+SPIDER_OWNER_EMAIL = os.getenv("SPIDER_OWNER_EMAIL", "").strip().lower()
+_bearer = HTTPBearer(auto_error=False)
 app = FastAPI(title="SPIDER API", description="Backend services for the SwingTraderKrushna SPIDER workspace.", version=APP_VERSION)
 origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "https://krushnawagh470-ops.github.io,http://localhost:8000,http://127.0.0.1:8000").split(",") if x.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
+
+
+def _owner_claims_valid(claims: dict[str, Any]) -> bool:
+    return bool(
+        FIREBASE_PROJECT_ID and SPIDER_OWNER_EMAIL
+        and claims.get("aud") == FIREBASE_PROJECT_ID
+        and claims.get("iss") == f"https://securetoken.google.com/{FIREBASE_PROJECT_ID}"
+        and claims.get("email_verified") is True
+        and str(claims.get("email", "")).strip().lower() == SPIDER_OWNER_EMAIL
+        and isinstance(claims.get("sub"), str) and bool(claims.get("sub"))
+    )
+
+
+async def require_owner(credentials: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> dict[str, Any]:
+    if not FIREBASE_PROJECT_ID or not SPIDER_OWNER_EMAIL:
+        raise HTTPException(status_code=503, detail="Owner authentication is not configured.")
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise HTTPException(status_code=401, detail="Sign in to SPIDER to continue.")
+    try:
+        claims = google_id_token.verify_firebase_token(
+            credentials.credentials, GoogleRequest(), audience=FIREBASE_PROJECT_ID
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=401, detail="Your SPIDER sign-in is invalid or expired.") from exc
+    if not _owner_claims_valid(claims):
+        raise HTTPException(status_code=403, detail="This account is not authorised to use SPIDER.")
+    return claims
 
 class ChatRequest(BaseModel):
     # Accept both names so clients using "message" and "prompt" work.
@@ -31,7 +64,7 @@ async def root() -> dict[str, str]:
 
 @app.get("/api/v1/health")
 async def health() -> dict[str, Any]:
-    return {"status": "ok", "service": "circuit-api", "version": APP_VERSION, "time": datetime.now(timezone.utc).isoformat(), "integrations": {"biquote": "public endpoint configured", "publisher_rss": "configured", "gemini": "configured" if GEMINI_API_KEY else "missing GEMINI_API_KEY"}}
+    return {"status": "ok", "service": "circuit-api", "version": APP_VERSION, "time": datetime.now(timezone.utc).isoformat(), "integrations": {"biquote": "public endpoint configured", "publisher_rss": "configured", "gemini": "configured" if GEMINI_API_KEY else "missing GEMINI_API_KEY", "owner_auth": "configured" if FIREBASE_PROJECT_ID and SPIDER_OWNER_EMAIL else "missing Firebase owner configuration"}}
 
 @app.get("/api/v1/market/quotes")
 async def market_quotes(symbols: str = "XAUUSD,XAGUSD,EURUSD,BTCUSD,USOIL,DXY") -> dict[str, Any]:
@@ -52,7 +85,7 @@ async def latest_news(limit: int = 5) -> dict[str, Any]:
     return {"items": stories, "count": len(stories), "updated_at": datetime.now(timezone.utc).isoformat()}
 
 @app.post("/api/v1/ai/chat")
-async def ai_chat(body: ChatRequest) -> dict[str, str]:
+async def ai_chat(body: ChatRequest, _owner: dict[str, Any] = Depends(require_owner)) -> dict[str, str]:
     if not GEMINI_API_KEY:
         raise HTTPException(status_code=503, detail="AI service is not configured. Set GEMINI_API_KEY on the backend host.")
     user_prompt = (body.prompt or body.message or "").strip()
