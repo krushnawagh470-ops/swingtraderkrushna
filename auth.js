@@ -71,7 +71,12 @@
       } catch (error) { message(error.message || "Could not link email/password sign-in.", true); }
     });
     document.getElementById("spiderSignOut")?.addEventListener("click", () => auth.signOut().catch(e => message(e.message, true)));
-    auth.getRedirectResult().catch(e => message(e.message, true));
+    auth.getRedirectResult().catch(error => {
+      if (error.code === "auth/account-exists-with-different-credential") {
+        pendingGoogleCredential = firebase.auth.GoogleAuthProvider.credentialFromError(error);
+        message("This owner email already has an email/password login. Sign in with email below to link Google.", true);
+      } else message(error.message, true);
+    });
     auth.onAuthStateChanged(setAuthenticated);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true }); else init();
