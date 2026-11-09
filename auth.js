@@ -77,16 +77,40 @@
       if (pendingGoogleCredential) { await result.user.linkWithCredential(pendingGoogleCredential); pendingGoogleCredential = null; }
       if (password) password.value = "";
     }));
-    document.getElementById("spiderLinkEmail")?.addEventListener("click", async () => {
-      const secret = window.prompt("Create a password for your SPIDER owner account (minimum 12 characters).");
-      if (secret === null) return;
-      if (secret.length < 12) { message("Use a password with at least 12 characters.", true); return; }
-      try {
-        const credential = firebase.auth.EmailAuthProvider.credential(ownerEmail, secret);
-        await auth.currentUser.linkWithCredential(credential);
-        message("Email/password sign-in is now linked to this owner account.", false);
-        setAuthenticated(auth.currentUser);
-      } catch (error) { message(error.message || "Could not link email/password sign-in.", true); }
+    document.getElementById("spiderLinkEmail")?.addEventListener("click", () => {
+      // Avoid window.prompt: it is suppressed in some Android WebViews/PWA contexts.
+      let modal = document.getElementById("spiderPasswordSetup");
+      if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "spiderPasswordSetup";
+        modal.setAttribute("role", "dialog");
+        modal.setAttribute("aria-modal", "true");
+        modal.style.cssText = "position:fixed;inset:0;z-index:2147483600;display:flex;align-items:center;justify-content:center;padding:18px;background:#020914dd;font:14px system-ui,sans-serif";
+        modal.innerHTML = '<form style="width:min(100%,390px);padding:22px;border:1px solid #3975a8;border-radius:14px;background:#0b1b30;color:#eaf4ff;box-shadow:0 20px 70px #000a"><h2 style="margin:0 0 8px;font-size:19px">Enable email/password login</h2><p style="color:#a8c8e6;font-size:12px;line-height:1.5">Create a password for the same SPIDER owner account. Use at least 12 characters.</p><label for="spiderNewPassword" style="display:block;margin:14px 0 6px;font-size:11px">NEW PASSWORD</label><input id="spiderNewPassword" type="password" minlength="12" autocomplete="new-password" required style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #315577;border-radius:8px;background:#061426;color:#fff"><label for="spiderConfirmPassword" style="display:block;margin:12px 0 6px;font-size:11px">CONFIRM PASSWORD</label><input id="spiderConfirmPassword" type="password" minlength="12" autocomplete="new-password" required style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #315577;border-radius:8px;background:#061426;color:#fff"><div id="spiderPasswordSetupError" role="alert" style="min-height:18px;margin-top:9px;color:#ff9b9b;font-size:11px"></div><div style="display:flex;gap:9px;margin-top:10px"><button type="button" id="spiderPasswordCancel" style="flex:1;padding:11px;border:1px solid #345879;border-radius:8px;background:#10223d;color:#d9edff">Cancel</button><button type="submit" id="spiderPasswordSave" style="flex:1;padding:11px;border:0;border-radius:8px;background:#58aaff;color:#04101f;font-weight:700">Save password</button></div></form>';
+        document.body.appendChild(modal);
+        modal.querySelector("form").addEventListener("submit", async event => {
+          event.preventDefault();
+          const first = modal.querySelector("#spiderNewPassword").value;
+          const second = modal.querySelector("#spiderConfirmPassword").value;
+          const errorBox = modal.querySelector("#spiderPasswordSetupError");
+          const save = modal.querySelector("#spiderPasswordSave");
+          if (first.length < 12) { errorBox.textContent = "Use at least 12 characters."; return; }
+          if (first !== second) { errorBox.textContent = "Passwords do not match."; return; }
+          save.disabled = true; save.textContent = "Saving…"; errorBox.textContent = "";
+          try {
+            const credential = firebase.auth.EmailAuthProvider.credential(ownerEmail, first);
+            await auth.currentUser.linkWithCredential(credential);
+            modal.remove();
+            message("Email/password sign-in is now linked to this owner account.", false);
+            setAuthenticated(auth.currentUser);
+          } catch (error) {
+            errorBox.textContent = error.message || "Could not link email/password sign-in.";
+            save.disabled = false; save.textContent = "Save password";
+          }
+        });
+        modal.querySelector("#spiderPasswordCancel").addEventListener("click", () => modal.remove());
+      }
+      modal.querySelector("#spiderNewPassword").focus();
     });
     document.getElementById("spiderSignOut")?.addEventListener("click", () => auth.signOut().catch(e => message(e.message, true)));
     auth.getRedirectResult().catch(error => {
