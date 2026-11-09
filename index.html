@@ -978,7 +978,7 @@ async function loadNativeNews(force=false){
  }finally{newsBusy=false}
 }
 window.loadNativeNews=loadNativeNews;
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(()=>loadNativeNews(true),500),{once:true});else setTimeout(()=>loadNativeNews(true),500);
+// News Desk is loaded by the single SPIDER API controller below to avoid competing RSS loaders.
 // Hard limit: keep the News Desk DOM at five newest rendered stories, regardless of which loader updates it.
 (function(){const clamp=()=>{const list=document.getElementById("nativeNews");if(!list)return;const cards=[...list.children].filter(x=>x.matches("article,.native-news-item"));cards.sort((a,b)=>{const ta=Date.parse(a.querySelector(".news-story-source")?.lastElementChild?.textContent||a.querySelector(".q-meta")?.textContent||"");const tb=Date.parse(b.querySelector(".news-story-source")?.lastElementChild?.textContent||b.querySelector(".q-meta")?.textContent||"");return (Number.isFinite(tb)?tb:0)-(Number.isFinite(ta)?ta:0)});cards.slice(5).forEach(x=>x.remove())};const start=()=>{const list=document.getElementById("nativeNews");if(!list){setTimeout(start,250);return}new MutationObserver(clamp).observe(list,{childList:true});clamp()};if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start()})();
 
@@ -2056,7 +2056,7 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
  setInterval(()=>{if(document.getElementById("markets")?.classList.contains("active"))loadDailyReferences()},30*60*1000);
  setInterval(()=>{if(document.getElementById("markets")?.classList.contains("active"))loadNativeMovers()},60000);
  setInterval(()=>{if(document.getElementById("markets")?.classList.contains("active"))loadNativeSummary()},60000);
- setInterval(()=>{if(document.getElementById("news")?.classList.contains("active"))loadNativeNews()},10*60*1000);
+ setInterval(()=>{if(document.getElementById("news")?.classList.contains("active"))window.loadNativeNews?.()},10*60*1000);
  setInterval(()=>{if(document.getElementById("settings")?.classList.contains("active"))loadNativeCalendar()},5*60*1000);
 })();
 </script>
