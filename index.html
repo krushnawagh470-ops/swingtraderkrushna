@@ -2300,7 +2300,7 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
  window.loadNativeNews=load;
  const start=()=>{if(document.getElementById("nativeNews"))load();else setTimeout(start,200)};
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
- document.addEventListener("click",e=>{if(e.target.closest("#refreshGlobalNewsBtn"))load()});
+ // Refresh is already handled by the button itself; no duplicate delegated listener.
 })();
 </script>
 <script id="circuit-market-pulse-isolated">
@@ -2504,4 +2504,20 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
 </style>
 
 <script id="spider-pwa-register">if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(error=>console.warn("SPIDER offline worker registration failed:",error)));}</script>
+
+<style id="spider-mobile-accessibility-polish">
+/* Mobile touch and focus improvements; preserve the existing SPIDER layout. */
+:where(button,a,input,select,textarea,[tabindex]):focus-visible{outline:2px solid #68bdff!important;outline-offset:3px!important}
+button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+@media(max-width:650px){
+  .mobile-nav button{min-height:48px!important;min-width:56px!important;padding:7px 6px!important;line-height:1.25!important}
+  .nav button,.btn{min-height:42px!important}
+  .field input,.field select,.field textarea{min-height:44px!important;font-size:16px!important}
+  .card,.live-quote,.terminal-chip,.workspace-link{min-width:0;overflow-wrap:anywhere}
+  .main,.section,.overview-layout,.workspace-grid,.news-grid{min-width:0;max-width:100%}
+  .chart-frame,.pulse-frame{max-width:100%;display:block}
+  .mobile-nav{padding-bottom:calc(8px + env(safe-area-inset-bottom))!important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
 </body></html>
