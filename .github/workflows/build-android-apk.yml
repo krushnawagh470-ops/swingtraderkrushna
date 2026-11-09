@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - 'android/**'
-      - 'assets/spider-favicon.png'
+      - 'assets/spider-favicon.jpg'
       - '.github/workflows/build-android-apk.yml'
 
 permissions:
@@ -41,10 +41,10 @@ jobs:
           from PIL import Image, ImageFile
           from pathlib import Path
           ImageFile.LOAD_TRUNCATED_IMAGES = True
-          src = Image.open("assets/spider-favicon.png")
+          src = Image.open("assets/spider-favicon.jpg")
           src.load()
           src = src.convert("RGBA")
-          # Preserve the supplied artwork exactly; only scale the canvas resolution.
+          # Use the exact cropped emblem from the supplied logo; only resize for Android launcher densities.
           sizes = {"mdpi":48, "hdpi":72, "xhdpi":96, "xxhdpi":144, "xxxhdpi":192}
           for density, size in sizes.items():
               out = Path(f"android/app/src/main/res/mipmap-{density}")
