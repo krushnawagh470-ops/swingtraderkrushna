@@ -28,6 +28,7 @@ jobs:
           cp icons/spider.svg hosting/icons/
           cp icons/spider.png hosting/icons/
           cp assets/spider-agent.mp4 hosting/assets/
+          cp assets/spider-favicon.png hosting/assets/
           cp data/calendar.json data/forex_factory_calendar.json hosting/data/
 
       - name: Verify Firebase deploy identity (non-secret fields only)
