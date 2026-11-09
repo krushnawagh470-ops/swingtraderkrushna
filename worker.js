@@ -2,7 +2,8 @@
 // Default: Groq. Future switch: set AI_PROVIDER=openai and add OPENAI_API_KEY
 // as a Cloudflare Worker secret. Never put provider keys in the website.
 
-const ALLOWED_ORIGIN = "https://krushnawagh470-ops.github.io";
+const ALLOWED_ORIGINS = new Set(["https://krushnawagh470-ops.github.io", "https://spider-121.web.app", "https://spider-121.firebaseapp.com"]);
+function isAllowedOrigin(origin) { return !origin || ALLOWED_ORIGINS.has(origin) || /^https:\/\/spider-121--[a-z0-9-]+\.web\.app$/i.test(origin); }
 const DEFAULT_PROVIDER = "groq";
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const OPENAI_MODEL = "gpt-4.1-mini";
@@ -31,7 +32,7 @@ OPERATING RULES
 
 function cors() {
   return {
-    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Vary": "Origin"
@@ -162,7 +163,7 @@ async function memoryRoute(request, env, url) {
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
-    if (origin && origin !== ALLOWED_ORIGIN) return json({ error: "Origin not allowed." }, 403);
+    if (!isAllowedOrigin(origin)) return json({ error: "Origin not allowed." }, 403);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors() });
 
     const url = new URL(request.url);
