@@ -1,0 +1,48 @@
+name: Deploy SPIDER Firebase Hosting preview
+
+on:
+  push:
+    branches:
+      - security/owner-auth-google-email
+    paths:
+      - 'index.html'
+      - 'auth.js'
+      - 'firebase-config.js'
+      - 'memory.js'
+      - 'assets/**'
+      - 'firebase.json'
+      - '.github/workflows/firebase-hosting-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out security branch
+        uses: actions/checkout@v4
+
+      - name: Assemble static-only Firebase Hosting folder
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test -f auth.js
+          test -f firebase-config.js
+          test -f memory.js
+          test -f assets/spider-agent.mp4
+          mkdir -p hosting/assets
+          cp index.html auth.js firebase-config.js memory.js hosting/
+          cp assets/spider-agent.mp4 hosting/assets/
+          echo "Static hosting payload:"
+          find hosting -type f -printf '%P (%s bytes)\n' | sort
+
+      - name: Deploy isolated preview channel (7-day expiry)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SPIDER_121 }}
+          projectId: spider-121
+          channelId: security-preview
+          expires: 7d
