@@ -1,4 +1,4 @@
-"""External data adapters used by the CIRCUIT API."""
+"""External data adapters used by the SPIDER API."""
 from __future__ import annotations
 import asyncio, email.utils, time, xml.etree.ElementTree as ET
 from datetime import timezone
@@ -81,7 +81,7 @@ async def _fetch_feed(client: httpx.AsyncClient, source: str, url: str) -> list[
 async def get_latest_news(limit: int = 5) -> list[dict[str, Any]]:
     now = time.monotonic()
     if now - float(_news_cache["at"]) < NEWS_CACHE_SECONDS: return list(_news_cache["items"][:limit])
-    async with httpx.AsyncClient(timeout=10, follow_redirects=True, headers={"User-Agent": "CIRCUIT-NewsDesk/0.1"}) as client:
+    async with httpx.AsyncClient(timeout=10, follow_redirects=True, headers={"User-Agent": "SPIDER-NewsDesk/0.1"}) as client:
         results = await asyncio.gather(*[_fetch_feed(client, name, url) for name, url in RSS_FEEDS], return_exceptions=True)
     stories = [story for result in results if isinstance(result, list) for story in result]
     unique = {story["url"]: story for story in stories}
