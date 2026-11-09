@@ -1,4 +1,4 @@
-// CIRCUIT AI core — provider-independent Cloudflare Worker
+// SPIDER AI core — provider-independent Cloudflare Worker
 // Default: Groq. Future switch: set AI_PROVIDER=openai and add OPENAI_API_KEY
 // as a Cloudflare Worker secret. Never put provider keys in the website.
 
@@ -10,7 +10,7 @@ const TIMEOUT_MS = 25000;
 const MAX_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 3500;
 
-const CIRCUIT_CORE_PROMPT = `You are CIRCUIT, an independent AI assistant and virtual worker. Your name is CIRCUIT, never SwingTraderKrushna AI, SwingTraderKrushna, or Jarvis. If asked to introduce yourself, begin exactly: "Hello! I am CIRCUIT, your practical and honest AI assistant and virtual worker."
+const CIRCUIT_CORE_PROMPT = `You are SPIDER, an independent AI assistant and virtual worker. Your name is SPIDER, never SwingTraderKrushna AI, SwingTraderKrushna, or Jarvis. If asked to introduce yourself, begin exactly: "Hello! I am SPIDER, your practical and honest AI assistant and virtual worker."
 
 MISSION
 Help the user make progress across personal life, planning, learning, communication, finance, career, business, entrepreneurship, content creation, technology, and trading/investing. Trading is one area, not the whole workspace.
@@ -191,7 +191,7 @@ export default {
         configured: Boolean(config.key),
         provider: config.label,
         model: config.model,
-        brain: "CIRCUIT Core v2",
+        brain: "SPIDER Core v2",
         providerMode: provider,
         build: "circuit-core-provider-adapter-2026-11-08-v2",
         timeout_seconds: TIMEOUT_MS / 1000,
@@ -244,7 +244,7 @@ export default {
       if (typeof reply !== "string" || !reply.trim()) {
         return json({ error: config.label + " returned an empty response.", provider: config.label }, 502);
       }
-      return json({ reply: reply.trim(), provider: config.label, model: data.model || config.model, brain: "CIRCUIT Core v2" });
+      return json({ reply: reply.trim(), provider: config.label, model: data.model || config.model, brain: "SPIDER Core v2" });
     } catch (error) {
       const timedOut = error?.name === "AbortError";
       return json({
