@@ -1,27 +1,10 @@
 {
   "hosting": {
-    "public": ".",
+    "public": "hosting",
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**",
-      ".github/**",
-      "backend/**",
-      "data/**",
-      "migrations/**",
-      "scripts/**",
-      "*.md",
-      "*.yaml",
-      "*.yml",
-      "*.toml",
-      "*.py",
-      "*.txt",
-      "*.lock",
-      "*.json",
-      "worker.js",
-      "cloudflare-worker.js",
-      "render.yaml",
-      ".gitignore"
+      "**/node_modules/**"
     ]
   }
 }
