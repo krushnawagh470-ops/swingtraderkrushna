@@ -115,10 +115,10 @@ async function sha256Hex(value) {
   return Array.from(digest, b => b.toString(16).padStart(2, "0")).join("");
 }
 async function memoryRoute(request, env, url) {
-  const memoryPassword = env.SPIDER_MEMORY_PASSWORD || memoryPassword;
-  const memoryJwtSecret = env.SPIDER_MEMORY_JWT_SECRET || memoryJwtSecret;
+  const memoryPassword = env.SPIDER_MEMORY_PASSWORD || env.CIRCUIT_MEMORY_PASSWORD;
+  const memoryJwtSecret = env.SPIDER_MEMORY_JWT_SECRET || env.CIRCUIT_MEMORY_JWT_SECRET;
   if (!env.DB || !memoryPassword || !memoryJwtSecret) {
-    return json({ error: "Persistent memory is not configured yet. Set the D1 binding DB and both CIRCUIT_MEMORY secrets in Cloudflare." }, 503);
+    return json({ error: "Persistent memory is not configured yet. Set the D1 binding DB and both SPIDER_MEMORY secrets in Cloudflare." }, 503);
   }
   if (url.pathname === "/memory/login" && request.method === "POST") {
     let body;
