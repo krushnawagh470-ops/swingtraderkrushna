@@ -21,8 +21,9 @@ FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "").strip()
 SPIDER_OWNER_EMAIL = os.getenv("SPIDER_OWNER_EMAIL", "").strip().lower()
 _bearer = HTTPBearer(auto_error=False)
 app = FastAPI(title="SPIDER API", description="Backend services for the SwingTraderKrushna SPIDER workspace.", version=APP_VERSION)
-origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "https://krushnawagh470-ops.github.io,http://localhost:8000,http://127.0.0.1:8000").split(",") if x.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
+origins = [x.strip() for x in os.getenv("CORS_ORIGINS", "https://krushnawagh470-ops.github.io,https://spider-121.web.app,https://spider-121.firebaseapp.com,http://localhost:8000,http://127.0.0.1:8000").split(",") if x.strip()]
+origin_regex = os.getenv("CORS_ORIGIN_REGEX", r"^https://spider-121(?:--[a-z0-9-]+)?\\.web\\.app$")
+app.add_middleware(CORSMiddleware, allow_origins=origins, allow_origin_regex=origin_regex, allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization"])
 
 
 def _owner_claims_valid(claims: dict[str, Any]) -> bool:
