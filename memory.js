@@ -31,7 +31,42 @@
     if (state) state.textContent = show ? "CLOUD MEMORY · UNLOCKED" : "CLOUD MEMORY · LOCKED";
   }
   let memories = [];
+  let suggestions = [];
+  function ensureSuggestionUI() {
+    const manager = $("circuitMemoryManager");
+    if (!manager || $("circuitMemorySuggestionPanel")) return;
+    const panel = document.createElement("section"); panel.id = "circuitMemorySuggestionPanel";
+    panel.style.cssText = "margin-top:18px;padding-top:14px;border-top:1px solid #29435e";
+    const heading = document.createElement("b"); heading.textContent = "Memory suggestions · approval required";
+    const note = document.createElement("p"); note.className = "q-meta"; note.textContent = "Pending items are NOT used by SPIDER until you approve them.";
+    const input = document.createElement("textarea"); input.id = "circuitMemorySuggestionInput"; input.rows = 2; input.maxLength = 1200; input.placeholder = "Add a fact or preference for review…"; input.style.cssText = "width:100%;margin-top:8px";
+    const category = document.createElement("select"); category.id = "circuitMemorySuggestionCategory"; category.style.cssText = "margin-top:7px;max-width:100%";
+    ["General","Preferences","Personal planning","Finance and career","Business and content","Technology and projects","Trading and investing"].forEach(v => { const o=document.createElement("option"); o.value=v; o.textContent=v; category.append(o); });
+    const add = document.createElement("button"); add.type="button"; add.className="btn secondary"; add.textContent="Add to review inbox"; add.style.cssText="margin:8px 0;font-size:11px";
+    add.addEventListener("click", async () => { const content=input.value.trim(); if(!content){status("Write a suggestion first.",true);return;} try { await api("/memory/suggestions",{method:"POST",body:JSON.stringify({content,category:category.value,source:"user"})}); input.value=""; await loadSuggestions(); status("Added to pending review. Not active memory yet."); } catch(e){status(e.message,true);} });
+    const count=document.createElement("div"); count.id="circuitMemorySuggestionCount"; count.className="terminal-label";
+    const list=document.createElement("div"); list.id="circuitMemorySuggestionList"; list.className="q-meta";
+    panel.append(heading,note,input,category,document.createElement("br"),add,count,list); manager.append(panel);
+  }
+  function renderSuggestions() {
+    const list=$("circuitMemorySuggestionList"), count=$("circuitMemorySuggestionCount"); if(!list)return;
+    if(count)count.textContent=suggestions.length+" awaiting approval"; list.replaceChildren();
+    if(!suggestions.length){list.textContent="No pending suggestions.";return;}
+    suggestions.forEach(item=>{
+      const row=document.createElement("div"); row.style.cssText="padding:10px 0;border-top:1px solid #1c3859";
+      const meta=document.createElement("div"); meta.className="terminal-label"; meta.textContent=(item.category||"General")+" · "+(item.source==="assistant"?"SPIDER suggestion":"Your suggestion");
+      const content=document.createElement("div"); content.textContent=item.content; content.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;margin:5px 0";
+      const actions=document.createElement("div"); actions.style.cssText="display:flex;gap:7px;flex-wrap:wrap";
+      const approve=document.createElement("button"); approve.type="button"; approve.className="btn"; approve.textContent="Approve & save";
+      approve.addEventListener("click",async()=>{if(!window.confirm("Approve and add this to active memory?"))return;try{await api("/memory/suggestions/"+encodeURIComponent(item.id)+"/approve",{method:"POST"});await load();await loadSuggestions();status("Approved and saved to active memory.");}catch(e){status(e.message,true);}});
+      const reject=document.createElement("button"); reject.type="button"; reject.className="btn secondary"; reject.textContent="Reject";
+      reject.addEventListener("click",async()=>{if(!window.confirm("Reject this suggestion?"))return;try{await api("/memory/suggestions/"+encodeURIComponent(item.id),{method:"DELETE"});await loadSuggestions();status("Suggestion rejected.");}catch(e){status(e.message,true);}});
+      actions.append(approve,reject); row.append(meta,content,actions); list.append(row);
+    });
+  }
+  async function loadSuggestions(){const data=await api("/memory/suggestions",{method:"GET"});suggestions=Array.isArray(data.suggestions)?data.suggestions:[];renderSuggestions();}
   function render() {
+    ensureSuggestionUI();
     const list = $("circuitCloudMemoryList"), count = $("circuitCloudMemoryCount");
     if (!list) return;
     if (count) count.textContent = memories.length + " saved";
@@ -96,15 +131,16 @@
     $("circuitCloudMemoryLogout")?.addEventListener("click", logout);
     $("circuitCloudMemoryRefresh")?.addEventListener("click", async () => { try { await load(); status("Cloud memory refreshed."); } catch (e) { status(e.message, true); } });
     $("circuitCloudMemoryClear")?.addEventListener("click", clearAll);
+    ensureSuggestionUI();
     window.addEventListener("spider-auth-state", event => {
       const user = event.detail && event.detail.user;
       signedIn(Boolean(user));
-      if (user) load().then(() => status("Cloud memory unlocked for " + user.email + ".")).catch(e => status(e.message, true));
-      else { memories = []; render(); status("Sign in to SPIDER to unlock cloud memory."); }
+      if (user) Promise.all([load(),loadSuggestions()]).then(() => status("Cloud memory unlocked for " + user.email + ".")).catch(e => status(e.message, true));
+      else { memories = []; suggestions=[]; render(); renderSuggestions(); status("Sign in to SPIDER to unlock cloud memory."); }
     });
     window.spiderAuthReady?.then(user => {
       signedIn(Boolean(user));
-      if (user) load().then(() => status("Cloud memory unlocked.")).catch(e => status(e.message, true));
+      if (user) Promise.all([load(),loadSuggestions()]).then(() => status("Cloud memory unlocked.")).catch(e => status(e.message, true));
     });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true }); else init();
