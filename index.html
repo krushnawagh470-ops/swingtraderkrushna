@@ -460,6 +460,37 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 @keyframes spiderGestureRight{0%,100%{opacity:0;transform:scaleX(-1) translateY(12px) rotate(-25deg)}25%,70%{opacity:.82;transform:scaleX(-1) translateY(-10px) rotate(8deg)}}
 @media(prefers-reduced-motion:reduce){#ai #aiAgentVisual.is-speaking .spider-gesture{animation:none;opacity:.4}}
 </style>
+
+<style id="spider-agent-video-clean-layout">
+/* SPIDER's uploaded portrait video is the single source of truth for the agent visual. */
+#ai .ai-workbench-grid{grid-template-columns:minmax(0,1fr)!important}
+#ai .ai-workbench-grid>div:first-child{grid-column:1/-1!important;width:100%!important;display:flex!important;justify-content:center!important}
+#ai .ai-agent-visual.circuit-stage{
+  width:min(100%,560px)!important;height:auto!important;min-height:0!important;
+  max-height:none!important;aspect-ratio:1080/1430!important;margin:0 auto!important;
+  border:1px solid rgba(92,177,221,.32)!important;border-radius:14px!important;
+  background:#02070d!important;overflow:hidden!important;box-shadow:0 16px 48px #0008!important
+}
+#ai .ai-agent-visual video.circuit-agent-video{
+  position:absolute!important;inset:0!important;display:block!important;visibility:visible!important;
+  opacity:1!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;
+  object-fit:contain!important;object-position:center center!important;z-index:5!important;background:#02070d!important
+}
+#ai .ai-agent-visual canvas,#ai .ai-agent-visual .spider-body-gestures{display:none!important;visibility:hidden!important}
+#ai .ai-agent-visual:before,#ai .ai-agent-visual:after{display:none!important;content:none!important}
+#ai .circuit-state-label{display:none!important}
+@media(min-width:901px){
+ #ai .ai-workbench-grid{grid-template-columns:minmax(260px,.78fr) minmax(0,1.22fr)!important}
+ #ai .ai-workbench-grid>div:first-child{grid-column:1!important;grid-row:1/3!important;align-self:start!important}
+ #ai .ai-agent-visual.circuit-stage{width:min(100%,520px)!important}
+ #ai .circuit-live-task-panel{grid-column:2!important;grid-row:1!important}
+ #ai .ai-workspace-panel{grid-column:2!important;grid-row:2!important}
+}
+@media(max-width:900px){
+ #ai .ai-workbench-grid{display:flex!important;flex-direction:column!important}
+ #ai .ai-agent-visual.circuit-stage{width:min(100%,520px)!important}
+}
+</style>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -506,18 +537,12 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 <section class="section" id="ai">
 
 <div class="ai-workbench" id="aiWorkbench">
- <div class="ai-workbench-head"><div><div class="eyebrow">SPIDER · AI WORKSPACE</div><b style="font-size:16px">SPIDER Intelligence Console</b><div class="q-meta">Neural processing interface · AI task orchestration and review.</div></div></div>
+ <div class="ai-workbench-head"><div><div class="eyebrow">SPIDER · AI WORKSPACE</div><b style="font-size:18px">SPIDER · Your AI Agent</b><div class="q-meta">A visual assistant that listens, responds and works alongside you.</div></div></div>
  <div class="ai-workbench-grid">
   <div>
    <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="SPIDER animated neural-network virtual intelligence">
 <video class="circuit-agent-video" autoplay muted loop playsinline preload="metadata" aria-label="SPIDER AI Agent video"><source src="assets/spider-agent.mp4" type="video/mp4"></video>
-<canvas id="circuitNeuralCanvas" aria-hidden="true"></canvas>
-<svg class="spider-body-gestures" viewBox="0 0 1000 650" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
- <defs><linearGradient id="spiderArmGlow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#efffff"/><stop offset=".45" stop-color="#68d7ff"/><stop offset="1" stop-color="#278aff"/></linearGradient><filter id="spiderArmBlur"><feGaussianBlur stdDeviation="5"/></filter></defs>
- <g class="spider-arm spider-arm-left"><path class="arm-halo" d="M340 414 C285 400 260 355 230 318 C213 296 192 281 174 263"/><path class="arm-line" d="M340 414 C285 400 260 355 230 318 C213 296 192 281 174 263"/><path class="arm-line" d="M174 263 C151 246 144 228 151 211 M174 263 C168 236 172 218 184 205 M174 263 C185 241 199 231 211 231 M174 263 C198 254 214 254 224 263"/><circle class="arm-joint" cx="340" cy="414" r="9"/><circle class="arm-joint" cx="230" cy="318" r="7"/></g>
- <g class="spider-arm spider-arm-right"><path class="arm-halo" d="M660 414 C715 400 740 355 770 318 C787 296 808 281 826 263"/><path class="arm-line" d="M660 414 C715 400 740 355 770 318 C787 296 808 281 826 263"/><path class="arm-line" d="M826 263 C849 246 856 228 849 211 M826 263 C832 236 828 218 816 205 M826 263 C815 241 801 231 789 231 M826 263 C802 254 786 254 776 263"/><circle class="arm-joint" cx="660" cy="414" r="9"/><circle class="arm-joint" cx="770" cy="318" r="7"/></g>
- <path class="spider-chest-scan" d="M300 465 Q500 510 700 465"/>
-</svg>
+
     <div class="circuit-state-label"><span class="circuit-live-dot"></span><span id="circuitStateText">SPIDER AI AGENT</span></div>
    </div>
 
