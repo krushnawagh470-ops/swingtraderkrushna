@@ -95,7 +95,7 @@
     } catch (e) { status(e.message, true); }
   }
   async function clearAll() {
-    if (!window.confirm("Permanently delete every CIRCUIT cloud memory? This cannot be undone.")) return;
+    if (!window.confirm("Permanently delete every SPIDER cloud memory? This cannot be undone.")) return;
     try { await api("/memory/clear", { method: "DELETE" }); await load(); status("All cloud memories deleted."); }
     catch (e) { status(e.message, true); }
   }
