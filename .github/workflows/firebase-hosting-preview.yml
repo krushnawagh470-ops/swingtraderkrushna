@@ -10,6 +10,7 @@ on:
       - 'firebase-config.js'
       - 'memory.js'
       - 'assets/**'
+      - 'icons/**'
       - 'firebase.json'
       - '.github/workflows/firebase-hosting-preview.yml'
   workflow_dispatch:
