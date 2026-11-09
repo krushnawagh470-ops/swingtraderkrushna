@@ -20,6 +20,13 @@ jobs:
       - name: Checkout development branch
         uses: actions/checkout@v4
 
+      - name: Stage frontend-only hosting files
+        run: |
+          mkdir -p hosting/assets hosting/data
+          cp index.html auth.js firebase-config.js memory.js hosting/
+          cp assets/spider-agent.mp4 hosting/assets/
+          cp data/calendar.json data/forex_factory_calendar.json hosting/data/
+
       - name: Deploy isolated Firebase preview channel
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
