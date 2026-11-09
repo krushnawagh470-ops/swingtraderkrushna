@@ -513,6 +513,28 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
  #ai .ai-agent-visual.circuit-stage{width:100%!important;aspect-ratio:4/3!important}
 }
 </style>
+<style id="spider-agent-fill-and-voice-sync">
+/* Fill the agent console edge-to-edge without letterboxing. */
+#ai .ai-workbench-grid>div:first-child{width:100%!important;min-width:0!important}
+#ai .ai-agent-visual.circuit-stage{
+  width:100%!important;max-width:none!important;height:clamp(300px,46vh,560px)!important;
+  min-height:300px!important;aspect-ratio:auto!important;margin:0!important;
+  padding:0!important;overflow:hidden!important;border-radius:0!important;
+  background:#02070d!important
+}
+#ai .ai-agent-visual video.circuit-agent-video{
+  position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+  min-width:100%!important;min-height:100%!important;display:block!important;
+  object-fit:cover!important;object-position:center 38%!important;
+  margin:0!important;padding:0!important;border:0!important;background:#02070d!important;
+  z-index:5!important
+}
+#ai .ai-agent-visual:not(.is-speaking) video.circuit-agent-video{animation:none!important;filter:none!important}
+#ai .ai-agent-visual.is-speaking video.circuit-agent-video{filter:brightness(1.08) saturate(1.08)}
+@media(max-width:650px){
+  #ai .ai-agent-visual.circuit-stage{height:clamp(280px,54vh,480px)!important;min-height:280px!important}
+}
+</style>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -1493,8 +1515,25 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
     if (agentVisual) agentVisual.classList.toggle("is-speaking", !!active);
     if (!agentVideo) return;
     if (!active && agentBeatAnimation) { agentBeatAnimation.cancel(); agentBeatAnimation = null; }
-    if (active) { const playback = agentVideo.play(); if (playback && playback.catch) playback.catch(function(){}); }
-    else { agentVideo.pause(); try { agentVideo.currentTime = 0; } catch (e) {} }
+    if (active) {
+      /* Start the talking clip only when the spoken answer starts. */
+      if (agentVideo.ended || agentVideo.currentTime < 0.05) {
+        try { agentVideo.currentTime = 0; } catch (e) {}
+      }
+      const playback = agentVideo.play();
+      if (playback && playback.catch) playback.catch(function(){});
+    } else {
+      /* Freeze the avatar immediately when speech ends or is stopped. */
+      agentVideo.pause();
+      try { agentVideo.currentTime = 0; } catch (e) {}
+    }
+  }
+  if (agentVideo) {
+    agentVideo.addEventListener("loadedmetadata", function () {
+      agentVideo.pause();
+      try { agentVideo.currentTime = 0; } catch (e) {}
+    }, { once: true });
+    setAgentSpeaking(false);
   }
   function pulseAgentForWord(word) {
     if (!agentVideo || !agentVisual || !word || !agentVisual.classList.contains("is-speaking") || !agentVideo.animate) return;
