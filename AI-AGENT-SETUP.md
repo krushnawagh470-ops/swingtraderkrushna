@@ -1,28 +1,28 @@
-# CIRCUIT AI Core — free-first setup
+# SPIDER AI Core — free-first setup
 
-CIRCUIT now has a provider-independent AI core in `worker.js`. Groq remains the default provider. The website calls the Cloudflare Worker; provider API keys stay private in Cloudflare and are never placed in the public website.
+SPIDER now has a provider-independent AI core in `worker.js`. Groq remains the default provider. The website calls the Cloudflare Worker; provider API keys stay private in Cloudflare and are never placed in the public website.
 
 ## What changed
 
-- A central CIRCUIT identity and operating prompt now lives in the Worker, rather than being tied to one model provider.
+- A central SPIDER identity and operating prompt now lives in the Worker, rather than being tied to one model provider.
 - The Worker uses a provider adapter. Groq is active by default.
 - OpenAI can be selected later by changing one Worker variable and adding an API key secret. The website chat interface does not need to be rebuilt.
 - The original adaptive-learning notes remain local to the browser. The new optional Cloud memory panel uses authenticated Cloudflare D1 storage for cross-device persistence after its one-time setup below.
 
-## Deploy the updated CIRCUIT brain
+## Deploy the updated SPIDER brain
 
 A GitHub commit does **not** automatically update the already-running Cloudflare Worker unless a Cloudflare deployment pipeline has been configured. The website may deploy separately through GitHub Pages.
 
 1. Open Cloudflare Dashboard: https://dash.cloudflare.com/
-2. Go to **Workers & Pages** and open the existing Worker used by CIRCUIT (the URL currently saved in the website).
+2. Go to **Workers & Pages** and open the existing Worker used by SPIDER (the URL currently saved in the website).
 3. Open **Edit code** / **Quick Edit**.
 4. In this repository, open `worker.js`: https://github.com/krushnawagh470-ops/swingtraderkrushna/blob/main/worker.js
 5. Replace the Worker editor contents with the complete `worker.js` file, then **Save and Deploy**.
 6. Keep the existing `GROQ_API_KEY` secret. Do not paste it into GitHub or into this chat.
-7. Open the website's AI Agent connection test. The health response should show **CIRCUIT Core v2**, provider **Groq**, and `configured: true`.
+7. Open the website's AI Agent connection test. The health response should show **SPIDER Core v2**, provider **Groq**, and `configured: true`.
 
 
-## CIRCUIT Persistent Memory v1 — one-time setup
+## SPIDER Persistent Memory v1 — one-time setup
 
 The website now includes a cloud-memory panel. It is intentionally locked until you configure a D1 database and two Worker Secrets. The existing Groq chat continues to work without these memory bindings.
 
@@ -36,7 +36,7 @@ The website now includes a cloud-memory panel. It is intentionally locked until 
 
 ### 2. Bind D1 to the existing Worker
 
-1. Open **Workers & Pages** and select the Worker whose URL is saved in CIRCUIT.
+1. Open **Workers & Pages** and select the Worker whose URL is saved in SPIDER.
 2. Open **Settings → Bindings → Add binding → D1 database**.
 3. Set the variable/binding name to exactly `DB`.
 4. Select the `circuit-memory` database and save.
@@ -45,16 +45,16 @@ The website now includes a cloud-memory panel. It is intentionally locked until 
 
 In the same Worker, open **Settings → Variables and Secrets** and add:
 
-- `CIRCUIT_MEMORY_PASSWORD` — create a long, unique passphrase (at least 20 characters). This is the password you will enter in CIRCUIT's Cloud memory panel. Save it in your password manager.
-- `CIRCUIT_MEMORY_JWT_SECRET` — generate a separate random secret of at least 32 characters. Do not use the memory passphrase again.
+- `SPIDER_MEMORY_PASSWORD` — create a long, unique passphrase (at least 20 characters). This is the password you will enter in SPIDER's Cloud memory panel. Save it in your password manager.
+- `SPIDER_MEMORY_JWT_SECRET` — generate a separate random secret of at least 32 characters. Do not use the memory passphrase again.
 
 Add both as **Secrets**, not plain-text variables. Never put either value in GitHub, website code, screenshots, or chat.
 
 ### 4. Deploy and verify
 
 1. Open the Worker editor, confirm it contains the latest `worker.js` from this repository, then **Save and Deploy**.
-2. Open the CIRCUIT website and go to **AI → Cloud memory**.
-3. Enter the passphrase you set for `CIRCUIT_MEMORY_PASSWORD`, then tap **Unlock cloud memory**.
+2. Open the SPIDER website and go to **AI → Cloud memory**.
+3. Enter the passphrase you set for `SPIDER_MEMORY_PASSWORD`, then tap **Unlock cloud memory**.
 4. Save a harmless test memory, for example: `Use 12-hour time format in answers.`
 5. Refresh the page and unlock again. The test memory should still appear. Sign in on another device to confirm cross-device persistence.
 
@@ -88,7 +88,7 @@ Optional model overrides:
 
 ## Current limits — stated clearly
 
-- This is CIRCUIT's central reasoning/assistant layer, not a direct connection to the ChatGPT Free app.
+- This is SPIDER's central reasoning/assistant layer, not a direct connection to the ChatGPT Free app.
 - It does not automatically gain access to ChatGPT, Claude, Gemini, broker accounts, GitHub actions, or other apps. Those require separate, explicitly connected tools.
 - Original browser-only learning notes remain in local storage. Cloud memory is separate and persists in D1 across devices once configured.
 - Market data/news context is only available when the website successfully retrieves and attaches it. The AI must not invent missing live data.
