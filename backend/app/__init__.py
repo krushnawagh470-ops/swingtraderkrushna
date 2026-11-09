@@ -1,1 +1,1 @@
-"""CIRCUIT Python backend package."""
+"""SPIDER Python backend package."""
