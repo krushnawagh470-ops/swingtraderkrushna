@@ -52,7 +52,7 @@ jobs:
               src.resize((size, size), Image.Resampling.LANCZOS).save(out / "ic_launcher.png")
           PY
       - name: Build debug APK
-        run: gradle --no-daemon :app:assembleDebug
+        run: gradle --no-daemon -p android :app:assembleDebug
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
