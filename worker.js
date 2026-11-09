@@ -2,7 +2,11 @@
 // Default: Groq. Future switch: set AI_PROVIDER=openai and add OPENAI_API_KEY
 // as a Cloudflare Worker secret. Never put provider keys in the website.
 
-const ALLOWED_ORIGIN = "https://krushnawagh470-ops.github.io";
+const ALLOWED_ORIGINS = new Set([
+  "https://krushnawagh470-ops.github.io",
+  "https://spider-121.web.app",
+  "https://spider-121--spider-auth-preview-gti0apvk.web.app"
+]);
 const DEFAULT_PROVIDER = "groq";
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const OPENAI_MODEL = "gpt-4.1-mini";
@@ -10,7 +14,7 @@ const TIMEOUT_MS = 25000;
 const MAX_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 3500;
 
-const SPIDER_CORE_PROMPT = `You are SPIDER, an independent AI assistant and virtual worker. Your name is SPIDER, never SwingTraderKrushna AI, SwingTraderKrushna, or Jarvis. If asked to introduce yourself, begin exactly: "Hello! I am SPIDER, your practical and honest AI assistant and virtual worker."
+const SPIDER_CORE_PROMPT = `You are SPIDER, an independent AI assistant and virtual worker. Your name is SPIDER. Never call yourself Circuit/CIRCUIT, SwingTraderKrushna AI, SwingTraderKrushna, Jarvis, or the name of an underlying model/provider. If asked to introduce yourself, begin exactly: "Hello! I am SPIDER, your practical and honest AI assistant and virtual worker."
 
 MISSION
 Help the user make progress across personal life, planning, learning, communication, finance, career, business, entrepreneurship, content creation, technology, and trading/investing. Trading is one area, not the whole workspace.
@@ -31,7 +35,7 @@ OPERATING RULES
 
 function cors() {
   return {
-    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Vary": "Origin"
@@ -111,7 +115,9 @@ async function sha256Hex(value) {
   return Array.from(digest, b => b.toString(16).padStart(2, "0")).join("");
 }
 async function memoryRoute(request, env, url) {
-  if (!env.DB || !env.CIRCUIT_MEMORY_PASSWORD || !env.CIRCUIT_MEMORY_JWT_SECRET) {
+  const memoryPassword = env.SPIDER_MEMORY_PASSWORD || memoryPassword;
+  const memoryJwtSecret = env.SPIDER_MEMORY_JWT_SECRET || memoryJwtSecret;
+  if (!env.DB || !memoryPassword || !memoryJwtSecret) {
     return json({ error: "Persistent memory is not configured yet. Set the D1 binding DB and both CIRCUIT_MEMORY secrets in Cloudflare." }, 503);
   }
   if (url.pathname === "/memory/login" && request.method === "POST") {
@@ -120,21 +126,21 @@ async function memoryRoute(request, env, url) {
     const supplied = typeof body.password === "string" ? body.password : "";
     if (supplied.length < 1 || supplied.length > 256) return json({ error: "Enter your memory passphrase." }, 400);
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-    const ipHash = await sha256Hex(ip + ":" + env.CIRCUIT_MEMORY_JWT_SECRET);
+    const ipHash = await sha256Hex(ip + ":" + memoryJwtSecret);
     await env.DB.prepare("DELETE FROM memory_login_attempts WHERE attempted_at < ?").bind(Date.now()-86400000).run();
     const recent = await env.DB.prepare("SELECT COUNT(*) AS n FROM memory_login_attempts WHERE ip_hash = ? AND attempted_at > ?").bind(ipHash, Date.now()-900000).first();
     if (Number(recent?.n || 0) >= 5) return json({ error: "Too many login attempts. Wait 15 minutes and try again." }, 429);
-    if (supplied !== env.CIRCUIT_MEMORY_PASSWORD) {
+    if (supplied !== memoryPassword) {
       await env.DB.prepare("INSERT INTO memory_login_attempts (ip_hash, attempted_at) VALUES (?, ?)").bind(ipHash, Date.now()).run();
       return json({ error: "Incorrect memory passphrase." }, 401);
     }
     await env.DB.prepare("DELETE FROM memory_login_attempts WHERE ip_hash = ?").bind(ipHash).run();
-    const token = await issueMemoryToken(env.CIRCUIT_MEMORY_JWT_SECRET);
+    const token = await issueMemoryToken(memoryJwtSecret);
     return json({ token, expiresIn: 43200, message: "Memory session started." });
   }
   const auth = request.headers.get("Authorization") || "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!(await verifyMemoryToken(token, env.CIRCUIT_MEMORY_JWT_SECRET))) return json({ error: "Memory session expired or not signed in. Sign in again." }, 401);
+  if (!(await verifyMemoryToken(token, memoryJwtSecret))) return json({ error: "Memory session expired or not signed in. Sign in again." }, 401);
 
   if (url.pathname === "/memory" && request.method === "GET") {
     const result = await env.DB.prepare("SELECT id, category, content, created_at, updated_at FROM circuit_memories WHERE user_id = 'owner' ORDER BY updated_at DESC LIMIT 100").all();
@@ -178,7 +184,7 @@ async function memoryRoute(request, env, url) {
 export default {
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
-    if (origin && origin !== ALLOWED_ORIGIN) return json({ error: "Origin not allowed." }, 403);
+    if (origin && !ALLOWED_ORIGINS.has(origin)) return json({ error: "Origin not allowed." }, 403);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors() });
 
     const url = new URL(request.url);
@@ -193,9 +199,9 @@ export default {
         model: config.model,
         brain: "SPIDER Core v2",
         providerMode: provider,
-        build: "circuit-core-provider-adapter-2026-11-08-v2",
+        build: "spider-core-conversation-memory-2026-11-10-v3",
         timeout_seconds: TIMEOUT_MS / 1000,
-        memoryConfigured: Boolean(env.DB && env.CIRCUIT_MEMORY_PASSWORD && env.CIRCUIT_MEMORY_JWT_SECRET)
+        memoryConfigured: Boolean(env.DB && (env.SPIDER_MEMORY_PASSWORD || env.CIRCUIT_MEMORY_PASSWORD) && (env.SPIDER_MEMORY_JWT_SECRET || env.CIRCUIT_MEMORY_JWT_SECRET))
       });
     }
 
