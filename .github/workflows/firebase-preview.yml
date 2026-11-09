@@ -1,0 +1,30 @@
+name: SPIDER Firebase Preview
+
+on:
+  push:
+    branches:
+      - security/owner-auth-google-email
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spider-firebase-preview
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v4
+
+      - name: Deploy isolated Firebase preview channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SPIDER_121 }}
+          projectId: spider-121
+          channelId: spider-auth-preview
+          expires: 7d
