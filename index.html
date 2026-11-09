@@ -446,6 +446,20 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 }
 </style>
 
+
+<style id="spider-speaking-gestures">
+/* SPIDER speaks with subtle holographic hand gestures around the uploaded face video. */
+#ai #aiAgentVisual .spider-gesture{position:absolute;z-index:12;bottom:12%;width:34px;height:42px;opacity:0;pointer-events:none;border:1px solid #86d8ff;border-radius:48% 48% 42% 42%;box-shadow:0 0 12px #45baff88,inset 0 0 10px #45baff33;background:linear-gradient(160deg,#9fe7ff33,#2b8fff08);transform-origin:50% 90%}
+#ai #aiAgentVisual .spider-gesture:before{content:"";position:absolute;left:3px;right:3px;top:-15px;height:18px;border-radius:12px 12px 3px 3px;border:1px solid #86d8ff;border-bottom:0;background:repeating-linear-gradient(90deg,transparent 0 6px,#86d8ff66 6px 7px);box-shadow:0 0 8px #45baff66}
+#ai #aiAgentVisual .spider-gesture:after{content:"";position:absolute;width:17px;height:9px;top:13px;left:-10px;border:1px solid #86d8ff;border-right:0;border-radius:12px 0 0 12px;transform:rotate(-25deg)}
+#ai #aiAgentVisual .spider-gesture-left{left:19%;transform:rotate(-18deg)}
+#ai #aiAgentVisual .spider-gesture-right{right:19%;transform:scaleX(-1) rotate(-18deg)}
+#ai #aiAgentVisual.is-speaking .spider-gesture-left{animation:spiderGestureLeft 1.8s ease-in-out infinite}
+#ai #aiAgentVisual.is-speaking .spider-gesture-right{animation:spiderGestureRight 1.8s ease-in-out infinite .25s}
+@keyframes spiderGestureLeft{0%,100%{opacity:0;transform:translateY(12px) rotate(-25deg)}25%,70%{opacity:.82;transform:translateY(-10px) rotate(8deg)}}
+@keyframes spiderGestureRight{0%,100%{opacity:0;transform:scaleX(-1) translateY(12px) rotate(-25deg)}25%,70%{opacity:.82;transform:scaleX(-1) translateY(-10px) rotate(8deg)}}
+@media(prefers-reduced-motion:reduce){#ai #aiAgentVisual.is-speaking .spider-gesture{animation:none;opacity:.4}}
+</style>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -498,6 +512,7 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
    <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="SPIDER animated neural-network virtual intelligence">
 <video class="circuit-agent-video" autoplay muted loop playsinline preload="metadata" aria-label="SPIDER AI Agent video"><source src="assets/From Klickpin.com- Try this viral spring refresh roundup that feel luxe without spending a fortune with realistic ideas for busy days and small bu.mp4" type="video/mp4"></video>
 <canvas id="circuitNeuralCanvas" aria-hidden="true"></canvas>
+<span class="spider-gesture spider-gesture-left" aria-hidden="true"></span><span class="spider-gesture spider-gesture-right" aria-hidden="true"></span>
     <div class="circuit-state-label"><span class="circuit-live-dot"></span><span id="circuitStateText">SPIDER AI AGENT</span></div>
    </div>
 
