@@ -1,6 +1,6 @@
-# CIRCUIT Python API
+# SPIDER Python API
 
-FastAPI backend for the SwingTraderKrushna CIRCUIT frontend.
+FastAPI backend for the SwingTraderKrushna SPIDER frontend.
 
 ## Services
 - `GET /api/v1/health` — API and integration configuration status.
