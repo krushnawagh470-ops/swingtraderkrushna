@@ -491,6 +491,28 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
  #ai .ai-agent-visual.circuit-stage{width:min(100%,520px)!important}
 }
 </style>
+
+<style id="spider-video-fill-and-speech-sync">
+/* Fill the complete agent panel; no letterbox gaps around the portrait clip. */
+#ai .ai-workbench-grid>div:first-child{width:100%!important;min-width:0!important;padding:0!important;margin:0!important}
+#ai .ai-agent-visual.circuit-stage{
+ width:100%!important;max-width:none!important;height:auto!important;min-height:0!important;
+ aspect-ratio:4/3!important;margin:0!important;padding:0!important;border:0!important;
+ border-radius:0!important;overflow:hidden!important;background:#02070d!important
+}
+#ai .ai-agent-visual video.circuit-agent-video{
+ position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+ min-width:100%!important;min-height:100%!important;object-fit:cover!important;
+ object-position:center 42%!important;border:0!important;border-radius:0!important;
+}
+/* The clip is intentionally paused while idle/listening/thinking. */
+#ai .ai-agent-visual:not(.is-speaking) video.circuit-agent-video{animation:none!important}
+@media(max-width:900px){
+ #ai .ai-workbench-grid{display:flex!important;flex-direction:column!important;gap:0!important}
+ #ai .ai-workbench-grid>div:first-child{width:100%!important}
+ #ai .ai-agent-visual.circuit-stage{width:100%!important;aspect-ratio:4/3!important}
+}
+</style>
 </head><body><div class="shell">
 <aside class="side"><div class="brand">SWING<span>TRADER</span></div><div class="tag">KRUSHNA · TRADING DESK</div><nav class="nav desk-workspace-nav" id="sideNav">
 <button class="active" data-page="overview">⌂ <span>Home</span></button>
@@ -541,7 +563,7 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
  <div class="ai-workbench-grid">
   <div>
    <div class="ai-agent-visual circuit-stage state-idle" id="aiAgentVisual" aria-label="SPIDER animated neural-network virtual intelligence">
-<video class="circuit-agent-video" autoplay muted loop playsinline preload="metadata" aria-label="SPIDER AI Agent video"><source src="assets/spider-agent.mp4" type="video/mp4"></video>
+<video class="circuit-agent-video" muted playsinline preload="metadata" aria-label="SPIDER AI Agent video"><source src="assets/spider-agent.mp4" type="video/mp4"></video>
 
     <div class="circuit-state-label"><span class="circuit-live-dot"></span><span id="circuitStateText">SPIDER AI AGENT</span></div>
    </div>
