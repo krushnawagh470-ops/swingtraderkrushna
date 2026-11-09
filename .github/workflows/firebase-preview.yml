@@ -26,6 +26,7 @@ jobs:
           cp index.html auth.js firebase-config.js memory.js manifest.webmanifest sw.js hosting/
           mkdir -p hosting/icons
           cp icons/spider.svg hosting/icons/
+          cp icons/spider.png hosting/icons/
           cp assets/spider-agent.mp4 hosting/assets/
           cp data/calendar.json data/forex_factory_calendar.json hosting/data/
 
