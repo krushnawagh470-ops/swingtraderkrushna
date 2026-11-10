@@ -692,6 +692,7 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
      <p class="q-meta">Your passphrase is checked by the secure Worker. It is not saved in this browser or sent to the AI model.</p>
     </div>
     <div id="circuitMemoryManager" hidden style="margin-top:10px">
+     <label style="display:flex;align-items:center;gap:9px;margin:4px 0 10px;font-size:12px"><input id="circuitAutoMemoryToggle" type="checkbox" style="width:18px;height:18px;accent-color:#69b8ff"> <span><b>Automatic memory</b><br><span class="q-meta">Save useful, non-sensitive details from chats when Cloud Memory is unlocked. You can pause this anytime.</span></span></label>
      <label class="terminal-label" for="circuitCloudMemoryCategory">CATEGORY</label>
      <select id="circuitCloudMemoryCategory"><option>General</option><option>Preferences</option><option>Personal planning</option><option>Finance and career</option><option>Business and content</option><option>Technology and projects</option><option>Trading and investing</option></select>
      <label class="terminal-label" for="circuitCloudMemoryInput" style="display:block;margin-top:9px">ADD APPROVED MEMORY</label>
@@ -1467,8 +1468,16 @@ const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|feder
           method: "POST",
           mode: "cors",
           cache: "no-store",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: outgoing }),
+          headers: Object.assign(
+            { "Content-Type": "application/json" },
+            window.circuitCloudMemoryAutoEnabled?.() && window.circuitCloudMemoryAuthorization?.()
+              ? { "Authorization": window.circuitCloudMemoryAuthorization() } : {}
+          ),
+          body: JSON.stringify({
+            messages: outgoing,
+            memoryEnabled: Boolean(window.circuitCloudMemoryAutoEnabled?.() && window.circuitCloudMemoryAuthorization?.()),
+            memoryMessages: [...messages.slice(-6), { role: "user", content: prompt }].slice(-8)
+          }),
           signal: activeRequestController.signal
         });
         /* Keep the timeout active until the complete response body has arrived. */
