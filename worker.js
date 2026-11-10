@@ -298,89 +298,31 @@ async function fetchOfficialCpiContext(timeZone) {
   }
 }
 
-async function oandaMarketRoute(env, url) {
-  if (url.searchParams.get("symbol") && url.searchParams.get("symbol").toUpperCase() !== "XAU_USD") {
-    return json({ ok: false, source: "OANDA", error: "This endpoint is restricted to XAU_USD spot data." }, 400);
-  }
-  const token = env.OANDA_API_TOKEN;
-  const accountId = env.OANDA_ACCOUNT_ID;
-  if (!token || !accountId) {
-    return json({
-      ok: false,
-      source: "OANDA v20 account-specific pricing",
-      instrument: "XAU_USD",
-      marketRole: "SPOT EXECUTION DATA ONLY",
-      error: "OANDA feed is not configured. Add OANDA_API_TOKEN and OANDA_ACCOUNT_ID as Cloudflare Worker secrets."
-    }, 503);
-  }
-  const environment = String(env.OANDA_ENV || "practice").toLowerCase() === "live" ? "live" : "practice";
-  const base = environment === "live" ? "https://api-fxtrade.oanda.com" : "https://api-fxpractice.oanda.com";
-  const headers = { "Authorization": "Bearer " + token, "Accept": "application/json" };
-  const frames = [["M5", "M5"], ["M15", "M15"], ["H1", "H1"], ["H4", "H4"], ["D", "D"]];
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 9000);
-  try {
-    const quoteUrl = base + "/v3/accounts/" + encodeURIComponent(accountId) + "/pricing?instruments=XAU_USD";
-    const quoteResponse = await fetch(quoteUrl, { headers, signal: controller.signal });
-    if (!quoteResponse.ok) {
-      const detail = (await quoteResponse.text()).slice(0, 240);
-      return json({ ok: false, source: "OANDA v20", instrument: "XAU_USD", environment, error: "OANDA pricing request failed with HTTP " + quoteResponse.status + (detail ? ": " + detail : "") }, quoteResponse.status === 401 || quoteResponse.status === 403 ? 502 : 503);
-    }
-    const quoteBody = await quoteResponse.json();
-    const quote = (quoteBody.prices || []).find(item => item.instrument === "XAU_USD");
-    if (!quote) return json({ ok: false, source: "OANDA v20", instrument: "XAU_USD", environment, error: "OANDA returned no XAU_USD quote for this account." }, 503);
-    const bid = Number(quote.bids?.[0]?.price ?? quote.closeoutBid);
-    const ask = Number(quote.asks?.[0]?.price ?? quote.closeoutAsk);
-    const quoteTime = quote.time || null;
-    const quoteAgeSeconds = quoteTime ? Math.max(0, (Date.now() - Date.parse(quoteTime)) / 1000) : null;
-    const candlesResults = await Promise.all(frames.map(async ([label, granularity]) => {
-      const endpoint = base + "/v3/accounts/" + encodeURIComponent(accountId) + "/instruments/XAU_USD/candles?granularity=" + granularity + "&count=100&price=MBA&smooth=false";
-      const response = await fetch(endpoint, { headers, signal: controller.signal });
-      if (!response.ok) throw new Error("OANDA " + label + " candles HTTP " + response.status);
-      const body = await response.json();
-      const candles = (body.candles || []).filter(c => c.complete === true).map(c => {
-        const m = c.mid || {}, b = c.bid || {}, a = c.ask || {};
-        return {
-          time: c.time, open: Number(m.o), high: Number(m.h), low: Number(m.l), close: Number(m.c),
-          volume: Number(c.volume || 0), complete: c.complete === true,
-          bid: b.c != null ? Number(b.c) : null, ask: a.c != null ? Number(a.c) : null,
-          mid: m.c != null ? Number(m.c) : null
-        };
-      }).filter(c => [c.open,c.high,c.low,c.close].every(Number.isFinite));
-      const last = candles[candles.length - 1] || null;
-      return { timeframe: label, source: "OANDA account-specific XAU_USD spot candles", count: candles.length, lastClosedCandle: last, candles };
-    }));
-    const stale = quoteAgeSeconds == null || quoteAgeSeconds > 30;
-    return json({
-      ok: true,
-      source: "OANDA v20 account-specific pricing",
-      instrument: "XAU_USD",
-      marketRole: "SPOT EXECUTION DATA ONLY — never futures",
-      environment,
-      fetchedAt: new Date().toISOString(),
-      quote: {
-        bid: Number.isFinite(bid) ? bid : null,
-        ask: Number.isFinite(ask) ? ask : null,
-        mid: Number.isFinite(bid) && Number.isFinite(ask) ? (bid + ask) / 2 : null,
-        spread: Number.isFinite(bid) && Number.isFinite(ask) ? ask - bid : null,
-        timestamp: quoteTime,
-        ageSeconds: quoteAgeSeconds,
-        status: stale ? "STALE_OR_UNTIMESTAMPED" : "FRESH"
-      },
-      candles: candlesResults,
-      tradeDataStatus: stale || !Number.isFinite(bid) || !Number.isFinite(ask) ? "NOT_AUTHORIZED" : "QUOTE_FRESH"
-    });
-  } catch (error) {
-    return json({
-      ok: false,
-      source: "OANDA v20",
-      instrument: "XAU_USD",
-      environment,
-      error: error?.name === "AbortError" ? "OANDA request timed out." : String(error?.message || "OANDA feed failed.")
-    }, 502);
-  } finally {
-    clearTimeout(timer);
-  }
+async function twelveDataMarketRoute(env,url){
+ const symbol=String(url.searchParams.get("symbol")||"XAU/USD").toUpperCase();
+ if(symbol!=="XAU/USD"&&symbol!=="XAU_USD")return json({ok:false,error:"Endpoint restricted to XAU/USD."},400);
+ const key=env.TWELVE_DATA_API_KEY;
+ if(!key)return json({ok:false,source:"Twelve Data",error:"TWELVE_DATA_API_KEY is not configured."},503);
+ const frames=[["M5","5min",300],["M15","15min",900],["H1","1h",3600],["H4","4h",14400],["1D","1day",86400]];
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+ const td=async(path,params)=>{const u=new URL("https://api.twelvedata.com"+path);Object.entries({...params,apikey:key,format:"JSON"}).forEach(([k,v])=>u.searchParams.set(k,String(v)));const r=await fetch(u,{signal:controller.signal,headers:{Accept:"application/json"}});const b=await r.json().catch(()=>({}));if(!r.ok||b.status==="error"||b.code)throw new Error("Twelve Data "+path+": "+(b.message||b.msg||("HTTP "+r.status)));return b;};
+ const ms=v=>{if(v==null)return null;if(typeof v==="number"||/^\d{10,13}$/.test(String(v))){const n=Number(v);return n<1e12?n*1000:n;}const n=Date.parse(String(v).replace(" ","T")+"Z");return Number.isFinite(n)?n:null;};
+ try{
+  const q=await td("/quote",{symbol:"XAU/USD"});
+  const price=Number(q.close??q.price??q.last),qt=ms(q.timestamp??q.datetime),age=qt==null?null:Math.max(0,(Date.now()-qt)/1000);
+  const bid=Number(q.bid),ask=Number(q.ask),hasBA=Number.isFinite(bid)&&Number.isFinite(ask)&&bid>0&&ask>=bid;
+  const candles=await Promise.all(frames.map(async([label,interval,seconds])=>{
+   const b=await td("/time_series",{symbol:"XAU/USD",interval,outputsize:101,order:"DESC"});
+   if(!Array.isArray(b.values)||b.values.length<26)throw new Error(label+" returned insufficient candles");
+   const rows=b.values.slice(1).reverse().map(v=>({time:v.datetime,open:Number(v.open),high:Number(v.high),low:Number(v.low),close:Number(v.close),volume:Number(v.volume||0),complete:true})).filter(c=>[c.open,c.high,c.low,c.close].every(Number.isFinite));
+   if(rows.length<20)throw new Error(label+" has insufficient valid candles");
+   const last=rows[rows.length-1],opened=ms(last.time),closeMs=opened==null?null:opened+seconds*1000,barAge=closeMs==null?null:Math.max(0,(Date.now()-closeMs)/1000);
+   return{timeframe:label,interval,source:"Twelve Data XAU/USD spot",count:rows.length,lastClosedCandle:last,lastClosedCandleAgeSeconds:barAge,status:barAge!=null&&barAge<=Math.max(seconds*2,seconds+300)?"FRESH":"STALE",candles:rows};
+  }));
+  const quoteFresh=age!=null&&age<=120&&Number.isFinite(price)&&price>0,allFresh=candles.every(c=>c.status==="FRESH");
+  return json({ok:true,source:"Twelve Data REST API",instrument:"XAU/USD",marketRole:"SPOT REFERENCE DATA ONLY — not broker executable pricing",fetchedAt:new Date().toISOString(),quote:{price:Number.isFinite(price)?price:null,bid:hasBA?bid:null,ask:hasBA?ask:null,mid:hasBA?(bid+ask)/2:(Number.isFinite(price)?price:null),spread:hasBA?ask-bid:null,timestamp:q.timestamp??q.datetime??null,ageSeconds:age,status:quoteFresh?"FRESH":"STALE_OR_UNTIMESTAMPED",bidAskAvailable:hasBA},candles,dataQuality:{quoteFresh,allClosedTimeframesFresh:allFresh,bidAskAvailable:hasBA},tradeDataStatus:quoteFresh&&allFresh&&hasBA?"REFERENCE_DATA_READY_NOT_BROKER_EXECUTABLE":"NOT_AUTHORIZED",limitation:"Twelve Data is a reference feed, not a broker's executable XAUUSD bid/ask. Confirm execution price and spread separately."});
+ }catch(e){return json({ok:false,source:"Twelve Data REST API",instrument:"XAU/USD",error:e?.name==="AbortError"?"Twelve Data request timed out.":String(e?.message||"Twelve Data request failed."),tradeDataStatus:"NOT_AUTHORIZED"},502);}
+ finally{clearTimeout(timer);}
 }
 
 function cors() {
@@ -628,7 +570,7 @@ export default {
       });
     }
 
-    if (url.pathname === "/market/oanda" && request.method === "GET") return oandaMarketRoute(env, url);
+    if (url.pathname === "/market/twelve-data" && request.method === "GET") return twelveDataMarketRoute(env, url);
     if (url.pathname === "/memory" || url.pathname.startsWith("/memory/")) return memoryRoute(request, env, url);
     if (url.pathname === "/search" && request.method === "GET") return webSearchRoute(url);
     if (url.pathname !== "/chat" || request.method !== "POST") return json({ error: "Not found." }, 404);
