@@ -106,3 +106,5 @@ jobs:
           node -e 'const d=require("/tmp/spider-health.json"); if(!d.ok || !d.configured || !d.memoryConfigured) process.exit(1); console.log("SPIDER Core health OK:", d.build);'
           curl --fail --silent --show-error "$WORKER_URL/search?q=Bureau%20of%20Labor%20Statistics%20CPI%20release" > /tmp/spider-search.json
           node -e 'const d=require("/tmp/spider-search.json"); if(!d.ok || !Array.isArray(d.results) || !d.results.length) process.exit(1); console.log("Live search OK:", d.results.length, "sources");'
+          curl --fail --silent --show-error -X POST "$WORKER_URL/chat" -H "Content-Type: application/json" --data '{"messages":[{"role":"user","content":"What is the latest US CPI release, and is the October 2026 CPI report published yet?"}],"timeZone":"Asia/Kolkata"}' > /tmp/spider-cpi.json
+          node -e 'const d=require("/tmp/spider-cpi.json"); const r=String(d.reply||""); if(!r || /April\\s+10,?\\s+2024|April\\s+2024/i.test(r)) { console.error(r || d.error || "Empty CPI response"); process.exit(1); } console.log("Official CPI grounding OK:", r.slice(0,180));'
