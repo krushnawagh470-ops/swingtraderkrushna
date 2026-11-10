@@ -29,9 +29,129 @@ OPERATING RULES
 - Protect credentials and sensitive personal/financial information. Never ask the user to paste API keys, passwords, or access tokens into chat.
 - Use relevant user-approved context supplied with the request. New explicit user instructions override older preferences. Do not treat feedback as factual knowledge.
 - For trading, prioritize capital preservation, risk sizing, invalidation, and uncertainty. Never present a setup as guaranteed or personalized financial advice.
-- For current or time-sensitive claims, explain when the available information may be stale and request or use current source data when available.
+- Treat the injected current date/time as authoritative for interpreting words such as today, yesterday, and upcoming.
+- For current or time-sensitive claims, use supplied live source excerpts first. Never present model training knowledge as live data. If current source retrieval failed, say that clearly and do not guess.
+- For economic releases, distinguish scheduled time, forecast, previous, and actual. A scheduled release is not an actual result; do not report actual figures until the official release source contains them.
 - Use 12-hour clock with am/pm when writing times.
 - If a task requires a tool or external access that is unavailable, say so and provide the next practical step.`;
+
+
+
+function decodeWebText(value) {
+  return String(value || "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&");
+}
+function stripWebHtml(html) {
+  return decodeWebText(String(html || "")
+    .replace(/<(script|style|noscript|svg|canvas|iframe|nav|footer|header|form|aside)[^>]*>[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[\u0000-\u001f]+/g, " "))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function xmlField(block, tag) {
+  const match = String(block || "").match(new RegExp("<" + tag + "(?:\\s[^>]*)?>([\\s\\S]*?)<\\/" + tag + ">", "i"));
+  return match ? decodeWebText(match[1]).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() : "";
+}
+async function webSearchRoute(url) {
+  const query = String(url.searchParams.get("q") || "").trim().slice(0, 240);
+  if (!query) return json({ error: "A search query is required." }, 400);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 11000);
+  try {
+    const endpoint = "https://www.bing.com/search?" + new URLSearchParams({ q: query, format: "rss", mkt: "en-IN" });
+    const response = await fetch(endpoint, {
+      signal: controller.signal,
+      headers: { "Accept": "application/rss+xml, application/xml, text/xml, */*", "User-Agent": "Mozilla/5.0 SPIDER/1.0" }
+    });
+    if (!response.ok) return json({ error: "Live search provider returned HTTP " + response.status + "." }, 502);
+    const xml = await response.text();
+    const blocks = [...xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)].slice(0, 8);
+    const rows = blocks.map(match => {
+      const block = match[1];
+      const title = xmlField(block, "title");
+      const link = xmlField(block, "link");
+      const description = xmlField(block, "description").slice(0, 900);
+      const publishedRaw = xmlField(block, "pubDate");
+      const date = publishedRaw ? new Date(publishedRaw) : null;
+      let domain = "";
+      try { domain = new URL(link).hostname.replace(/^www\./, ""); } catch (_) {}
+      return { title, url: link, domain, published: date && !isNaN(date.getTime()) ? date.toISOString() : "Date not supplied", snippet: description };
+    }).filter(item => item.title && /^https?:\/\//i.test(item.url));
+    if (!rows.length) return json({ error: "Live search returned no usable results." }, 502);
+    const pages = await Promise.all(rows.slice(0, 5).map(async item => {
+      try {
+        const pageResponse = await fetch(item.url, {
+          signal: controller.signal,
+          headers: { "User-Agent": "Mozilla/5.0 SPIDER/1.0", "Accept": "text/html,application/xhtml+xml,*/*" },
+          redirect: "follow"
+        });
+        if (!pageResponse.ok) throw new Error("HTTP " + pageResponse.status);
+        const html = await pageResponse.text();
+        const content = stripWebHtml(html).slice(0, 4200);
+        return { ...item, content: content || item.snippet, readStatus: content ? "PAGE CONTENT RETRIEVED" : "SNIPPET ONLY" };
+      } catch (error) {
+        if (error?.name === "AbortError") throw error;
+        return { ...item, content: item.snippet, readStatus: "SNIPPET ONLY · page fetch failed" };
+      }
+    }));
+    return json({ ok: true, query, fetchedAt: new Date().toISOString(), results: pages });
+  } catch (error) {
+    return json({ error: error?.name === "AbortError" ? "Live search timed out." : (error?.message || "Live search failed.") }, 502);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+async function fetchOfficialCpiContext(timeZone) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 9000);
+  try {
+    const [releaseResponse, scheduleResponse] = await Promise.all([
+      fetch("https://www.bls.gov/news.release/cpi.htm", { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 SPIDER/1.0", "Accept": "text/html" } }),
+      fetch("https://www.bls.gov/schedule/news_release/cpi.htm", { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 SPIDER/1.0", "Accept": "text/html" } })
+    ]);
+    if (!releaseResponse.ok || !scheduleResponse.ok) throw new Error("BLS official pages returned HTTP " + releaseResponse.status + "/" + scheduleResponse.status);
+    const [releaseHtml, scheduleHtml] = await Promise.all([releaseResponse.text(), scheduleResponse.text()]);
+    const titleMatch = releaseHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    const releaseTitle = titleMatch ? stripWebHtml(titleMatch[1]) : "BLS CPI news release";
+    const releaseText = stripWebHtml(releaseHtml);
+    const marker = "The Consumer Price Index for All Urban Consumers";
+    const markerAt = releaseText.indexOf(marker);
+    const releaseExcerpt = markerAt >= 0
+      ? releaseText.slice(Math.max(0, markerAt - 260), markerAt + 3300)
+      : releaseText.slice(0, 3000);
+    const scheduleText = stripWebHtml(scheduleHtml);
+    const scheduleMarker = scheduleText.indexOf("Reference Month Release Date Release Time");
+    const scheduleExcerpt = scheduleMarker >= 0
+      ? scheduleText.slice(scheduleMarker, scheduleMarker + 1150)
+      : scheduleText.slice(0, 1150);
+    let localNow;
+    try {
+      localNow = new Intl.DateTimeFormat("en-IN", { timeZone: timeZone || "Asia/Kolkata", dateStyle: "full", timeStyle: "long" }).format(new Date());
+    } catch (_) {
+      localNow = new Date().toISOString();
+    }
+    return [
+      "OFFICIAL LIVE CPI SOURCE: U.S. Bureau of Labor Statistics (BLS), fetched directly for this request.",
+      "Current date/time in the user's time zone (" + (timeZone || "Asia/Kolkata") + "): " + localNow,
+      "Current BLS release page title: " + releaseTitle,
+      "Latest published CPI release excerpt: " + releaseExcerpt,
+      "BLS CPI release schedule excerpt: " + scheduleExcerpt,
+      "Official URLs: https://www.bls.gov/news.release/cpi.htm and https://www.bls.gov/schedule/news_release/cpi.htm",
+      "Interpretation rules: Use the latest report period actually published on the release page. If the schedule says a report is scheduled but the release page still shows the prior report, say the new report is not published yet; do not invent actual figures. Explicitly distinguish actual, forecast, and previous. Never describe 2024 data as current."
+    ].join("\n\n").slice(0, 6500);
+  } catch (error) {
+    return "OFFICIAL LIVE CPI SOURCE UNAVAILABLE: The BLS pages could not be verified for this request (" + String(error?.message || "fetch failed").slice(0, 180) + "). Do not provide current CPI actuals, forecasts, or market reaction from memory. State that current figures could not be verified.";
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function cors() {
   return {
@@ -279,6 +399,7 @@ export default {
     }
 
     if (url.pathname === "/memory" || url.pathname.startsWith("/memory/")) return memoryRoute(request, env, url);
+    if (url.pathname === "/search" && request.method === "GET") return webSearchRoute(url);
     if (url.pathname !== "/chat" || request.method !== "POST") return json({ error: "Not found." }, 404);
     if (!config.key) {
       const secret = provider === "openai" ? "OPENAI_API_KEY" : "GROQ_API_KEY";
@@ -292,12 +413,21 @@ export default {
     const messages = validMessages(body.messages);
     if (!messages) return json({ error: "Send 1–12 valid messages, with the latest message from the user." }, 400);
 
+    const userTimeZone = typeof body.timeZone === "string" ? body.timeZone.slice(0, 80) : "Asia/Kolkata";
+    let currentLocalTime;
+    try { currentLocalTime = new Intl.DateTimeFormat("en-IN", { timeZone: userTimeZone, dateStyle: "full", timeStyle: "long" }).format(new Date()); }
+    catch (_) { currentLocalTime = new Date().toISOString(); }
+    const latestUserText = messages.slice().reverse().find(item => item.role === "user")?.content || "";
+    let officialLiveContext = "CURRENT DATE/TIME (" + userTimeZone + "): " + currentLocalTime + ". Do not claim current facts without supplied live evidence.";
+    if (/\\b(cpi|consumer price index|inflation)\\b/i.test(latestUserText)) {
+      officialLiveContext += "\\n\\n" + await fetchOfficialCpiContext(userTimeZone);
+    }
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
       const payload = {
         model: config.model,
-        messages: [{ role: "system", content: SPIDER_CORE_PROMPT }, ...messages],
+        messages: [{ role: "system", content: SPIDER_CORE_PROMPT + "\\n\\n" + officialLiveContext }, ...messages],
         max_completion_tokens: provider === "openai" ? 900 : 900
       };
       if (provider === "groq" && config.model.includes("gpt-oss")) payload.reasoning_effort = "low";
