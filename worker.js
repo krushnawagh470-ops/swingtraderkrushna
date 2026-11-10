@@ -578,7 +578,7 @@ export default {
     try {
       const payload = {
         model: config.model,
-        messages: [{ role: "system", content: SPIDER_CORE_PROMPT + "\\n\\n" + officialLiveContext }, ...messages],
+        messages: [{ role: "system", content: SPIDER_CORE_PROMPT + "\n\n" + officialLiveContext }, ...messages],
         max_completion_tokens: provider === "openai" ? 900 : 900
       };
       if (provider === "groq" && config.model.includes("gpt-oss")) payload.reasoning_effort = "low";
