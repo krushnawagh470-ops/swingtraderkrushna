@@ -113,12 +113,37 @@ async function fetchOfficialCpiContext(timeZone) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 5000);
   try {
-    const [releaseResponse, scheduleResponse] = await Promise.all([
+    const [releaseResponse, scheduleResponse, calendarResponse] = await Promise.all([
       fetch("https://www.bls.gov/news.release/cpi.htm", { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 SPIDER/1.0", "Accept": "text/html" } }),
-      fetch("https://www.bls.gov/schedule/news_release/cpi.htm", { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 SPIDER/1.0", "Accept": "text/html" } })
+      fetch("https://www.bls.gov/schedule/news_release/cpi.htm", { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 SPIDER/1.0", "Accept": "text/html" } }),
+      fetch("https://spider-121.web.app/data/calendar.json?ts=" + Date.now(), { signal: controller.signal, headers: { "Accept": "application/json" } }).catch(() => null)
     ]);
     if (!releaseResponse.ok || !scheduleResponse.ok) throw new Error("BLS official pages returned HTTP " + releaseResponse.status + "/" + scheduleResponse.status);
     const [releaseHtml, scheduleHtml] = await Promise.all([releaseResponse.text(), scheduleResponse.text()]);
+    let calendarExcerpt = "Calendar forecast/previous snapshot unavailable.";
+    if (calendarResponse && calendarResponse.ok) {
+      try {
+        const calendarData = await calendarResponse.json();
+        const events = Array.isArray(calendarData.events) ? calendarData.events : [];
+        const localToday = new Intl.DateTimeFormat("en-CA", { timeZone: timeZone || "Asia/Kolkata" }).format(new Date());
+        const todayCpi = events.filter(event => {
+          if (!event || event.countryCode !== "US" || !/cpi/i.test(String(event.name || ""))) return false;
+          const eventDate = new Date(event.time);
+          if (isNaN(eventDate.getTime())) return false;
+          return new Intl.DateTimeFormat("en-CA", { timeZone: timeZone || "Asia/Kolkata" }).format(eventDate) === localToday;
+        }).slice(0, 10);
+        if (todayCpi.length) {
+          calendarExcerpt = "Today's U.S. CPI calendar entries from the SPIDER-hosted Biquote/MQL5 calendar snapshot (use this feed for forecast/previous/event time only; BLS remains authoritative for actual results): " +
+            todayCpi.map(event => {
+              const eventTime = new Intl.DateTimeFormat("en-IN", { timeZone: timeZone || "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" }).format(new Date(event.time));
+              const fmt = value => value == null ? "not released/not supplied" : String(value) + (event.unit === "percent" ? "%" : "");
+              return String(event.name) + " | time " + eventTime + " | actual " + fmt(event.actual) + " | forecast " + fmt(event.forecast) + " | previous " + fmt(event.previous) + " | impact " + String(event.importance || "not supplied");
+            }).join("; ");
+        }
+      } catch (_) {
+        calendarExcerpt = "Calendar snapshot could not be parsed; use BLS for release status and actuals.";
+      }
+    }
     const titleMatch = releaseHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const releaseTitle = titleMatch ? stripWebHtml(titleMatch[1]) : "BLS CPI news release";
     const releaseText = stripWebHtml(releaseHtml);
@@ -144,8 +169,9 @@ async function fetchOfficialCpiContext(timeZone) {
       "Current BLS release page title: " + releaseTitle,
       "Latest published CPI release excerpt: " + releaseExcerpt,
       "BLS CPI release schedule excerpt: " + scheduleExcerpt,
+      calendarExcerpt,
       "Official URLs: https://www.bls.gov/news.release/cpi.htm and https://www.bls.gov/schedule/news_release/cpi.htm",
-      "Interpretation rules: Use the latest report period actually published on the release page. If the schedule says a report is scheduled but the release page still shows the prior report, say the new report is not published yet; do not invent actual figures. Explicitly distinguish actual, forecast, and previous. Never describe 2024 data as current."
+      "Interpretation rules: Use the latest report period actually published on the release page. If the schedule says a report is scheduled but the release page still shows the prior report, say the new report is not published yet; do not invent actual figures. Use the calendar snapshot only for forecast, previous, and event time; BLS controls actual values and publication status. Explicitly distinguish actual, forecast, and previous. Never describe 2024 data as current."
     ].join("\n\n").slice(0, 6500);
   } catch (error) {
     return "OFFICIAL LIVE CPI SOURCE UNAVAILABLE: The BLS pages could not be verified for this request (" + String(error?.message || "fetch failed").slice(0, 180) + "). Do not provide current CPI actuals, forecasts, or market reaction from memory. State that current figures could not be verified.";
