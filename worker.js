@@ -209,7 +209,13 @@ async function fetchOfficialCpiContext(timeZone) {
     ].filter(row => row[1]);
     const calendarLines = calendarRows.map(row => {
       const event = row[1];
-      const actualValue = event.actual == null ? "not released" : fmt(event.actual, event.unit);
+      const eventName = String(event.name || "").toLowerCase();
+      const parsedActual = eventName === "cpi m/m" ? latestStats.headlineM
+        : eventName === "core cpi m/m" ? latestStats.coreM
+        : eventName === "cpi y/y" ? latestStats.headlineY
+        : eventName === "core cpi y/y" ? latestStats.coreY : null;
+      const actualValue = event.actual != null ? fmt(event.actual, event.unit)
+        : (published && parsedActual != null ? parsedActual + "%" : "not released");
       return row[0] + ": actual " + actualValue + ", forecast " + fmt(event.forecast, event.unit) + ", previous " + fmt(event.previous, event.unit);
     });
 
