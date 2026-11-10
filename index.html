@@ -1524,43 +1524,201 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
   });
 
   try {
-  // Browser-native voice mode: speech recognition in, spoken reply out.
   const mic = document.getElementById("stkVoiceMic");
   const stopVoice = document.getElementById("stkVoiceStop");
   const voiceInput = document.getElementById("aiWorkbenchPrompt");
-  const voiceLanguage = document.getElementById("stkVoiceLanguage");
+  const voiceStatus = document.getElementById("stkVoiceStatus");
   const agentVisual = document.getElementById("aiAgentVisual");
   const agentVideo = agentVisual && agentVisual.querySelector(".circuit-agent-video");
-  let agentBeatAnimation = null;
+  let recognition = null;
+  let listening = false;
+  let stkSpeechRun = 0;
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const selectedVoiceLanguage = () => {
+    const lang = String(navigator.language || "en-IN").toLowerCase();
+    return lang.startsWith("hi") ? "hi-IN" : lang.startsWith("mr") ? "mr-IN" : (lang === "en-us" ? "en-US" : "en-IN");
+  };
   function setAgentSpeaking(active) {
     if (agentVisual) agentVisual.classList.toggle("is-speaking", !!active);
     if (!agentVideo) return;
-    if (!active && agentBeatAnimation) { agentBeatAnimation.cancel(); agentBeatAnimation = null; }
     if (active) {
-      /* Start the talking clip only when the spoken answer starts. */
       if (agentVideo.ended || agentVideo.currentTime < 0.05) {
         try { agentVideo.currentTime = 0; } catch (e) {}
       }
       const playback = agentVideo.play();
       if (playback && playback.catch) playback.catch(function(){});
     } else {
-      /* Freeze the avatar immediately when speech ends or is stopped. */
       agentVideo.pause();
       try { agentVideo.currentTime = 0; } catch (e) {}
+    }
+  }
+  function setMicIdle() {
+    listening = false;
+    if (mic) {
+      mic.classList.remove("listening");
+      mic.textContent = "🎙️ Talk to AI";
+      mic.setAttribute("aria-pressed", "false");
     }
   }
   window.spiderNativeSpeechState = function(state) {
     if (state === "listening") {
       listening = true;
       if (mic) {
+        mic.classList.add("listening");
+        mic.textContent = "Listening… tap to cancel";
+        mic.setAttribute("aria-pressed", "true");
+      }
+      if (voiceStatus) voiceStatus.textContent = "Listening. Speak clearly; your message will send when you finish.";
+    } else if (state === "permission") {
+      if (voiceStatus) voiceStatus.textContent = "Allow microphone permission in the Android popup.";
+    } else if (state === "stopped" || state === "ended") {
+      setMicIdle();
+    }
+  };
+  window.spiderNativeSpeechResult = function(text) {
+    setMicIdle();
+    const spoken = String(text || "").trim();
+    if (!spoken) {
+      if (voiceStatus) voiceStatus.textContent = "No speech detected. Tap Talk to AI and try again.";
+      return;
+    }
+    voiceInput.value = spoken;
+    if (voiceStatus) voiceStatus.textContent = "Heard: " + spoken + " · sending to SPIDER…";
+    sendMessage();
+  };
+  window.spiderNativeSpeechError = function(message) {
+    setMicIdle();
+    if (voiceStatus) voiceStatus.textContent = "Voice input: " + String(message || "Could not recognise speech.");
+  };
+  window.spiderNativeTtsState = function(state) {
+    if (state === "start") {
+      setAgentSpeaking(true);
+      if (voiceStatus) voiceStatus.textContent = "SPIDER is speaking…";
+    } else {
+      setAgentSpeaking(false);
+      if (voiceStatus) voiceStatus.textContent = state === "error" ? "Phone text-to-speech failed. Check Android speech settings." : "Finished speaking. Tap Talk to AI to continue.";
+    }
+  };
+  if (agentVideo) {
+    agentVideo.loop = false;
+    agentVideo.style.objectFit = "cover";
+    agentVideo.style.objectPosition = "center center";
+    agentVideo.addEventListener("loadedmetadata", function() {
+      agentVideo.pause();
+      try { agentVideo.currentTime = 0; } catch (e) {}
+    }, { once: true });
+    /* Restart before the unrelated promotion at the end of the clip. */
+    agentVideo.addEventListener("timeupdate", function() {
+      if (agentVisual && agentVisual.classList.contains("is-speaking") && agentVideo.currentTime >= 27.2) {
+        agentVideo.currentTime = 0;
+      }
+    });
+    setAgentSpeaking(false);
+  }
+  function getPreferredVoice(requestedLang) {
+    if (!("speechSynthesis" in window)) return null;
+    const voices = window.speechSynthesis.getVoices() || [];
+    if (!voices.length) return null;
+    const lang = requestedLang.toLowerCase();
+    const matching = voices.filter(v => v.lang && v.lang.toLowerCase() === lang);
+    const sameLanguage = voices.filter(v => v.lang && v.lang.toLowerCase().startsWith(lang.split("-")[0]));
+    const quality = v => /google|natural|neural|enhanced/i.test(v.name || "") ? 2 : 0;
+    const score = v => quality(v) + (v.localService ? 1 : 0);
+    matching.sort((a,b) => score(b)-score(a));
+    sameLanguage.sort((a,b) => score(b)-score(a));
+    return matching[0] || sameLanguage[0] || null;
+  }
+  window.stkSpeakReply = function(text) {
+    if (!voiceOn || !text) {
+      if (voiceStatus) voiceStatus.textContent = "Voice replies are muted.";
+      return;
+    }
+    const requestedLang = selectedVoiceLanguage();
+    const speechText = String(text)
+      .replace(/\`\`\`[\s\S]*?\`\`\`/g, " Code block omitted. ")
+      .replace(/https?:\/\/\S+/g, " link omitted ")
+      .replace(/[*_#\`>]/g, "")
+      .replace(/^\s*[-•]\s+/gm, "")
+      .replace(/\s+/g, " ").trim().slice(0, 3500);
+    if (window.SpiderNative && typeof window.SpiderNative.speak === "function") {
+      window.SpiderNative.speak(speechText, requestedLang);
+      if (voiceStatus) voiceStatus.textContent = "Preparing spoken reply…";
+      return;
+    }
+    if (!("speechSynthesis" in window)) {
+      if (voiceStatus) voiceStatus.textContent = "Speech playback is unavailable in this browser.";
+      return;
+    }
+    const synth = window.speechSynthesis;
+    const speak = function() {
+      try {
+        const run = ++stkSpeechRun;
+        synth.cancel();
+        const chosen = getPreferredVoice(requestedLang);
+        const utterance = new SpeechSynthesisUtterance(speechText);
+        utterance.lang = chosen ? chosen.lang : requestedLang;
+        if (chosen) utterance.voice = chosen;
+        utterance.rate = 0.92;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+        utterance.onstart = function() {
+          setAgentSpeaking(true);
+          if (voiceStatus) voiceStatus.textContent = "SPIDER is speaking…";
+        };
+        utterance.onend = function() {
+          if (run === stkSpeechRun) setAgentSpeaking(false);
+          if (run === stkSpeechRun && voiceStatus) voiceStatus.textContent = "Finished speaking. Tap Talk to AI to continue.";
+        };
+        utterance.onerror = function(event) {
+          if (run === stkSpeechRun) setAgentSpeaking(false);
+          if (run !== stkSpeechRun || event.error === "canceled" || event.error === "interrupted") return;
+          if (voiceStatus) voiceStatus.textContent = "Phone speech error: " + (event.error || "unknown") + ". Check Android text-to-speech settings.";
+        };
+        synth.resume();
+        synth.speak(utterance);
+        if (voiceStatus) voiceStatus.textContent = "Preparing spoken reply…";
+      } catch (error) {
+        if (voiceStatus) voiceStatus.textContent = "Could not start speech: " + (error.message || "unknown error");
+      }
+    };
+    if (synth.getVoices().length) speak();
+    else {
+      if (voiceStatus) voiceStatus.textContent = "Loading installed phone voices…";
+      let done = false;
+      const ready = function() {
+        if (done) return;
+        done = true;
+        synth.removeEventListener("voiceschanged", ready);
+        speak();
+      };
+      synth.addEventListener("voiceschanged", ready);
+      window.setTimeout(ready, 1200);
+    }
+  };
+  if (voiceToggle) voiceToggle.addEventListener("click", function() {
+    voiceOn = !voiceOn;
+    voiceToggle.textContent = voiceOn ? "🔊 Voice replies: ON" : "🔇 Voice replies: OFF";
+    voiceToggle.setAttribute("aria-pressed", String(voiceOn));
+    if (!voiceOn && "speechSynthesis" in window) { stkSpeechRun++; window.speechSynthesis.cancel(); }
+    if (!voiceOn && window.SpiderNative && typeof window.SpiderNative.stopSpeaking === "function") window.SpiderNative.stopSpeaking();
+    if (!voiceOn) setAgentSpeaking(false);
+    if (voiceStatus) voiceStatus.textContent = voiceOn ? "AI replies will be spoken aloud." : "Voice replies are muted; text replies remain on.";
+  });
+  if (stopVoice) stopVoice.addEventListener("click", function() {
+    if ("speechSynthesis" in window) { stkSpeechRun++; window.speechSynthesis.cancel(); }
+    if (window.SpiderNative && typeof window.SpiderNative.stopSpeaking === "function") window.SpiderNative.stopSpeaking();
+    if (recognition && listening) recognition.stop();
+    if (window.SpiderNative && listening && typeof window.SpiderNative.stopListening === "function") window.SpiderNative.stopListening();
+    setMicIdle();
+    setAgentSpeaking(false);
+    if (voiceStatus) voiceStatus.textContent = "Voice playback stopped.";
+  });
+  if (mic) {
     if (window.SpiderNative && typeof window.SpiderNative.startListening === "function") {
       mic.addEventListener("click", function() {
         if (listening) {
           if (typeof window.SpiderNative.stopListening === "function") window.SpiderNative.stopListening();
-          listening = false;
-          mic.classList.remove("listening");
-          mic.textContent = "🎙️ Talk to AI";
-          mic.setAttribute("aria-pressed", "false");
+          setMicIdle();
           if (voiceStatus) voiceStatus.textContent = "Voice input cancelled.";
           return;
         }
@@ -1574,10 +1732,7 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
           if (voiceStatus) voiceStatus.textContent = "Requesting Android microphone permission…";
           window.SpiderNative.startListening(selectedVoiceLanguage());
         } catch (error) {
-          listening = false;
-          mic.classList.remove("listening");
-          mic.textContent = "🎙️ Talk to AI";
-          mic.setAttribute("aria-pressed", "false");
+          setMicIdle();
           if (voiceStatus) voiceStatus.textContent = "Could not start Android speech recognition: " + (error.message || "unknown error");
         }
       });
@@ -1612,10 +1767,7 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
         if (voiceStatus) voiceStatus.textContent = event.error === "not-allowed" ? "Microphone permission denied. Allow microphone access for SPIDER in Chrome." : "Voice input error: " + event.error;
       };
       recognition.onend = function() {
-        listening = false;
-        mic.classList.remove("listening");
-        mic.textContent = "🎙️ Talk to AI";
-        mic.setAttribute("aria-pressed", "false");
+        setMicIdle();
       };
       mic.addEventListener("click", function() {
         if (listening) { recognition.stop(); return; }
