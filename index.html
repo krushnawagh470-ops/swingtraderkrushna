@@ -1141,7 +1141,7 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
     if (c === "commands" || c === "/help" || c === "help") { showCommand("SPIDER COMMANDS\\n\\nQuick replies — brief answers by default\\nDetailed replies — longer explanations\\nMute / Unmute — spoken replies off / on\\nWeb on / Web off — toggle web lookup mode\\nCancel tasks — stop the active AI request\\nSelf-learning module — save approved memory and review it below the conversation\\nCommands or /help — open this guide"); return true; }
     if (c === "quick replies" || c === "quick replies on") { quickReplies = true; showCommand("Quick replies are ON."); return true; }
     if (c === "detailed replies" || c === "quick replies off") { quickReplies = false; showCommand("Detailed replies are ON."); return true; }
-    if (c === "mute" || c === "unmute") { voiceOn = c === "unmute"; if (!voiceOn && "speechSynthesis" in window) window.speechSynthesis.cancel(); if (voiceToggle) { voiceToggle.textContent = voiceOn ? "🔊 Voice replies: ON" : "🔇 Voice replies: OFF"; voiceToggle.setAttribute("aria-pressed", String(voiceOn)); } if (voiceStatus) voiceStatus.textContent = voiceOn ? "Voice replies are on." : "Voice replies are muted."; showCommand(voiceOn ? "Voice replies enabled." : "Voice replies muted."); return true; }
+    if (c === "mute" || c === "unmute") { voiceOn = c === "unmute"; if (!voiceOn && "speechSynthesis" in window) window.speechSynthesis.cancel(); if (!voiceOn && window.SpiderNative && typeof window.SpiderNative.stopSpeaking === "function") window.SpiderNative.stopSpeaking(); if (voiceToggle) { voiceToggle.textContent = voiceOn ? "🔊 Voice replies: ON" : "🔇 Voice replies: OFF"; voiceToggle.setAttribute("aria-pressed", String(voiceOn)); } if (voiceStatus) voiceStatus.textContent = voiceOn ? "Voice replies are on." : "Voice replies are muted."; showCommand(voiceOn ? "Voice replies enabled." : "Voice replies muted."); return true; }
     if (c === "web on" || c === "web off") { webLookupOn = c === "web on"; localStorage.setItem("stk_web_lookup_on", String(webLookupOn)); showCommand(webLookupOn ? "Web lookup mode is ON. Live search still requires a search service connected to the Worker; I will not claim a search until one is connected." : "Web lookup mode is OFF."); return true; }
     if (c === "cancel tasks") { cancelActiveRequest(); return true; }
     return false;
@@ -1404,8 +1404,8 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
       const domainRules="\\n\\nIMPORTANT FORMAT OVERRIDE: For non-chart and non-trading questions, ignore all trading-only instructions in the generic response template, including BUY SETUP / SELL SETUP / WAIT labels. Answer the actual question naturally. For economy, geopolitics, institutions and conflict questions, use concise fact/analysis/scenario structure and cite only sources actually retrieved.";
       activeRequestController=new AbortController();
       let liveNewsCount=0,liveNewsContext="\n\nLIVE WEB SEARCH STATUS: Search was not completed.",liveNewsFailed=false;
-      const needsLiveWebSearch=!chartRequest&&/\b(latest|current|today|tonight|this week|recent|news|headlines|breaking|research|sources|search|compare|price now|live update|what happened|2026)\b/i.test(prompt);
       const isCpiQuery=/\b(cpi|consumer price index|inflation)\b/i.test(prompt);
+      const needsLiveWebSearch=!chartRequest&&!isCpiQuery&&/\b(latest|current|today|tonight|this week|recent|news|headlines|breaking|research|sources|search|compare|price now|live update|what happened|2026)\b/i.test(prompt);
       try{
        if(needsLiveWebSearch){
         status.textContent="Searching the web…";
@@ -1463,8 +1463,8 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
           body: JSON.stringify({
             messages: outgoing,
             memoryEnabled: Boolean(window.circuitCloudMemoryAutoEnabled?.() && window.circuitCloudMemoryAuthorization?.()),
-            memoryMessages: [...messages.slice(-6), { role: "user", content: prompt }].slice(-8)
-            ,timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata"
+            memoryMessages: [...messages.slice(-6), { role: "user", content: prompt }].slice(-8),
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata"
           }),
           signal: activeRequestController.signal
         });
