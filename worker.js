@@ -276,6 +276,7 @@ async function fetchOfficialCpiContext(timeZone) {
       : "There is no confirmed post-release move yet. If actual headline/core inflation prints above forecast, the USD and yields may firm and gold may face pressure; if it prints below forecast, the USD/yields may soften and gold may benefit. In-line or mixed readings can whipsaw. These are conditional scenarios, not a trade signal.";
     const reply = [
       "**U.S. CPI — live update**",
+      "CPI measures changes in the prices consumers pay for goods and services.",
       statusLine,
       reportLine,
       scheduleLine,
@@ -285,7 +286,7 @@ async function fetchOfficialCpiContext(timeZone) {
       "",
       marketLine,
       "",
-      "Sources: U.S. Bureau of Labor Statistics (official release and schedule); SPIDER-hosted Biquote/MQL5 calendar snapshot for consensus."
+      "Sources: [BLS CPI release](https://www.bls.gov/news.release/cpi.htm) · [BLS release schedule](https://www.bls.gov/schedule/news_release/cpi.htm) · [SPIDER calendar snapshot](https://spider-121.web.app/data/calendar.json) (Biquote/MQL5 consensus feed)."
     ].join("\n");
     return { ok: true, context, reply, published, latestReportMonth, currentReportMonth, eventTime, calendarFetchedAt };
   } catch (error) {
