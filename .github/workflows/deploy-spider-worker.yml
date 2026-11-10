@@ -97,3 +97,12 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: wrangler deploy --config .wrangler-ci.jsonc --keep-vars
+
+      - name: Smoke-test SPIDER health and live search
+        env:
+          WORKER_URL: https://spider-core-v2.swingtraderkrushna.workers.dev
+        run: |
+          curl --fail --silent --show-error "$WORKER_URL/health" > /tmp/spider-health.json
+          node -e 'const d=require("/tmp/spider-health.json"); if(!d.ok || !d.configured || !d.memoryConfigured) process.exit(1); console.log("SPIDER Core health OK:", d.build);'
+          curl --fail --silent --show-error "$WORKER_URL/search?q=Bureau%20of%20Labor%20Statistics%20CPI%20release" > /tmp/spider-search.json
+          node -e 'const d=require("/tmp/spider-search.json"); if(!d.ok || !Array.isArray(d.results) || !d.results.length) process.exit(1); console.log("Live search OK:", d.results.length, "sources");'
