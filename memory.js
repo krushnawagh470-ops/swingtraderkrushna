@@ -99,6 +99,8 @@
     try { await api("/memory/clear", { method: "DELETE" }); await load(); status("All cloud memories deleted."); }
     catch (e) { status(e.message, true); }
   }
+  window.circuitCloudMemoryAuthorization = function () { return token() ? "Bearer " + token() : ""; };
+  window.circuitCloudMemoryAutoEnabled = function () { try { return localStorage.getItem("spider_auto_memory_v1") !== "false"; } catch (_) { return false; } };
   window.circuitCloudMemoryContext = async function () {
     if (!token()) return "";
     try {
@@ -115,6 +117,14 @@
     $("circuitCloudMemoryLogout")?.addEventListener("click", logout);
     $("circuitCloudMemoryRefresh")?.addEventListener("click", async () => { try { await load(); status("Cloud memory refreshed."); } catch (e) { status(e.message, true); } });
     $("circuitCloudMemoryClear")?.addEventListener("click", clearAll);
+    const autoToggle = $("circuitAutoMemoryToggle");
+    if (autoToggle) {
+      autoToggle.checked = window.circuitCloudMemoryAutoEnabled();
+      autoToggle.addEventListener("change", () => {
+        try { localStorage.setItem("spider_auto_memory_v1", autoToggle.checked ? "true" : "false"); } catch (_) {}
+        status(autoToggle.checked ? "Automatic memory is enabled. Only non-sensitive durable details are eligible." : "Automatic memory is paused.");
+      });
+    }
     if (token()) { signedIn(true); load().then(() => status("Cloud memory unlocked.")).catch(e => { signedIn(false); status(e.message, true); }); }
     else signedIn(false);
   }
