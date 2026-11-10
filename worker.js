@@ -13,6 +13,22 @@ const OPENAI_MODEL = "gpt-4.1-mini";
 const TIMEOUT_MS = 20000;
 const MAX_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 3500;
+const RATE_BUCKETS = new Map();
+function enforceLocalRateLimit(request, scope, limit, windowMs) {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const key = scope + ":" + ip;
+  const now = Date.now();
+  let bucket = RATE_BUCKETS.get(key);
+  if (!bucket || now - bucket.startedAt >= windowMs) { bucket = { startedAt: now, count: 0 }; RATE_BUCKETS.set(key, bucket); }
+  if (bucket.count >= limit) {
+    const retryAfter = Math.max(1, Math.ceil((windowMs - (now - bucket.startedAt)) / 1000));
+    return new Response(JSON.stringify({ error: "Too many requests. Please wait before trying again.", retryAfterSeconds: retryAfter }), { status: 429, headers: { "Content-Type": "application/json; charset=utf-8", "Retry-After": String(retryAfter), ...cors() } });
+  }
+  bucket.count++;
+  if (RATE_BUCKETS.size > 10000) for (const [k, value] of RATE_BUCKETS) if (now - value.startedAt >= windowMs) RATE_BUCKETS.delete(k);
+  return null;
+}
+
 
 const SPIDER_CORE_PROMPT = `You are SPIDER, an independent AI assistant and virtual worker. Your name is SPIDER. Never call yourself Circuit/CIRCUIT, SwingTraderKrushna AI, SwingTraderKrushna, Jarvis, or the name of an underlying model/provider. If asked to introduce yourself, begin exactly: "Hello! I am SPIDER, your practical and honest AI assistant and virtual worker."
 
@@ -570,10 +586,18 @@ export default {
       });
     }
 
-    if (url.pathname === "/market/twelve-data" && request.method === "GET") return twelveDataMarketRoute(env, url);
+    if (url.pathname === "/market/twelve-data" && request.method === "GET") {
+      const limited = enforceLocalRateLimit(request, "market", 60, 60_000);
+      return limited || twelveDataMarketRoute(env, url);
+    }
     if (url.pathname === "/memory" || url.pathname.startsWith("/memory/")) return memoryRoute(request, env, url);
-    if (url.pathname === "/search" && request.method === "GET") return webSearchRoute(url);
+    if (url.pathname === "/search" && request.method === "GET") {
+      const limited = enforceLocalRateLimit(request, "search", 45, 60_000);
+      return limited || webSearchRoute(url);
+    }
     if (url.pathname !== "/chat" || request.method !== "POST") return json({ error: "Not found." }, 404);
+    const limited = enforceLocalRateLimit(request, "chat", 30, 60_000);
+    if (limited) return limited;
     if (!config.key) {
       const secret = provider === "openai" ? "OPENAI_API_KEY" : "GROQ_API_KEY";
       return json({ error: "The selected provider is " + config.label + ", but " + secret + " is not configured in Cloudflare Worker Secrets.", provider: config.label }, 503);
