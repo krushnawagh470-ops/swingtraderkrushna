@@ -392,7 +392,7 @@ export default {
         model: config.model,
         brain: "SPIDER Core v2",
         providerMode: provider,
-        build: "spider-core-auto-memory-2026-11-10-v1",
+        build: "spider-core-live-search-cpi-2026-11-10-v2",
         timeout_seconds: TIMEOUT_MS / 1000,
         memoryConfigured: Boolean(env.DB && (env.SPIDER_MEMORY_PASSWORD || env.CIRCUIT_MEMORY_PASSWORD) && (env.SPIDER_MEMORY_JWT_SECRET || env.CIRCUIT_MEMORY_JWT_SECRET))
       });
@@ -419,8 +419,8 @@ export default {
     catch (_) { currentLocalTime = new Date().toISOString(); }
     const latestUserText = messages.slice().reverse().find(item => item.role === "user")?.content || "";
     let officialLiveContext = "CURRENT DATE/TIME (" + userTimeZone + "): " + currentLocalTime + ". Do not claim current facts without supplied live evidence.";
-    if (/\\b(cpi|consumer price index|inflation)\\b/i.test(latestUserText)) {
-      officialLiveContext += "\\n\\n" + await fetchOfficialCpiContext(userTimeZone);
+    if (/\b(cpi|consumer price index|inflation)\b/i.test(latestUserText)) {
+      officialLiveContext += "\n\n" + await fetchOfficialCpiContext(userTimeZone);
     }
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
