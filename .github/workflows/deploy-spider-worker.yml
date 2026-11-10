@@ -1,0 +1,91 @@
+name: Deploy SPIDER Core to Cloudflare
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "worker.js"
+      - ".github/workflows/deploy-spider-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spider-core-v2-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Check Worker JavaScript syntax
+        run: node --input-type=module --check < worker.js
+
+      - name: Install Wrangler
+        run: npm install --global wrangler@4
+
+      - name: Find the existing SPIDER D1 database and build Wrangler config
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          DB_LIST="$(wrangler d1 list --json)"
+          DB_ID="$(printf '%s' "$DB_LIST" | node -e '
+            let raw = "";
+            process.stdin.on("data", chunk => raw += chunk);
+            process.stdin.on("end", () => {
+              const parsed = JSON.parse(raw);
+              const rows = Array.isArray(parsed) ? parsed : (parsed.result || []);
+              const target = rows.find(db =>
+                String(db.name || "").toLowerCase().replace(/[^a-z0-9]/g, "") === "circuitmemory"
+              );
+              console.log(target ? (target.uuid || target.database_id || "") : "");
+            });
+          ')"
+          if [ -z "$DB_ID" ]; then
+            echo "::error::Could not find the existing D1 database named 'circuit-memory' (or 'circuit memory'). No deployment was made."
+            exit 1
+          fi
+          node - "$DB_ID" <<'NODE'
+          const fs = require("node:fs");
+          const databaseId = process.argv[2];
+          const config = {
+            "$schema": "node_modules/wrangler/config-schema.json",
+            "name": "spider-core-v2",
+            "main": "worker.js",
+            "compatibility_date": "2026-11-10",
+            "keep_vars": true,
+            "d1_databases": [
+              {
+                "binding": "DB",
+                "database_name": "circuit-memory",
+                "database_id": databaseId
+              }
+            ]
+          };
+          fs.writeFileSync(".wrangler-ci.jsonc", JSON.stringify(config, null, 2) + "\n");
+          NODE
+
+      - name: Validate deployment bundle without publishing
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: wrangler deploy --config .wrangler-ci.jsonc --dry-run --keep-vars
+
+      - name: Deploy SPIDER Core v2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: wrangler deploy --config .wrangler-ci.jsonc --keep-vars
