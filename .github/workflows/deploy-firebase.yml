@@ -20,3 +20,11 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SPIDER_121 }}
           projectId: spider-121
           channelId: live
+
+      - name: Update the SPIDER Android app preview channel
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_SPIDER_121 }}
+          projectId: spider-121
+          channelId: spider-auth-preview
