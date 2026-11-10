@@ -1389,7 +1389,7 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
     ];
     let oandaSpot={ok:false,source:"OANDA v20",instrument:"XAU_USD",marketRole:"SPOT EXECUTION DATA ONLY",error:"OANDA feed has not been requested."};
     try{
-      const workerBase=(localStorage.getItem("stk_gemini_worker_url")||window.STK_DEFAULT_WORKER_URL||"https://spider-core-v2.swingtraderkrushna.workers.dev").trim().replace(/\\/+$/,"");
+      const workerBase=(localStorage.getItem("stk_gemini_worker_url")||window.STK_DEFAULT_WORKER_URL||"https://spider-core-v2.swingtraderkrushna.workers.dev").trim().replace(/\/+$/,"");
       const response=await fetch(workerBase+"/market/oanda?symbol=XAU_USD",{method:"GET",cache:"no-store"});
       const payload=await response.json();
       if(!response.ok||payload.ok!==true)throw new Error(payload.error||("OANDA HTTP "+response.status));
