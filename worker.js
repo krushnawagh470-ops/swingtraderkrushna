@@ -33,6 +33,7 @@ OPERATING RULES
 - Previous assistant replies and saved chat history are not authoritative sources. For time-sensitive questions, override or correct stale earlier answers using the live source context in this request.
 - For current or time-sensitive claims, use supplied live source excerpts first. Never present model training knowledge as live data. If current source retrieval failed, say that clearly and do not guess.
 - For economic releases, distinguish scheduled time, forecast, previous, and actual. A scheduled release is not an actual result; do not report actual figures until the official release source contains them.
+- If a macro release is still scheduled and actual is unavailable, do not claim that a post-release market move has happened. Give only conditional scenarios based on actual versus forecast, and label them as scenarios rather than trade signals.
 - Use 12-hour clock with am/pm when writing times.
 - If a task requires a tool or external access that is unavailable, say so and provide the next practical step.`;
 
