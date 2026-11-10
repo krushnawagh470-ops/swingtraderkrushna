@@ -1396,7 +1396,7 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
         return;
       }
       const checked=circuitValidateCandles(result.value,label,seconds,nowSeconds);
-      validation.push({...checked,candles:undefined});
+      validation.push(checked);
       const payload={...checked};
       context.push(circuitContextMessage(symbol+" "+label+" CLOSED OHLC · Unix seconds UTC; report in Kolkata IST",payload,1200));
     });
@@ -1544,10 +1544,10 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
       }
       const globalIntelRequest=/\b(geopolitic|war|conflict|sanction|central bank|federal reserve|\bfed\b|imf|world bank|global economy|macroeconom|election|military|diplomac|opec|wto|united nations|nato)\b/i.test(prompt);
       const compactWorkspaceRules="\\n\\nIDENTITY: Your name is SPIDER. Always identify yourself as SPIDER, never as Circuit/CIRCUIT or by a model/provider name. Legacy code or database labels are not your identity. You are the user's practical multidisciplinary assistant. Handle the actual task, not only trading. Be accurate, concise and actionable. Use relevant context only. Never invent facts, sources, tests or completed actions. Protect credentials. State uncertainty when needed.";
+      const riskManagementRequest=/\b(risk|position size|lot size|stop.?loss|take.?profit|drawdown|daily loss|risk.?reward|rr|trade plan|risk management)\b/i.test(prompt);
+      const riskOnlyRules=riskManagementRequest?"\\n\\nSPIDER AI RISK MANAGEMENT: Use the attached deterministic Risk Guard snapshot. Default risk is 0.5% per trade, hard cap 1%, daily loss limit 1.5%, stop after 2 consecutive losses, maximum 3 trades per day, minimum reward-to-risk 1:1.5, and block when high-impact news is present or unknown. Never invent missing account data, stop, target, contract size, lot step or daily statistics. Do not provide a lot-size estimate unless broker specifications are verified. Return NO TRADE whenever a hard blocker exists. Never widen stops, martingale, average down or revenge trade. This is advisory and does not place or block broker orders.":"";
       const requestRules=(chartRequest?analysisRules+closedMarketOverride:"")+compactWorkspaceRules+(globalIntelRequest?globalIntelligenceRules:"")+modeRules+(needsLiveWebSearch?webRules:"")+(chartRequest||riskManagementRequest?"":domainRules)+riskOnlyRules;
       const learningContext=(circuitLearningContext()+(await window.circuitCloudMemoryContext?.()||"")).slice(0,6000);
-      const riskManagementRequest=/\b(risk|position size|lot size|stop.?loss|take.?profit|drawdown|daily loss|risk.?reward|rr|trade plan|risk management)\b/i.test(prompt);
-      const riskOnlyRules=riskManagementRequest?"\\n\\nSPIDER AI RISK MANAGEMENT: Use the attached Risk Guard snapshot. Default risk is 0.5% per trade, absolute cap 1%, daily loss limit 1.5%, stop after 2 consecutive losses, maximum 3 trades per day, minimum reward-to-risk 1:1.5, and block trades when high-impact news is present or news risk is unknown. Do not approve a trade if risk status is NO TRADE or NOT RUN. Require brokerSpecVerified=yes before giving a lot-size estimate. If required account, entry, structural stop, target, daily P/L, trade count, loss streak, contract size or lot step is missing, explain what is missing; do not guess. Never widen stops, martingale, average down or revenge trade. This guard is advisory and does not enforce orders at the broker.":"";
       const terminalMessages = chartRequest
         ? [...terminalContext.context.slice(0,6), ...terminalContext.context.filter(x=>x.content.includes("SPIDER ADAPTIVE MARKET BIAS ENGINE")), circuitContextMessage("SPIDER RISK GUARD SETTINGS",riskGuardSnapshot(),1100)]
         : riskManagementRequest ? [circuitContextMessage("SPIDER RISK GUARD SETTINGS",riskGuardSnapshot(),1100)] : [];
