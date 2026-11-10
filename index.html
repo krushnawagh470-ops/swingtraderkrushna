@@ -4495,4 +4495,11 @@ body{background:radial-gradient(ellipse at 50% -20%,#10294a,#040b19 65%,#020611)
 }
 @media(max-width:999px){.spider-desktop-topbar,#spiderReferenceDashboard{display:none!important}}
 @media(prefers-reduced-motion:reduce){.spider-orbital,.spider-orb,.spider-orb i{animation:none!important}}
-</style><script id="spider-reference-dashboard-init">(function(){const q=document.getElementById("nativeQuoteGrid"),host=document.getElementById("spiderDesktopQuoteHost");if(q&&host)host.appendChild(q);const src=document.getElementById("pipelineStatus"),dst=document.getElementById("spiderDesktopFeedStatus");if(src&&dst){const f=()=>dst.textContent=(src.textContent||"CONNECTING").trim().toUpperCase().slice(0,30);f();if(window.MutationObserver)new MutationObserver(f).observe(src,{subtree:true,childList:true,characterData:true});}document.addEventListener("click",e=>{const b=e.target.closest(".spider-desktop-topbar nav button");if(b)document.querySelectorAll(".spider-desktop-topbar nav button").forEach(x=>x.classList.toggle("on",x===b));});})();</script></body></html>
+</style><script id="spider-reference-dashboard-init">(function(){const q=document.getElementById("nativeQuoteGrid"),host=document.getElementById("spiderDesktopQuoteHost");if(q&&host)host.appendChild(q);const src=document.getElementById("pipelineStatus"),dst=document.getElementById("spiderDesktopFeedStatus");if(src&&dst){const f=()=>dst.textContent=(src.textContent||"CONNECTING").trim().toUpperCase().slice(0,30);f();if(window.MutationObserver)new MutationObserver(f).observe(src,{subtree:true,childList:true,characterData:true});}document.addEventListener("click",e=>{const b=e.target.closest(".spider-desktop-topbar nav button");if(b)document.querySelectorAll(".spider-desktop-topbar nav button").forEach(x=>x.classList.toggle("on",x===b));});})();</script><script id="spider-remove-stray-source-text">
+(function(){
+ const pattern=/tickValue|blockers\.length|blockers\.map\(|return snapshot|document\.getElementById\(|function restRiskGuard|localStorage\.getItem\(/;
+ function clean(root){Array.from(root.childNodes||[]).forEach(n=>{if(n.nodeType===3&&pattern.test(n.textContent||""))n.remove();else if(n.nodeType===1&&n.tagName!=="SCRIPT"&&n.tagName!=="STYLE")clean(n);});}
+ clean(document.body);
+ if(window.MutationObserver)new MutationObserver(()=>clean(document.body)).observe(document.body,{childList:true,subtree:true});
+})();
+</script></body></html>
