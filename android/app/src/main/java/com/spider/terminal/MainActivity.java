@@ -12,7 +12,7 @@ import android.graphics.Color;
 
 public class MainActivity extends Activity {
     private WebView webView;
-    private static final String APP_URL = "https://spider-121--spider-auth-preview-gti0apvk.web.app/";
+    private static final String APP_URL = "https://spider-121.web.app/";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
