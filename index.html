@@ -1489,7 +1489,7 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
       messages = messages.slice(-80);
       saveSpiderConversation();
       add("assistant", cleanReply);
-      status.textContent = "Reply received · " + (data.model || data.provider || "SPIDER AI") + (liveNewsCount?" · "+liveNewsCount+" web results searched":" · web search unavailable") + (chartRequest?" · terminal data attached · "+circuitIST(new Date()):"");
+      status.textContent = "Reply received · " + (data.model || data.provider || "SPIDER AI") + (liveNewsCount?" · "+liveNewsCount+" web results searched":(isCpiQuery?" · official BLS CPI source checked":" · web search not used")) + (chartRequest?" · terminal data attached · "+circuitIST(new Date()):"");
       const analysisStatus=document.getElementById("chartAnalysisStatus");
       if(analysisStatus&&chartRequest)analysisStatus.textContent="Terminal sync completed · "+terminalContext.quoteCount+" quotes · "+terminalContext.candleCount+"/5 validated candle timeframes · "+(terminalContext.tradeReady?"fresh data":"stale/invalid data")+" · "+circuitIST(new Date());
     } catch (error) {
