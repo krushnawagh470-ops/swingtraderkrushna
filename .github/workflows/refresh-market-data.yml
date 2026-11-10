@@ -10,6 +10,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  actions: write
 concurrency:
   group: terminal-market-data
   cancel-in-progress: true
@@ -25,7 +26,9 @@ jobs:
           python-version: "3.12"
       - name: Fetch free live news and calendar data
         run: python scripts/fetch_market_data.py
-      - name: Publish data snapshots
+      - name: Publish data snapshots and deploy refreshed hosting data
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -40,6 +43,7 @@ jobs:
               git fetch origin main
               git rebase origin/main
               if git push origin HEAD:main; then
+                gh workflow run deploy-firebase.yml --ref main
                 exit 0
               fi
               echo "Push raced with another main-branch update (attempt $attempt). Retrying."
