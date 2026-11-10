@@ -10,7 +10,7 @@ const ALLOWED_ORIGINS = new Set([
 const DEFAULT_PROVIDER = "groq";
 const GROQ_MODEL = "openai/gpt-oss-120b";
 const OPENAI_MODEL = "gpt-4.1-mini";
-const TIMEOUT_MS = 25000;
+const TIMEOUT_MS = 20000;
 const MAX_MESSAGES = 12;
 const MAX_MESSAGE_CHARS = 3500;
 
@@ -63,7 +63,7 @@ async function webSearchRoute(url) {
   const query = String(url.searchParams.get("q") || "").trim().slice(0, 240);
   if (!query) return json({ error: "A search query is required." }, 400);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 11000);
+  const timer = setTimeout(() => controller.abort(), 7500);
   try {
     const endpoint = "https://www.bing.com/search?" + new URLSearchParams({ q: query, format: "rss", mkt: "en-IN" });
     const response = await fetch(endpoint, {
@@ -85,7 +85,7 @@ async function webSearchRoute(url) {
       return { title, url: link, domain, published: date && !isNaN(date.getTime()) ? date.toISOString() : "Date not supplied", snippet: description };
     }).filter(item => item.title && /^https?:\/\//i.test(item.url));
     if (!rows.length) return json({ error: "Live search returned no usable results." }, 502);
-    const pages = await Promise.all(rows.slice(0, 5).map(async item => {
+    const pages = await Promise.all(rows.slice(0, 3).map(async item => {
       try {
         const pageResponse = await fetch(item.url, {
           signal: controller.signal,
@@ -110,7 +110,7 @@ async function webSearchRoute(url) {
 }
 async function fetchOfficialCpiContext(timeZone) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 9000);
+  const timer = setTimeout(() => controller.abort(), 5000);
   try {
     const [releaseResponse, scheduleResponse] = await Promise.all([
       fetch("https://www.bls.gov/news.release/cpi.htm", { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 SPIDER/1.0", "Accept": "text/html" } }),
@@ -420,7 +420,11 @@ export default {
     const latestUserText = messages.slice().reverse().find(item => item.role === "user")?.content || "";
     let officialLiveContext = "CURRENT DATE/TIME (" + userTimeZone + "): " + currentLocalTime + ". Do not claim current facts without supplied live evidence.";
     if (/\b(cpi|consumer price index|inflation)\b/i.test(latestUserText)) {
-      officialLiveContext += "\n\n" + await fetchOfficialCpiContext(userTimeZone);
+      const cpiContext = await fetchOfficialCpiContext(userTimeZone);
+      if (cpiContext.startsWith("OFFICIAL LIVE CPI SOURCE UNAVAILABLE:")) {
+        return json({ error: "SPIDER could not verify the current CPI release from the U.S. Bureau of Labor Statistics. It will not substitute old figures. Please retry shortly." }, 503);
+      }
+      officialLiveContext += "\n\n" + cpiContext;
     }
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
