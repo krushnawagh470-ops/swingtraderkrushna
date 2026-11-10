@@ -42,7 +42,7 @@ jobs:
         run: |
           set -euo pipefail
           DB_LIST="$(wrangler d1 list --json)"
-          DB_ID="$(printf '%s' "$DB_LIST" | node -e '
+          DB_META="$(printf '%s' "$DB_LIST" | node -e '
             let raw = "";
             process.stdin.on("data", chunk => raw += chunk);
             process.stdin.on("end", () => {
@@ -51,16 +51,16 @@ jobs:
               const target = rows.find(db =>
                 String(db.name || "").toLowerCase().replace(/[^a-z0-9]/g, "") === "circuitmemory"
               );
-              console.log(target ? (target.uuid || target.database_id || "") : "");
+              console.log(target ? JSON.stringify({ id: target.uuid || target.database_id || "", name: target.name }) : "");
             });
           ')"
-          if [ -z "$DB_ID" ]; then
+          if [ -z "$DB_META" ]; then
             echo "::error::Could not find the existing D1 database named 'circuit-memory' (or 'circuit memory'). No deployment was made."
             exit 1
           fi
-          node - "$DB_ID" <<'NODE'
+          node - "$DB_META" <<'NODE'
           const fs = require("node:fs");
-          const databaseId = process.argv[2];
+          const database = JSON.parse(process.argv[2]);
           const config = {
             "$schema": "node_modules/wrangler/config-schema.json",
             "name": "spider-core-v2",
@@ -70,8 +70,8 @@ jobs:
             "d1_databases": [
               {
                 "binding": "DB",
-                "database_name": "circuit-memory",
-                "database_id": databaseId
+                "database_name": database.name,
+                "database_id": database.id
               }
             ]
           };
