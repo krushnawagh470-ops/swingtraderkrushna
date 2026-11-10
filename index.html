@@ -646,7 +646,7 @@ body{background:radial-gradient(ellipse at 48% -18%,#19345b 0%,#081326 38%,#0407
 <div class="field"><label>ATR period</label><input id="simAtr" type="number" min="2" max="100" value="14"></div>
 <div class="field"><label>Stop distance (ATR multiple)</label><input id="simStop" type="number" min=".1" max="10" step=".1" value="1.5"></div>
 <div class="field"><label>Take-profit (R multiple)</label><input id="simRR" type="number" min=".1" max="20" step=".1" value="2"></div>
-<div class="field"><label>Target mode</label><select id="simTargetMode"><option value="adaptive" selected>Adaptive · market regime</option><option value="fixed">Fixed R multiple</option></select><div class="sub">Adaptive: trend target 3R, range target 1.5R by default.</div></div>
+<div class="field"><label>Target mode</label><select id="simTargetMode"><option value="adaptive" selected>Adaptive · market regime</option><option value="fixed">Fixed R multiple</option></select><div class="sub">Adaptive: trend target 3R, range target 3R by default.</div></div>
 <div class="field"><label>Trend target (R)</label><input id="simTrendRR" type="number" min=".5" max="20" step=".1" value="3"></div>
 <div class="field"><label>Range target (R)</label><input id="simRangeRR" type="number" min=".5" max="20" step=".1" value="1.5"></div>
 <div class="field"><label>Trailing starts at (R)</label><input id="simTrailStart" type="number" min=".1" max="10" step=".1" value="1"></div>
@@ -867,7 +867,7 @@ function riskGuardSnapshot(){
  const ids=["balance","riskPct","riskSide","entry","stop","riskTarget","contractSize","tickSize","tickValue","brokerSpecVerified","lotStep","dailyPnl","dailyLimitPct","tradesToday","lossStreak","maxTrades","highImpactRisk"];
  const settings=Object.fromEntries(ids.map(id=>[id,riskField(id)]));
  let lastCalculation=null;try{lastCalculation=JSON.parse(localStorage.getItem("stk_risk_guard_snapshot")||"null")}catch(_){}
- return {system:"SPIDER AI Risk Guard v2",settings,lastCalculation,policy:{defaultRiskPercent:0.5,hardMaxRiskPercent:1,dailyLossLimitDefaultPercent:1.5,maxConsecutiveLosses:2,maxTradesDefault:3,minimumRewardToRisk:1.5,highImpactNews:"block",unknownNews:"block",noMartingale:true,noAveragingDown:true,noRevengeTrading:true,noStopWidening:true,lotRounding:"down",executionDistanceBufferPercent:10,brokerContractSizeMustBeVerified:true,brokerEnforcement:false}};
+ return {system:"SPIDER AI Risk Guard v2",settings,lastCalculation,policy:{defaultRiskPercent:0.5,hardMaxRiskPercent:1,dailyLossLimitDefaultPercent:1.5,maxConsecutiveLosses:2,maxTradesDefault:3,minimumRewardToRisk:3,highImpactNews:"block",unknownNews:"block",noMartingale:true,noAveragingDown:true,noRevengeTrading:true,noStopWidening:true,lotRounding:"down",executionDistanceBufferPercent:10,brokerContractSizeMustBeVerified:true,brokerEnforcement:false}};
 }
 function calculateRisk(){
  const box=document.getElementById("riskResult");
