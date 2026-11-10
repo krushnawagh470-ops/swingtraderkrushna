@@ -1405,7 +1405,7 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
       activeRequestController=new AbortController();
       let liveNewsCount=0,liveNewsContext="\n\nLIVE WEB SEARCH STATUS: Search was not completed.",liveNewsFailed=false;
       const isCpiQuery=/\b(cpi|consumer price index|inflation)\b/i.test(prompt);
-      const currentNeedsGeneralSearch=!chartRequest&&!isCpiQuery&&/\b(latest|current|today|tonight|this week|recent|news|headlines|breaking|research|sources|search|compare|price now|live update|what happened|2026)\b/i.test(prompt);
+      const currentNeedsGeneralSearch=!chartRequest&&/\b(latest|current|today|tonight|this week|recent|news|headlines|breaking|research|sources|search|compare|price now|live update|what happened|2026|cpi|inflation|economic calendar|interest rate|fed|fomc|nfp|payrolls|gold|xauusd|eurusd|gbpusd|usdjpy|forex|currency|exchange rate|bitcoin|btc|crypto|stock market|shares|indices|nasdaq|s&p|dow jones|oil price|crude|weather|forecast|sports|score|match|election|president|company results|earnings|launch|release date|latest version|price of)\b/i.test(prompt);
       const needsLiveWebSearch=currentNeedsGeneralSearch&&webLookupOn;
       try{
        if(needsLiveWebSearch){
