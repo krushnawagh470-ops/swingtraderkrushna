@@ -34,5 +34,17 @@ jobs:
             echo "No market data changes."
           else
             git commit -m "chore: refresh terminal news and calendar data"
-            git push
+            # Rebase the generated snapshot commit if another workflow or user
+            # update reached main while the live data was being fetched.
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              echo "Push raced with another main-branch update (attempt $attempt). Retrying."
+              sleep 2
+            done
+            echo "::error::Could not publish refreshed market data after 3 attempts."
+            exit 1
           fi
