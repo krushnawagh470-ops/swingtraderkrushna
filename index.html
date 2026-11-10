@@ -1411,9 +1411,10 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
     add("user", prompt);
     input.value = "";
     let terminalContext={context:[],quoteCount:0,candleCount:0,totalFrames:5,tradeReady:false};
-    const symbol=detectChartSymbol(prompt);
+    const recentTradingContext=messages.slice(-6).map(item=>item.content||"").join(" ");
+    const symbol=detectChartSymbol(prompt+" "+recentTradingContext);
     try {
-      const chartRequest=isChartAnalysisRequest(prompt);
+      const chartRequest=isChartAnalysisRequest(prompt+" "+recentTradingContext);
       if(chartRequest) {
         status.textContent="Syncing validated chart data for "+symbol+"…";
         terminalContext=await buildTerminalContext(symbol);
