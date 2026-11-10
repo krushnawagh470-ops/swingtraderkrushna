@@ -111,6 +111,7 @@ async function webSearchRoute(url) {
   }
 }
 async function fetchOfficialCpiContext(timeZone) {
+  const zone = timeZone || "Asia/Kolkata";
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 5000);
   try {
@@ -121,30 +122,6 @@ async function fetchOfficialCpiContext(timeZone) {
     ]);
     if (!releaseResponse.ok || !scheduleResponse.ok) throw new Error("BLS official pages returned HTTP " + releaseResponse.status + "/" + scheduleResponse.status);
     const [releaseHtml, scheduleHtml] = await Promise.all([releaseResponse.text(), scheduleResponse.text()]);
-    let calendarExcerpt = "Calendar forecast/previous snapshot unavailable.";
-    if (calendarResponse && calendarResponse.ok) {
-      try {
-        const calendarData = await calendarResponse.json();
-        const events = Array.isArray(calendarData.events) ? calendarData.events : [];
-        const localToday = new Intl.DateTimeFormat("en-CA", { timeZone: timeZone || "Asia/Kolkata" }).format(new Date());
-        const todayCpi = events.filter(event => {
-          if (!event || event.countryCode !== "US" || !/cpi/i.test(String(event.name || ""))) return false;
-          const eventDate = new Date(event.time);
-          if (isNaN(eventDate.getTime())) return false;
-          return new Intl.DateTimeFormat("en-CA", { timeZone: timeZone || "Asia/Kolkata" }).format(eventDate) === localToday;
-        }).slice(0, 10);
-        if (todayCpi.length) {
-          calendarExcerpt = "Today's U.S. CPI calendar entries from the SPIDER-hosted Biquote/MQL5 calendar snapshot (use this feed for forecast/previous/event time only; BLS remains authoritative for actual results): " +
-            todayCpi.map(event => {
-              const eventTime = new Intl.DateTimeFormat("en-IN", { timeZone: timeZone || "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" }).format(new Date(event.time));
-              const fmt = value => value == null ? "not released/not supplied" : String(value) + (event.unit === "percent" ? "%" : "");
-              return String(event.name) + " | time " + eventTime + " | actual " + fmt(event.actual) + " | forecast " + fmt(event.forecast) + " | previous " + fmt(event.previous) + " | impact " + String(event.importance || "not supplied");
-            }).join("; ");
-        }
-      } catch (_) {
-        calendarExcerpt = "Calendar snapshot could not be parsed; use BLS for release status and actuals.";
-      }
-    }
     const titleMatch = releaseHtml.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const releaseTitle = titleMatch ? stripWebHtml(titleMatch[1]) : "BLS CPI news release";
     const releaseText = stripWebHtml(releaseHtml);
@@ -158,29 +135,152 @@ async function fetchOfficialCpiContext(timeZone) {
     const scheduleExcerpt = scheduleMarker >= 0
       ? scheduleText.slice(scheduleMarker, scheduleMarker + 1150)
       : scheduleText.slice(0, 1150);
+
+    const dateKey = date => {
+      const parts = new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
+      const get = type => (parts.find(part => part.type === type) || {}).value || "";
+      return get("year") + "-" + get("month") + "-" + get("day");
+    };
+    const localToday = dateKey(new Date());
+    let todayCpi = [];
+    let calendarFetchedAt = "";
+    if (calendarResponse && calendarResponse.ok) {
+      try {
+        const calendarData = await calendarResponse.json();
+        const events = Array.isArray(calendarData.events) ? calendarData.events : [];
+        calendarFetchedAt = calendarData.fetchedAt || calendarData.updatedAt || "";
+        todayCpi = events.filter(event => {
+          if (!event || event.countryCode !== "US" || !/cpi/i.test(String(event.name || ""))) return false;
+          const eventDate = new Date(event.time);
+          if (isNaN(eventDate.getTime())) return false;
+          return dateKey(eventDate) === localToday;
+        }).slice(0, 10);
+      } catch (_) {
+        todayCpi = [];
+      }
+    }
+
+    const latestMatch = releaseTitle.match(/(\d{4})\s+M(\d{2})\s+Results/i);
+    const latestYear = latestMatch ? Number(latestMatch[1]) : null;
+    const latestMonth = latestMatch ? Number(latestMatch[2]) : null;
+    const headlineM = releaseText.match(/CPI-U\)\s+increased\s+([\d.]+)\s+percent\s+on\s+a\s+seasonally adjusted basis in\s+([A-Za-z]+)/i);
+    const headlineY = releaseText.match(/Over the last 12 months, the all items index increased\s+([\d.]+)\s+percent/i);
+    const coreM = releaseText.match(/all items less food and energy rose\s+([\d.]+)\s+percent in\s+([A-Za-z]+)/i);
+    const coreY = releaseText.match(/all items less food and energy index rose\s+([\d.]+)\s+percent over the year/i);
+    const latestStats = {
+      headlineM: headlineM ? headlineM[1] : null,
+      headlineY: headlineY ? headlineY[1] : null,
+      coreM: coreM ? coreM[1] : null,
+      coreY: coreY ? coreY[1] : null
+    };
+
+    const findEvent = name => todayCpi.find(event => String(event.name || "").toLowerCase() === name.toLowerCase());
+    const fmt = (value, unit) => value == null ? "not supplied" : String(value) + (unit === "percent" ? "%" : "");
+    const eventMonthDate = todayCpi.length && todayCpi[0].period ? new Date(todayCpi[0].period) : null;
+    const eventMonth = eventMonthDate && !isNaN(eventMonthDate.getTime())
+      ? new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "long", year: "numeric" }).format(eventMonthDate)
+      : "";
+    const eventYear = eventMonthDate && !isNaN(eventMonthDate.getTime()) ? eventMonthDate.getUTCFullYear() : null;
+    const eventMonthNumber = eventMonthDate && !isNaN(eventMonthDate.getTime()) ? eventMonthDate.getUTCMonth() + 1 : null;
+    const published = !!(latestYear && latestMonth && eventYear && eventMonthNumber &&
+      (latestYear > eventYear || (latestYear === eventYear && latestMonth >= eventMonthNumber)));
+    const eventDate = todayCpi.length ? new Date(todayCpi[0].time) : null;
+    let eventTime = "";
+    if (eventDate && !isNaN(eventDate.getTime())) {
+      eventTime = new Intl.DateTimeFormat("en-IN", {
+        timeZone: zone, weekday: "long", day: "numeric", month: "long", year: "numeric",
+        hour: "numeric", minute: "2-digit", hour12: true
+      }).format(eventDate);
+    }
+    const scheduledMatch = releaseText.match(/news release for ([A-Za-z]+)\s+(\d{4}) is scheduled to be published on ([A-Za-z]+),\s+([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4}), at ([0-9:]+)\s*a\.m\.\s*\(ET\)/i);
+    const scheduledText = scheduledMatch
+      ? scheduledMatch[3] + ", " + scheduledMatch[4] + " " + scheduledMatch[5] + ", " + scheduledMatch[6] + " at " + scheduledMatch[7] + " a.m. ET"
+      : "";
+    const currentReportMonth = eventMonth || (scheduledMatch ? scheduledMatch[1] + " " + scheduledMatch[2] : "");
+    const latestReportMonth = latestMatch
+      ? new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "long" }).format(new Date(Date.UTC(latestYear, latestMonth - 1, 1))) + " " + latestYear
+      : "the latest report shown on the BLS page";
+
+    const calendarRows = [
+      ["CPI m/m", findEvent("CPI m/m")],
+      ["Core CPI m/m", findEvent("Core CPI m/m")],
+      ["CPI y/y", findEvent("CPI y/y")],
+      ["Core CPI y/y", findEvent("Core CPI y/y")]
+    ].filter(row => row[1]);
+    const calendarLines = calendarRows.map(row => {
+      const event = row[1];
+      const actualValue = event.actual == null ? "not released" : fmt(event.actual, event.unit);
+      return row[0] + ": actual " + actualValue + ", forecast " + fmt(event.forecast, event.unit) + ", previous " + fmt(event.previous, event.unit);
+    });
+
+    const actualLines = [
+      "Headline CPI m/m: " + (latestStats.headlineM == null ? "not parsed" : latestStats.headlineM + "%"),
+      "Headline CPI y/y: " + (latestStats.headlineY == null ? "not parsed" : latestStats.headlineY + "%"),
+      "Core CPI m/m: " + (latestStats.coreM == null ? "not parsed" : latestStats.coreM + "%"),
+      "Core CPI y/y: " + (latestStats.coreY == null ? "not parsed" : latestStats.coreY + "%")
+    ];
+    const latestActualBlock = "Latest published BLS report (" + latestReportMonth + "): " + actualLines.join("; ");
+    const eventScheduleBlock = currentReportMonth
+      ? (published
+          ? currentReportMonth + " CPI: BLS release page now contains this report; the release is published."
+          : currentReportMonth + " CPI: not yet present as a published BLS report.")
+      : "No matching U.S. CPI event was found in today's calendar snapshot.";
+    const eventTimeBlock = eventTime
+      ? "Calendar event time in " + zone + ": " + eventTime + "."
+      : (scheduledText ? "BLS scheduled release: " + scheduledText + "." : "No exact event time was available in the current calendar snapshot.");
+    const calendarBlock = calendarLines.length
+      ? "Today's U.S. CPI calendar consensus (Biquote/MQL5 snapshot; use for forecast/previous only): " + calendarLines.join("; ")
+      : "No current-day CPI forecast/previous rows were available from the calendar snapshot.";
+
     let localNow;
     try {
-      localNow = new Intl.DateTimeFormat("en-IN", { timeZone: timeZone || "Asia/Kolkata", dateStyle: "full", timeStyle: "long" }).format(new Date());
+      localNow = new Intl.DateTimeFormat("en-IN", { timeZone: zone, dateStyle: "full", timeStyle: "long" }).format(new Date());
     } catch (_) {
       localNow = new Date().toISOString();
     }
-    return [
+    const context = [
       "OFFICIAL LIVE CPI SOURCE: U.S. Bureau of Labor Statistics (BLS), fetched directly for this request.",
-      "Current date/time in the user's time zone (" + (timeZone || "Asia/Kolkata") + "): " + localNow,
+      "Current date/time in the user's time zone (" + zone + "): " + localNow,
       "Current BLS release page title: " + releaseTitle,
       "Latest published CPI release excerpt: " + releaseExcerpt,
       "BLS CPI release schedule excerpt: " + scheduleExcerpt,
-      calendarExcerpt,
+      eventScheduleBlock,
+      eventTimeBlock,
+      calendarBlock,
       "Official URLs: https://www.bls.gov/news.release/cpi.htm and https://www.bls.gov/schedule/news_release/cpi.htm",
-      "Interpretation rules: Use the latest report period actually published on the release page. If the schedule says a report is scheduled but the release page still shows the prior report, say the new report is not published yet; do not invent actual figures. Use the calendar snapshot only for forecast, previous, and event time; BLS controls actual values and publication status. Explicitly distinguish actual, forecast, and previous. Never describe 2024 data as current."
-    ].join("\n\n").slice(0, 6500);
+      "BLS is authoritative for actual values and publication status. The Biquote/MQL5 calendar is used only for forecast, previous, and event time. Do not infer a market move before the actual release."
+    ].join("\n\n").slice(0, 7000);
+
+    const statusLine = published ? "Status: RELEASED." : "Status: NOT YET PUBLISHED by BLS.";
+    const scheduleLine = eventTime
+      ? "Scheduled event time: " + eventTime + " (" + zone + ")."
+      : (scheduledText ? "BLS scheduled time: " + scheduledText + "." : "Exact release time could not be confirmed from today's calendar.");
+    const reportLine = published
+      ? "The latest BLS release now covers " + currentReportMonth + "."
+      : "The latest published BLS report is " + latestReportMonth + "; " + (currentReportMonth ? currentReportMonth + " is the upcoming/current report." : "no new CPI report is shown as published.");
+    const marketLine = published
+      ? "For markets, compare the BLS actual headline and core readings with the calendar forecasts, then confirm the response in the U.S. dollar, Treasury yields, and XAUUSD. A single CPI number is not a standalone trade signal."
+      : "There is no confirmed post-release move yet. If actual headline/core inflation prints above forecast, the USD and yields may firm and gold may face pressure; if it prints below forecast, the USD/yields may soften and gold may benefit. In-line or mixed readings can whipsaw. These are conditional scenarios, not a trade signal.";
+    const reply = [
+      "**U.S. CPI — live update**",
+      statusLine,
+      reportLine,
+      scheduleLine,
+      "",
+      published ? "Latest BLS actual readings: " + actualLines.join("; ") + "." : latestActualBlock + ".",
+      calendarBlock,
+      "",
+      marketLine,
+      "",
+      "Sources: U.S. Bureau of Labor Statistics (official release and schedule); SPIDER-hosted Biquote/MQL5 calendar snapshot for consensus."
+    ].join("\n");
+    return { ok: true, context, reply, published, latestReportMonth, currentReportMonth, eventTime, calendarFetchedAt };
   } catch (error) {
-    return "OFFICIAL LIVE CPI SOURCE UNAVAILABLE: The BLS pages could not be verified for this request (" + String(error?.message || "fetch failed").slice(0, 180) + "). Do not provide current CPI actuals, forecasts, or market reaction from memory. State that current figures could not be verified.";
+    return { ok: false, error: String(error?.message || "fetch failed").slice(0, 180) };
   } finally {
     clearTimeout(timer);
   }
 }
-
 function cors() {
   return {
     "Access-Control-Allow-Origin": "*",
@@ -448,11 +548,14 @@ export default {
     const latestUserText = messages.slice().reverse().find(item => item.role === "user")?.content || "";
     let officialLiveContext = "CURRENT DATE/TIME (" + userTimeZone + "): " + currentLocalTime + ". Do not claim current facts without supplied live evidence.";
     if (/\b(cpi|consumer price index|inflation)\b/i.test(latestUserText)) {
-      const cpiContext = await fetchOfficialCpiContext(userTimeZone);
-      if (cpiContext.startsWith("OFFICIAL LIVE CPI SOURCE UNAVAILABLE:")) {
+      const cpiData = await fetchOfficialCpiContext(userTimeZone);
+      if (!cpiData.ok) {
         return json({ error: "SPIDER could not verify the current CPI release from the U.S. Bureau of Labor Statistics. It will not substitute old figures. Please retry shortly." }, 503);
       }
-      officialLiveContext += "\n\n" + cpiContext;
+      officialLiveContext += "\n\n" + cpiData.context;
+      if (/\b(today|latest|current|now|release|forecast|actual|move)\b/i.test(latestUserText)) {
+        return json({ ok: true, reply: cpiData.reply, model: "BLS official CPI + live calendar", provider: "SPIDER Core live data" });
+      }
     }
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
