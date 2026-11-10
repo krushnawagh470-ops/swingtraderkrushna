@@ -251,10 +251,17 @@ async function fetchOfficialCpiContext(timeZone) {
       "BLS is authoritative for actual values and publication status. The Biquote/MQL5 calendar is used only for forecast, previous, and event time. Do not infer a market move before the actual release."
     ].join("\n\n").slice(0, 7000);
 
-    const statusLine = published ? "Status: RELEASED." : "Status: NOT YET PUBLISHED by BLS.";
-    const scheduleLine = eventTime
-      ? "Scheduled event time: " + eventTime + " (" + zone + ")."
-      : (scheduledText ? "BLS scheduled time: " + scheduledText + "." : "Exact release time could not be confirmed from today's calendar.");
+    const statusLine = published
+      ? "Status: " + currentReportMonth + " CPI is published in the BLS release."
+      : (todayCpi.length
+          ? "Status: " + currentReportMonth + " CPI has not yet been published by BLS."
+          : "Status: latest published BLS report is " + latestReportMonth + "; the next scheduled report is not yet published.");
+    const scheduledMatchesCurrent = !!(scheduledMatch && currentReportMonth &&
+      (scheduledMatch[1] + " " + scheduledMatch[2]).toLowerCase() === currentReportMonth.toLowerCase());
+    const scheduleLine = [
+      scheduledMatchesCurrent ? "BLS schedule: " + scheduledText + "." : "",
+      eventTime ? "Local calendar time: " + eventTime + " (" + zone + ")." : ""
+    ].filter(Boolean).join(" ") || "Exact release time could not be confirmed from today's calendar.";
     const reportLine = published
       ? "The latest BLS release now covers " + currentReportMonth + "."
       : "The latest published BLS report is " + latestReportMonth + "; " + (currentReportMonth ? currentReportMonth + " is the upcoming/current report." : "no new CPI report is shown as published.");
