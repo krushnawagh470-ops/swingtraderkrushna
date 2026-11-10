@@ -1383,7 +1383,7 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
     const direction=adjusted>=0.65?"BULLISH":adjusted<=-0.65?"BEARISH":"MIXED";
     const alignment=Math.sign(htfScore)===Math.sign(ltfScore)&&Math.sign(htfScore)!==0;
     const decision=!freshAll?"WAIT — DATA NOT FRESH":Math.abs(adjusted)<0.65||!alignment?"WAIT — NO CONFIRMED ALIGNMENT":adjusted>0?"BUY BIAS":"SELL BIAS";
-    const biasEngine={engine:"SPIDER Adaptive XAUUSD Bias Engine v1",symbol,decision,direction,score:Number(adjusted.toFixed(3)),technicalScore:Number(normalized.toFixed(3)),higherTimeframeScore:Number(htfScore.toFixed(3)),entryTimeframeScore:Number(ltfScore.toFixed(3)),timeframes:frameEvidence,dxy:{changePercent:Number.isFinite(dxyChange)?dxyChange:null,adjustment:fundamentalAdjustment},fundamentalStatus:Number.isFinite(dxyChange)?"DXY change used as a small inverse USD-strength modifier":"DXY directional change unavailable; macro adjustment neutral",dataFresh:freshAll,alignment,limitations:["Prototype scoring model; not yet backtested or calibrated","No verified US 10Y yield or live event-risk lockout in this version","No entry price or stop is generated without a separate trigger model"]};
+    const biasEngine={engine:"SPIDER Adaptive XAUUSD Bias Engine v1",symbol,decision,direction,score:Number(adjusted.toFixed(3)),technicalScore:Number(normalized.toFixed(3)),higherTimeframeScore:Number(htfScore.toFixed(3)),entryTimeframeScore:Number(ltfScore.toFixed(3)),timeframes:frameEvidence,validation:validation.map(x=>({timeframe:x.timeframe,status:x.status,structuralValid:x.structuralValid,stale:x.stale,reason:x.reason||null})),dxy:{changePercent:Number.isFinite(dxyChange)?dxyChange:null,adjustment:fundamentalAdjustment},calendar:events.slice(0,5),headlines:news.slice(0,4),fundamentalStatus:Number.isFinite(dxyChange)?"DXY change used as a small inverse USD-strength modifier":"DXY directional change unavailable; macro adjustment neutral",dataFresh:freshAll,alignment,limitations:["Prototype scoring model; not yet backtested or calibrated","No verified US 10Y yield or live event-risk lockout in this version","No entry price or stop is generated without a separate trigger model"]};
     context.push(circuitContextMessage("SPIDER ADAPTIVE MARKET BIAS ENGINE",biasEngine,1700));
     context.push(circuitContextMessage("CANDLE DATA VALIDATION · KOLKATA IST",{
       symbol,reportTimeUTC:new Date().toISOString(),reportTimeIST:circuitIST(new Date()),
@@ -1478,8 +1478,10 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
       const compactWorkspaceRules="\\n\\nIDENTITY: Your name is SPIDER. Always identify yourself as SPIDER, never as Circuit/CIRCUIT or by a model/provider name. Legacy code or database labels are not your identity. You are the user's practical multidisciplinary assistant. Handle the actual task, not only trading. Be accurate, concise and actionable. Use relevant context only. Never invent facts, sources, tests or completed actions. Protect credentials. State uncertainty when needed.";
       const requestRules=(chartRequest?analysisRules+closedMarketOverride:"")+compactWorkspaceRules+(globalIntelRequest?globalIntelligenceRules:"")+modeRules+(needsLiveWebSearch?webRules:"")+(chartRequest?"":domainRules);
       const learningContext=(circuitLearningContext()+(await window.circuitCloudMemoryContext?.()||"")).slice(0,6000);
-      const terminalMessages = terminalContext.context.slice(-6);
-      const historyLimit = terminalMessages.length ? 4 : 8;
+      const terminalMessages = chartRequest
+        ? [...terminalContext.context.slice(3,8), ...terminalContext.context.filter(x=>x.content.includes("SPIDER ADAPTIVE MARKET BIAS ENGINE"))]
+        : [];
+      const historyLimit = terminalMessages.length ? 3 : 8;
       const recentConversation = messages.slice(-historyLimit);
       const outgoing=[...terminalMessages,...recentConversation,{role:"user",content:prompt+requestRules+liveNewsContext+learningContext}];
       status.textContent="Sending to connected AI…";
