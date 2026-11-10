@@ -1271,10 +1271,10 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
       if(!dailyDST&&Math.abs(diff/intervalSeconds-Math.round(diff/intervalSeconds))*intervalSeconds>3)spacingMismatches++;
     }
     if(Number.isFinite(shortestGap)&&shortestGap>intervalSeconds*1.5&&!(intervalSeconds===86400&&shortestGap>=23*3600&&shortestGap<=25*3600))spacingMismatches++;
-    const bars=valid.slice(-12);
+    const bars=valid.slice(-60);
     const last=bars[bars.length-1]||null;
     const staleSeconds=last?Math.max(0,nowSeconds-last.closeT):null;
-    const structuralValid=bars.length>=12&&invalidRows===0&&futureRows===0&&duplicateRows===0&&spacingMismatches===0;
+    const structuralValid=bars.length>=20&&invalidRows===0&&futureRows===0&&duplicateRows===0&&spacingMismatches===0;
     const stale=staleSeconds!==null&&staleSeconds>intervalSeconds*3;
     const highs=[],lows=[];
     for(let i=2;i<bars.length-2;i++){
@@ -1360,32 +1360,56 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
     });
     const analysisReady=validation.length===frames.length&&validation.every(x=>x.structuralValid);
     const tradeReady=analysisReady&&validation.every(x=>!x.stale);
-    const biasFrames=validation.filter(x=>x.structuralValid&&Array.isArray(x.candles)&&x.candles.length>=8);
-    const weights={"1D":5,"4H":35,"1H":25,"15m":25,"5m":10};
+    const biasFrames=validation.filter(x=>x.structuralValid&&Array.isArray(x.candles)&&x.candles.length>=20);
+    const weights={"1D":15,"4H":30,"1H":25,"15m":20,"5m":10};
     const frameEvidence=biasFrames.map(f=>{
-      const bars=f.candles,closes=bars.map(x=>Number(x[4])),last=bars[bars.length-1],prior=bars[bars.length-2];
-      const mean=closes.slice(-5,-1).reduce((a,b)=>a+b,0)/Math.max(1,closes.slice(-5,-1).length);
-      const highs=f.confirmedSwingHighs||[],lows=f.confirmedSwingLows||[],lastHigh=highs[highs.length-1]||f.lastConfirmedSwingHigh,lastLow=lows[lows.length-1]||f.lastConfirmedSwingLow;
-      const previousHigh=highs[highs.length-2],previousLow=lows[lows.length-2],close=Number(last[4]);
-      let score=0;const reasons=[];let structure="RANGE / UNCONFIRMED",highState="NOT TESTED",lowState="NOT TESTED";
-      const higherHigh=!!(lastHigh&&previousHigh&&lastHigh.price>previousHigh.price),higherLow=!!(lastLow&&previousLow&&lastLow.price>previousLow.price),lowerHigh=!!(lastHigh&&previousHigh&&lastHigh.price<previousHigh.price),lowerLow=!!(lastLow&&previousLow&&lastLow.price<previousLow.price);
-      if(higherHigh&&higherLow){structure="BULLISH STRUCTURE";score+=1.5;reasons.push("higher swing high and higher swing low")}else if(lowerHigh&&lowerLow){structure="BEARISH STRUCTURE";score-=1.5;reasons.push("lower swing high and lower swing low")}
-      if(lastHigh&&close>lastHigh.price){highState="BROKEN ABOVE ON CLOSE";score+=2;reasons.push("latest close above confirmed swing high")}else if(lastHigh&&last[2]>lastHigh.price&&close<=lastHigh.price){highState="SWEEP / REJECTION";score-=1.25;reasons.push("wick above swing high rejected by close")}
-      if(lastLow&&close<lastLow.price){lowState="BROKEN BELOW ON CLOSE";score-=2;reasons.push("latest close below confirmed swing low")}else if(lastLow&&last[3]<lastLow.price&&close>=lastLow.price){lowState="SWEEP / RECLAIM";score+=1.25;reasons.push("wick below swing low reclaimed by close")}
-      if(close>mean){score+=.5;reasons.push("close above recent mean")}else if(close<mean){score-=.5;reasons.push("close below recent mean")}
-      const ranges=bars.slice(-6,-1).map(x=>Number(x[2])-Number(x[3])).filter(x=>x>0),avgRange=ranges.reduce((a,b)=>a+b,0)/Math.max(1,ranges.length),body=Math.abs(Number(last[4])-Number(last[1]));
-      if(avgRange>0&&body>=avgRange*1.5){if(close>Number(last[1])){score+=.5;reasons.push("bullish displacement candle")}else if(close<Number(last[1])){score-=.5;reasons.push("bearish displacement candle")}}
-      const momentum=close>Number(prior[4])?"UP":close<Number(prior[4])?"DOWN":"FLAT";
-      return {timeframe:f.timeframe,weight:weights[f.timeframe]||0,score:Number(score.toFixed(2)),structure,highState,lowState,momentum,reasons,lastClose:close,lastClosedCloseIST:f.lastClosedCloseIST||null,lastConfirmedSwingHigh:lastHigh?.price??null,lastConfirmedSwingLow:lastLow?.price??null,stale:f.stale};
+      const bars=f.candles.map(x=>x.map(Number)),last=bars[bars.length-1],prior=bars[bars.length-2],close=last[4];
+      const highs=f.confirmedSwingHighs||[],lows=f.confirmedSwingLows||[];
+      const lastHigh=highs[highs.length-1]||f.lastConfirmedSwingHigh,previousHigh=highs[highs.length-2];
+      const lastLow=lows[lows.length-1]||f.lastConfirmedSwingLow,previousLow=lows[lows.length-2];
+      const higherHigh=!!(lastHigh&&previousHigh&&lastHigh.price>previousHigh.price);
+      const higherLow=!!(lastLow&&previousLow&&lastLow.price>previousLow.price);
+      const lowerHigh=!!(lastHigh&&previousHigh&&lastHigh.price<previousHigh.price);
+      const lowerLow=!!(lastLow&&previousLow&&lastLow.price<previousLow.price);
+      const bullishStructure=higherHigh&&higherLow,bearishStructure=lowerHigh&&lowerLow;
+      const breakHigh=!!(lastHigh&&close>lastHigh.price),breakLow=!!(lastLow&&close<lastLow.price);
+      const sweepHigh=!!(lastHigh&&last[2]>lastHigh.price&&close<=lastHigh.price);
+      const sweepLow=!!(lastLow&&last[3]<lastLow.price&&close>=lastLow.price);
+      const recent=bars.slice(-6,-1);
+      const retestHigh=!!(breakHigh&&recent.some(b=>b[3]<=lastHigh.price&&b[4]>lastHigh.price));
+      const retestLow=!!(breakLow&&recent.some(b=>b[2]>=lastLow.price&&b[4]<lastLow.price));
+      let score=0;const reasons=[];
+      let structure=bullishStructure?"BULLISH HH/HL":bearishStructure?"BEARISH LH/LL":"RANGE / MIXED";
+      if(bullishStructure){score+=1.5;reasons.push("confirmed higher high and higher low")}
+      if(bearishStructure){score-=1.5;reasons.push("confirmed lower high and lower low")}
+      let structureEvent="NONE";
+      if(breakHigh){score+=2;structureEvent=bearishStructure?"BULLISH CHoCH":"BULLISH BOS";reasons.push("closed above confirmed swing high")}
+      if(breakLow){score-=2;structureEvent=bullishStructure?"BEARISH CHoCH":"BEARISH BOS";reasons.push("closed below confirmed swing low")}
+      if(sweepHigh){score-=1.25;structureEvent="BUY-SIDE LIQUIDITY SWEEP / REJECTION";reasons.push("wick above swing high, close back below")}
+      if(sweepLow){score+=1.25;structureEvent="SELL-SIDE LIQUIDITY SWEEP / RECLAIM";reasons.push("wick below swing low, close back above")}
+      if(retestHigh){score+=.5;reasons.push("broken swing high retested and held as support")}
+      if(retestLow){score-=.5;reasons.push("broken swing low retested and rejected as resistance")}
+      const ranges=bars.slice(-15).map((b,i,a)=>Math.max(b[2]-b[3],i?Math.abs(b[2]-a[i-1][4]):0,i?Math.abs(b[3]-a[i-1][4]):0)).filter(x=>x>0);
+      const atr=ranges.length?ranges.reduce((a,b)=>a+b,0)/ranges.length:0;
+      const body=Math.abs(last[4]-last[1]),bodyRatio=atr?body/atr:0;
+      if(atr&&bodyRatio>=1.25){if(close>last[1]){score+=.5;reasons.push("bullish displacement relative to ATR")}else if(close<last[1]){score-=.5;reasons.push("bearish displacement relative to ATR")}}
+      const momentum=close>prior[4]?"UP":close<prior[4]?"DOWN":"FLAT";
+      const supportState=!lastLow?"UNAVAILABLE":breakLow?(retestLow?"BROKEN LOW · RETEST REJECTED / RESISTANCE":"BROKEN LOW · RETEST NOT CONFIRMED"):sweepLow?"SWEEP AND RECLAIM · SUPPORT HELD":"ACTIVE CONFIRMED SWING LOW";
+      const resistanceState=!lastHigh?"UNAVAILABLE":breakHigh?(retestHigh?"BROKEN HIGH · RETEST HELD / SUPPORT":"BROKEN HIGH · RETEST NOT CONFIRMED"):sweepHigh?"SWEEP AND REJECTION · RESISTANCE HELD":"ACTIVE CONFIRMED SWING HIGH";
+      const normalizedScore=Math.max(-1,Math.min(1,score/4));
+      return {timeframe:f.timeframe,weight:weights[f.timeframe]||0,score:Number(normalizedScore.toFixed(3)),rawScore:Number(score.toFixed(2)),structure,structureEvent,highState:resistanceState,lowState:supportState,momentum,atr:Number(atr.toFixed(3)),displacementATR:Number(bodyRatio.toFixed(2)),reasons,lastClose:close,lastClosedCloseIST:f.lastClosedCloseIST||null,lastConfirmedSwingHigh:lastHigh?.price??null,lastConfirmedSwingLow:lastLow?.price??null,stale:f.stale};
     });
     const weighted=frameEvidence.reduce((sum,x)=>sum+x.score*x.weight,0),totalWeight=frameEvidence.reduce((sum,x)=>sum+x.weight,0),normalized=totalWeight?weighted/totalWeight:0;
     const htf=frameEvidence.filter(x=>["1D","4H","1H"].includes(x.timeframe)),ltf=frameEvidence.filter(x=>["15m","5m"].includes(x.timeframe));
-    const htfScore=htf.reduce((s,x)=>s+x.score*x.weight,0)/Math.max(1,htf.reduce((s,x)=>s+x.weight,0)),ltfScore=ltf.reduce((s,x)=>s+x.score*x.weight,0)/Math.max(1,ltf.reduce((s,x)=>s+x.weight,0));
-    const freshAll=validation.length===5&&validation.every(x=>x.structuralValid&&!x.stale),htfDirection=Math.sign(htfScore),ltfDirection=Math.sign(ltfScore),alignment=htfDirection!==0&&htfDirection===ltfDirection;
-    const direction=normalized>=.65?"BULLISH":normalized<=-.65?"BEARISH":"MIXED";
-    const decision=!freshAll?"WAIT — DATA NOT FRESH":!alignment?"WAIT — HTF/LTF CONFLICT":Math.abs(htfScore)<.5||Math.abs(ltfScore)<.5?"WAIT — STRUCTURE NOT STRONG ENOUGH":htfDirection>0?"BUY BIAS":"SELL BIAS";
-    const levels=frameEvidence.map(x=>({timeframe:x.timeframe,support:x.lastConfirmedSwingLow,resistance:x.lastConfirmedSwingHigh,supportState:x.lowState,resistanceState:x.highState}));
-    const biasEngine={engine:"SPIDER Adaptive XAUUSD Structure Bias Engine v2",symbol,decision,direction,score:Number(normalized.toFixed(3)),higherTimeframeScore:Number(htfScore.toFixed(3)),entryTimeframeScore:Number(ltfScore.toFixed(3)),timeframes:frameEvidence,levels,validation:validation.map(x=>({timeframe:x.timeframe,status:x.status,structuralValid:x.structuralValid,stale:x.stale,reason:x.reason||null})),timeframeAgreement:alignment?"HTF and LTF agree":"HTF/LTF conflict or neutral",dataFresh:freshAll,limitations:["Structure and candle heuristics are not yet backtested or calibrated","Swing structure uses confirmed pivots from the latest 12 closed candles only","No order-block/FVG model, verified US yield input or automated event lockout yet","Bias is not an entry; wait for a separate lower-timeframe trigger and invalidation"]};
+    const htfWeight=htf.reduce((s,x)=>s+x.weight,0),ltfWeight=ltf.reduce((s,x)=>s+x.weight,0);
+    const htfScore=htfWeight?htf.reduce((s,x)=>s+x.score*x.weight,0)/htfWeight:0,ltfScore=ltfWeight?ltf.reduce((s,x)=>s+x.score*x.weight,0)/ltfWeight:0;
+    const freshAll=validation.length===5&&validation.every(x=>x.structuralValid&&!x.stale);
+    const htfDirection=Math.sign(htfScore),ltfDirection=Math.sign(ltfScore),alignment=htfDirection!==0&&htfDirection===ltfDirection;
+    const direction=normalized>=.25?"BULLISH":normalized<=-.25?"BEARISH":"MIXED";
+    const decision=!freshAll?"WAIT — DATA NOT FRESH":!alignment?"WAIT — HTF/LTF CONFLICT":Math.abs(htfScore)<.25||Math.abs(ltfScore)<.25?"WAIT — NO STRONG MULTI-TF EDGE":htfDirection>0?"BUY BIAS":"SELL BIAS";
+    const levels=frameEvidence.map(x=>({timeframe:x.timeframe,swingLow:x.lastConfirmedSwingLow,swingLowState:x.lowState,swingHigh:x.lastConfirmedSwingHigh,swingHighState:x.highState,structureEvent:x.structureEvent}));
+    const riskSettings=riskGuardSnapshot();
+    const biasEngine={engine:"SPIDER Adaptive XAUUSD Structure Bias Engine v3",symbol,decision,direction,score:Number(normalized.toFixed(3)),higherTimeframeScore:Number(htfScore.toFixed(3)),entryTimeframeScore:Number(ltfScore.toFixed(3)),timeframes:frameEvidence,levels,validation:validation.map(x=>({timeframe:x.timeframe,status:x.status,structuralValid:x.structuralValid,stale:x.stale,barCount:x.barCount,reason:x.reason||null})),timeframeAgreement:alignment?"HTF and LTF agree":"HTF/LTF conflict or neutral",dataFresh:freshAll,riskGuardStatus:riskSettings.lastCalculation?.status||"NOT RUN — risk inputs required",entryTrigger:"NOT GENERATED — directional bias is not an entry; require a fresh M5/M15 trigger and structural invalidation",limitations:["Uses up to 60 validated closed candles per timeframe and two-left/two-right confirmed pivots","BOS/CHoCH and sweep labels are rule-based approximations, not full institutional order-flow detection","Not historically backtested or calibrated; no probability claim","No automatic order placement or broker-side risk enforcement"]};
     context.push(circuitContextMessage("SPIDER ADAPTIVE MARKET BIAS ENGINE",biasEngine,1700));
     context.push(circuitContextMessage("CANDLE DATA VALIDATION · KOLKATA IST",{
       symbol,reportTimeUTC:new Date().toISOString(),reportTimeIST:circuitIST(new Date()),
