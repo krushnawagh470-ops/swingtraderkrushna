@@ -184,6 +184,8 @@ async function memoryRoute(request, env, url) {
 
 async function autoSaveConversationMemory(env, config, provider, messages, reply) {
   try {
+    const latestUserMessage = messages.slice().reverse().find(item => item.role === "user");
+    if (latestUserMessage && /\b(don't save|do not save|don't remember|do not remember|forget this|keep this private)\b/i.test(latestUserMessage.content)) return;
     const jwtSecret = env.SPIDER_MEMORY_JWT_SECRET || env.CIRCUIT_MEMORY_JWT_SECRET;
     if (!env.DB || !jwtSecret || !config.key) return;
     const existing = await env.DB.prepare("SELECT category, content FROM circuit_memories WHERE user_id = 'owner' ORDER BY updated_at DESC LIMIT 100").all();
@@ -204,18 +206,20 @@ async function autoSaveConversationMemory(env, config, provider, messages, reply
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 10000);
     try {
+      const extractionPayload = {
+        model: config.model,
+        messages: [
+          { role: "system", content: "You are a conservative memory extraction component. Follow the extraction rules exactly. Output only valid JSON." },
+          { role: "user", content: extractionPrompt }
+        ],
+        max_completion_tokens: 450
+      };
+      if (provider === "groq" && config.model.includes("gpt-oss")) extractionPayload.reasoning_effort = "low";
       const response = await fetch(config.endpoint, {
         method: "POST",
         signal: controller.signal,
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + config.key },
-        body: JSON.stringify({
-          model: config.model,
-          messages: [
-            { role: "system", content: "You are a conservative memory extraction component. Follow the extraction rules exactly. Output only valid JSON." },
-            { role: "user", content: extractionPrompt }
-          ],
-          max_completion_tokens: 450
-        })
+        body: JSON.stringify(extractionPayload)
       });
       if (!response.ok) return;
       const data = await response.json();
