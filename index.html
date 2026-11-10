@@ -1046,7 +1046,7 @@ renderJournal();renderChecks();loadPlan();calculateRisk();pipDefaults();renderBa
 .stk-voice-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px;padding:10px;border:1px solid #21456e;border-radius:9px;background:#07162a}.stk-voice-bar button{font-size:11px}.stk-voice-bar #stkVoiceMic.listening{background:linear-gradient(135deg,#ff6689,#e44768);color:#fff;box-shadow:0 0 18px #ff668955}.stk-voice-bar #stkVoiceStop{background:#10223d;color:#d9eaff;border:1px solid #27466e}@media(max-width:650px){.stk-voice-bar{gap:7px}.stk-voice-bar button{padding:9px 10px}}\n</style><script>
 /* Single source of truth for the secure AI Worker URL. Chat and connection
    actions are owned by their dedicated handlers below. */
-window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.workers.dev";
+window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.workers.dev";
 (function () {
   const field = document.getElementById("agentWorkerUrl");
   if (field && !field.value.trim()) field.value = window.STK_DEFAULT_WORKER_URL;
@@ -1058,7 +1058,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   const field = document.getElementById("agentWorkerUrl");
   const status = document.getElementById("agentConnectStatus");
   if (!button || !field || !status) return;
-  const defaultWorker = window.STK_DEFAULT_WORKER_URL || "https://floral-wood-dfe4.swingtraderkrushna.workers.dev";
+  const defaultWorker = window.STK_DEFAULT_WORKER_URL || "https://spider-core-v2.swingtraderkrushna.workers.dev";
   if (!field.value.trim()) field.value = defaultWorker;
   async function testWorkerConnection() {
     const url = (field.value || defaultWorker).trim().replace(/\/+$/, "");
@@ -1364,7 +1364,7 @@ window.STK_DEFAULT_WORKER_URL = "https://floral-wood-dfe4.swingtraderkrushna.wor
   async function sendMessage() {
     if (busy) return;
     const prompt = input.value.trim();
-    const url = (localStorage.getItem("stk_gemini_worker_url") || window.STK_DEFAULT_WORKER_URL || "https://floral-wood-dfe4.swingtraderkrushna.workers.dev").trim().replace(/\/+$/, "");
+    const url = (localStorage.getItem("stk_gemini_worker_url") || window.STK_DEFAULT_WORKER_URL || "https://spider-core-v2.swingtraderkrushna.workers.dev").trim().replace(/\/+$/, "");
     if (!prompt) { status.textContent = "Type a message first."; input.focus(); return; }
     if (processCommand(prompt)) { input.value = ""; return; }
     if (!url) { status.textContent = "Worker is not connected. Save and test the Worker URL first."; return; }
