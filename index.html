@@ -1123,7 +1123,7 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
   let busy = false;
   let activeRequestController = null;
   let quickReplies = true;
-  let webLookupOn = localStorage.getItem("stk_web_lookup_on") === "true";
+  let webLookupOn = localStorage.getItem("stk_web_lookup_on") !== "false";
   let voiceOn = true;
   const cancelButton = document.getElementById("stkCancelTask");
   const voiceToggle = document.getElementById("stkVoiceToggle");
@@ -1142,7 +1142,7 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
     if (c === "quick replies" || c === "quick replies on") { quickReplies = true; showCommand("Quick replies are ON."); return true; }
     if (c === "detailed replies" || c === "quick replies off") { quickReplies = false; showCommand("Detailed replies are ON."); return true; }
     if (c === "mute" || c === "unmute") { voiceOn = c === "unmute"; if (!voiceOn && "speechSynthesis" in window) window.speechSynthesis.cancel(); if (!voiceOn && window.SpiderNative && typeof window.SpiderNative.stopSpeaking === "function") window.SpiderNative.stopSpeaking(); if (voiceToggle) { voiceToggle.textContent = voiceOn ? "🔊 Voice replies: ON" : "🔇 Voice replies: OFF"; voiceToggle.setAttribute("aria-pressed", String(voiceOn)); } if (voiceStatus) voiceStatus.textContent = voiceOn ? "Voice replies are on." : "Voice replies are muted."; showCommand(voiceOn ? "Voice replies enabled." : "Voice replies muted."); return true; }
-    if (c === "web on" || c === "web off") { webLookupOn = c === "web on"; localStorage.setItem("stk_web_lookup_on", String(webLookupOn)); showCommand(webLookupOn ? "Web lookup mode is ON. Live search still requires a search service connected to the Worker; I will not claim a search until one is connected." : "Web lookup mode is OFF."); return true; }
+    if (c === "web on" || c === "web off") { webLookupOn = c === "web on"; localStorage.setItem("stk_web_lookup_on", String(webLookupOn)); showCommand(webLookupOn ? "Web lookup is ON. Current and news questions use SPIDER secure search; CPI release questions use the official BLS source." : "General web lookup is OFF. Current and news questions will not be answered from stale memory; official CPI verification remains enabled."); return true; }
     if (c === "cancel tasks") { cancelActiveRequest(); return true; }
     return false;
   }
@@ -1405,7 +1405,8 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
       activeRequestController=new AbortController();
       let liveNewsCount=0,liveNewsContext="\n\nLIVE WEB SEARCH STATUS: Search was not completed.",liveNewsFailed=false;
       const isCpiQuery=/\b(cpi|consumer price index|inflation)\b/i.test(prompt);
-      const needsLiveWebSearch=!chartRequest&&!isCpiQuery&&/\b(latest|current|today|tonight|this week|recent|news|headlines|breaking|research|sources|search|compare|price now|live update|what happened|2026)\b/i.test(prompt);
+      const currentNeedsGeneralSearch=!chartRequest&&!isCpiQuery&&/\b(latest|current|today|tonight|this week|recent|news|headlines|breaking|research|sources|search|compare|price now|live update|what happened|2026)\b/i.test(prompt);
+      const needsLiveWebSearch=currentNeedsGeneralSearch&&webLookupOn;
       try{
        if(needsLiveWebSearch){
         status.textContent="Searching the web…";
@@ -1427,6 +1428,12 @@ window.STK_DEFAULT_WORKER_URL = "https://spider-core-v2.swingtraderkrushna.worke
         liveNewsFailed=true;
         liveNewsContext="\n\nLIVE WEB SEARCH STATUS: Secure Worker search failed ("+String(newsError?.message||"unknown error").slice(0,180)+"). Do not claim that live research succeeded; do not guess current facts.";
         liveNewsCount=0;
+      }
+      if(currentNeedsGeneralSearch&&!webLookupOn){
+        const message="Live web lookup is OFF, so I cannot verify current information. Say \"web on\" and ask again.";
+        add("assistant",message,false);
+        status.textContent="Web lookup is OFF · no unverified current answer sent.";
+        return;
       }
       if(needsLiveWebSearch&&liveNewsFailed&&!isCpiQuery){
         const message="I couldn't retrieve live sources just now, so I won't guess or give you old figures as today's data. Please retry the current-data request in a moment.";
