@@ -2757,4 +2757,62 @@ body{background:radial-gradient(ellipse at 50% -18%,#102b52 0%,#061329 48%,#0207
 .spider-desktop-topbar nav button{padding:6px 7px;font-size:8px}
 }
 </style><script id="spider-reference-dashboard-init">(function(){const q=document.getElementById("nativeQuoteGrid"),host=document.getElementById("spiderDesktopQuoteHost");if(q&&host)host.appendChild(q);const src=document.getElementById("pipelineStatus"),dst=document.getElementById("spiderDesktopFeedStatus");if(src&&dst){const f=()=>dst.textContent=(src.textContent||"CONNECTING").trim().toUpperCase().slice(0,30);f();if(window.MutationObserver)new MutationObserver(f).observe(src,{subtree:true,childList:true,characterData:true});}document.addEventListener("click",e=>{const b=e.target.closest(".spider-desktop-topbar nav button");if(b)document.querySelectorAll(".spider-desktop-topbar nav button").forEach(x=>x.classList.toggle("on",x===b));});})();</script>
+
+<style id="spider-reference-mobile-layout">
+/* Apply the same SPIDER reference visual system to phone layouts.
+   Existing tools, page IDs, handlers and data hosts remain unchanged. */
+@media(max-width:999px){
+  body{background:radial-gradient(ellipse at 50% -10%,#102b52 0%,#061329 48%,#020714 100%)!important}
+  #spiderDesktopTopbar{display:flex!important;position:sticky;top:0;z-index:50;height:auto;min-height:56px;margin:0;padding:8px 10px;gap:8px;flex-wrap:wrap;background:rgba(3,10,23,.97);border-bottom:1px solid #173b67;backdrop-filter:blur(14px)}
+  .spider-desk-brand{min-width:0;flex:1 1 auto;font-size:12px;gap:7px}
+  .spider-desk-brand img{width:29px;height:29px;object-fit:cover;border-radius:50%}
+  .spider-desk-brand small{font-size:7px}
+  .spider-online{font-size:7px}
+  .spider-desktop-topbar nav{order:3;flex:1 0 100%;display:flex;gap:5px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:thin}
+  .spider-desktop-topbar nav button{flex:0 0 auto;min-height:36px;padding:7px 10px;border:1px solid #21466f;background:#091a30;color:#a9c9e8;font-size:9px;white-space:nowrap}
+  #spiderReferenceDashboard{display:block!important;max-width:100%;padding:0 10px 14px}
+  #overview{padding-top:8px!important}
+  #overview>.workspace-welcome,#overview>.workspace-toolbar,#overview>.terminal-hero,#overview>.terminal-metrics,#overview>.terminal-section-head,#overview>.market-pulse,#overview>.ops-grid,#overview>.home-modules{display:none!important}
+  .spider-ref-heading{min-height:0;margin:0 auto 10px;padding:13px 4px 8px;display:flex;flex-direction:column;gap:9px}
+  .spider-ref-heading h2{font-size:17px;letter-spacing:.15em}
+  .spider-ref-heading p{font-size:7px;line-height:1.6;letter-spacing:.08em}
+  .spider-ref-status{position:static;width:100%;min-width:0;grid-template-columns:14px 1fr;padding:8px 10px}
+  .spider-ref-grid{display:grid;grid-template-columns:minmax(0,1fr)!important;gap:9px;min-height:0}
+  .spider-ref-centre{order:0;gap:9px}
+  .spider-ref-col:first-child{order:1}
+  .spider-ref-col:last-child{order:2}
+  .spider-ref-col{gap:9px}
+  .spider-ref-core{min-height:clamp(300px,68vw,440px);height:auto}
+  .spider-orb{width:min(38%,190px)}
+  .spider-ref-core-title{top:12px}
+  .spider-ref-wave{height:70px}
+  .spider-ref-panel>header{padding:10px}
+  .spider-ref-stat-grid>div{min-height:76px;padding:8px}
+  .spider-ref-stat-grid b{font-size:19px}
+  .spider-ref-chart{height:100px}
+  .spider-ref-donut-row{padding:10px}
+  #spiderDesktopQuoteHost .live-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #spiderDesktopQuoteHost .q-price{font-size:15px}
+  .spider-ref-note{padding:8px 10px;font-size:9px}
+  .spider-ref-statusrow{padding:10px}
+  .spider-ref-cta{padding:12px}
+  .mobile-nav{z-index:62}
+}
+@media(max-width:380px){
+  #spiderDesktopTopbar{padding:7px}
+  .spider-online{font-size:6px}
+  .spider-ref-grid{gap:7px}
+  .spider-ref-core{min-height:285px}
+  .spider-ref-heading h2{font-size:15px}
+  #spiderDesktopQuoteHost .live-grid{grid-template-columns:1fr}
+}
+@media(min-width:1000px){
+  #spiderReferenceDashboard{display:block!important}
+  #spiderDesktopTopbar{display:flex!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .spider-orbital,.spider-orb,.spider-orb i{animation:none!important}
+}
+</style>
+
 </body></html>
